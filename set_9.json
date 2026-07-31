@@ -1,0 +1,816 @@
+{
+  "id": "set_9",
+  "title": "Smart Factory / 智慧工廠",
+  "description": "Machines, production lines, units, and components. / 機器、生產線、產量及零件。",
+  "datasets": {
+    "machines": [
+      {
+        "machine": "Arm-A",
+        "department": "Assembly",
+        "efficiency": 97,
+        "units": 120,
+        "line": "Line A",
+        "status": "active"
+      },
+      {
+        "machine": "Bolt-X",
+        "department": "Packing",
+        "efficiency": 78,
+        "units": 84,
+        "line": "Line B",
+        "status": "offline"
+      },
+      {
+        "machine": "Core-3",
+        "department": "Assembly",
+        "efficiency": 88,
+        "units": 108,
+        "line": "Line A",
+        "status": "active"
+      },
+      {
+        "machine": "Drive-8",
+        "department": "Quality",
+        "efficiency": 67,
+        "units": 66,
+        "line": "Line C",
+        "status": "standby"
+      },
+      {
+        "machine": "Echo-2",
+        "department": "Packing",
+        "efficiency": 90,
+        "units": 96,
+        "line": "Line B",
+        "status": "active"
+      },
+      {
+        "machine": "Forge-7",
+        "department": "Quality",
+        "efficiency": 72,
+        "units": 72,
+        "line": "Line C",
+        "status": "offline"
+      }
+    ],
+    "components": [
+      {
+        "component": "Servo Core",
+        "department": "Assembly",
+        "cost": 1010,
+        "line": "Line A"
+      },
+      {
+        "component": "Optic Eye",
+        "department": "Packing",
+        "cost": 780,
+        "line": "Line B"
+      },
+      {
+        "component": "Drive Belt",
+        "department": "Assembly",
+        "cost": 900,
+        "line": "Line A"
+      },
+      {
+        "component": "Nano Seal",
+        "department": "Quality",
+        "cost": 370,
+        "line": "Line C"
+      },
+      {
+        "component": "Power Cell",
+        "department": "Packing",
+        "cost": 1190,
+        "line": "Line B"
+      },
+      {
+        "component": "Logic Board",
+        "department": "Quality",
+        "cost": 680,
+        "line": "Line C"
+      }
+    ]
+  },
+  "levels": [
+    {
+      "id": "set_9_l01",
+      "title": "Field Scan",
+      "titleZh": "欄位掃描",
+      "mission": {
+        "zh": "只選取「機器名稱」欄。",
+        "en": "Select only the machine field."
+      },
+      "table": "machines",
+      "concept": "SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "machine"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l02",
+      "title": "Dual Readout",
+      "titleZh": "雙欄讀取",
+      "mission": {
+        "zh": "依序傳回「機器名稱」及「效率」。",
+        "en": "Return machine and efficiency in that order."
+      },
+      "table": "machines",
+      "concept": "MULTI SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "machine"
+          },
+          {
+            "type": "field",
+            "name": "efficiency"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l03",
+      "title": "Column Reversal",
+      "titleZh": "欄位倒序",
+      "mission": {
+        "zh": "先傳回「效率」，然後傳回「機器名稱」。",
+        "en": "Return efficiency first, then machine."
+      },
+      "table": "machines",
+      "concept": "FIELD ORDER",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "efficiency"
+          },
+          {
+            "type": "field",
+            "name": "machine"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l04",
+      "title": "Regional Signal",
+      "titleZh": "區域訊號",
+      "mission": {
+        "zh": "顯示位於 Line A 的機器，並傳回「機器名稱」及「生產線」。",
+        "en": "Show records from Line A, returning machine and line."
+      },
+      "table": "machines",
+      "concept": "WHERE =",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "machine"
+          },
+          {
+            "type": "field",
+            "name": "line"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "line"
+            },
+            "op": "=",
+            "right": "Line A",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l05",
+      "title": "Quality Gate",
+      "titleZh": "品質閘門",
+      "mission": {
+        "zh": "顯示「效率」為 80 或以上的機器。",
+        "en": "Show machine and efficiency where efficiency is at least 80."
+      },
+      "table": "machines",
+      "concept": "COMPARISON",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "machine"
+          },
+          {
+            "type": "field",
+            "name": "efficiency"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "efficiency"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l06",
+      "title": "Range Window",
+      "titleZh": "範圍視窗",
+      "mission": {
+        "zh": "顯示「產量」介乎 72 至 120 的機器。",
+        "en": "Show machine and units where units is between 72 and 120."
+      },
+      "table": "machines",
+      "concept": "BETWEEN",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "machine"
+          },
+          {
+            "type": "field",
+            "name": "units"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "units"
+            },
+            "op": "BETWEEN",
+            "right": [
+              72,
+              120
+            ],
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l07",
+      "title": "Category Lock",
+      "titleZh": "類別鎖定",
+      "mission": {
+        "zh": "找出 Assembly 類別中「效率」為 80 或以上的記錄。",
+        "en": "Find Assembly records with efficiency of at least 80."
+      },
+      "table": "machines",
+      "concept": "AND",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "machine"
+          },
+          {
+            "type": "field",
+            "name": "efficiency"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "department"
+            },
+            "op": "=",
+            "right": "Assembly",
+            "not": false
+          },
+          {
+            "join": "AND",
+            "left": {
+              "type": "field",
+              "name": "efficiency"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l08",
+      "title": "Twin Regions",
+      "titleZh": "雙區搜尋",
+      "mission": {
+        "zh": "列出位於 Line A 或 Line B 的機器。",
+        "en": "List records from Line A or Line B, returning machine and line."
+      },
+      "table": "machines",
+      "concept": "OR / IN",
+      "extraValues": [
+        [
+          "Line A",
+          "Line B"
+        ]
+      ],
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "machine"
+          },
+          {
+            "type": "field",
+            "name": "line"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "line"
+            },
+            "op": "=",
+            "right": "Line A",
+            "not": false
+          },
+          {
+            "join": "OR",
+            "left": {
+              "type": "field",
+              "name": "line"
+            },
+            "op": "=",
+            "right": "Line B",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l09",
+      "title": "Active Network",
+      "titleZh": "在線網絡",
+      "mission": {
+        "zh": "傳回狀態並非離線的機器及其狀態。",
+        "en": "Return machine and status for records that are not offline."
+      },
+      "table": "machines",
+      "concept": "NOT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "machine"
+          },
+          {
+            "type": "field",
+            "name": "status"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "status"
+            },
+            "op": "=",
+            "right": "offline",
+            "not": true
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l10",
+      "title": "Ascending Scan",
+      "titleZh": "遞增掃描",
+      "mission": {
+        "zh": "按「效率」由低至高排列機器。",
+        "en": "Order machine by efficiency, lowest first."
+      },
+      "table": "machines",
+      "concept": "ORDER BY ASC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "machine"
+          },
+          {
+            "type": "field",
+            "name": "efficiency"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "efficiency"
+            },
+            "dir": "ASC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l11",
+      "title": "Descending Load",
+      "titleZh": "遞減負載",
+      "mission": {
+        "zh": "按「產量」由高至低排列機器。",
+        "en": "Order machine by units, highest first."
+      },
+      "table": "machines",
+      "concept": "ORDER BY DESC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "machine"
+          },
+          {
+            "type": "field",
+            "name": "units"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "units"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l12",
+      "title": "Top Three",
+      "titleZh": "最高三項",
+      "mission": {
+        "zh": "顯示「成本」最高的 3 項零件。",
+        "en": "Show the 3 component records with the highest cost."
+      },
+      "table": "components",
+      "concept": "LIMIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "component"
+          },
+          {
+            "type": "field",
+            "name": "cost"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "cost"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": 3
+      }
+    },
+    {
+      "id": "set_9_l13",
+      "title": "Unique Categories",
+      "titleZh": "獨特類別",
+      "mission": {
+        "zh": "每個「部門」只顯示一次。",
+        "en": "Return each department exactly once."
+      },
+      "table": "machines",
+      "concept": "DISTINCT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "department"
+          }
+        ],
+        "distinct": true,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l14",
+      "title": "Record Census",
+      "titleZh": "記錄統計",
+      "mission": {
+        "zh": "計算 machines 中所有記錄的數量。",
+        "en": "Count every record in machines."
+      },
+      "table": "machines",
+      "concept": "COUNT",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l15",
+      "title": "Score Total",
+      "titleZh": "數值總和",
+      "mission": {
+        "zh": "計算 machines 中「效率」的總和。",
+        "en": "Calculate the total efficiency across machines."
+      },
+      "table": "machines",
+      "concept": "SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "efficiency"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l16",
+      "title": "Quantity Mean",
+      "titleZh": "數量平均",
+      "mission": {
+        "zh": "計算 machines 中「產量」的平均值。",
+        "en": "Calculate the average units across machines."
+      },
+      "table": "machines",
+      "concept": "AVG",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "units"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l17",
+      "title": "Category Count",
+      "titleZh": "類別計數",
+      "mission": {
+        "zh": "按「部門」分組，計算每組的記錄數量。",
+        "en": "Group by department and count the records in each group."
+      },
+      "table": "machines",
+      "concept": "GROUP BY",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "department"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "department"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l18",
+      "title": "Regional Totals",
+      "titleZh": "區域總和",
+      "mission": {
+        "zh": "按「生產線」分組，計算每組「效率」的總和。",
+        "en": "Group by line and total efficiency for each group."
+      },
+      "table": "machines",
+      "concept": "GROUP + SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "line"
+          },
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "efficiency"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "line"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l19",
+      "title": "Repeated Categories",
+      "titleZh": "重複類別",
+      "mission": {
+        "zh": "按「部門」分組，只保留記錄數量大於 1 的組別。",
+        "en": "Count records by department, keeping groups with counts above 1."
+      },
+      "table": "machines",
+      "concept": "HAVING",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "department"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "department"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "COUNT",
+              "field": "*"
+            },
+            "op": ">",
+            "right": 1,
+            "not": false
+          }
+        ],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_9_l20",
+      "title": "Command Summary",
+      "titleZh": "指揮總結",
+      "mission": {
+        "zh": "按「部門」計算「效率」平均值，只保留平均值為 80 或以上的組別，並由高至低排列。",
+        "en": "Average efficiency by department; keep averages of at least 80 and order highest first."
+      },
+      "table": "machines",
+      "concept": "FINAL CIRCUIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "department"
+          },
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "efficiency"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "department"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "efficiency"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "efficiency"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    }
+  ]
+}

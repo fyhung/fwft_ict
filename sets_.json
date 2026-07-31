@@ -1,0 +1,84 @@
+{
+  "version": 2,
+  "defaultSet": "set_1",
+  "project": {
+    "title": "SQL Circuit 雙語 SQL 解謎實驗室",
+    "creator": "fyhung",
+    "collaborator": "ChatGPT 5.6 Sol",
+    "school": "TWGHs Mrs. Fung Wong Fung Ting College",
+    "class": "Information and Communication Technology",
+    "term": "2026 Summer"
+  },
+  "sets": [
+    {
+      "id": "set_1",
+      "file": "set_1.json",
+      "title": "Core Circuit / 核心電路",
+      "description": "The original 20-level SQL campaign. / 原創二十關 SQL 學習旅程。",
+      "levelCount": 20
+    },
+    {
+      "id": "set_2",
+      "file": "set_2.json",
+      "title": "Neon Expansion / 霓虹擴展",
+      "description": "Twenty new puzzles across racers, relics, drones, beasts, and traders. / 二十個以賽車、遺物、無人機、怪獸及交易員為主題的新謎題。",
+      "levelCount": 20
+    },
+    {
+      "id": "set_3",
+      "file": "set_3.json",
+      "title": "Space Academy / 太空學院",
+      "description": "Cadets, missions, planets, and space relics. / 學員、任務、行星及太空遺物。",
+      "levelCount": 20
+    },
+    {
+      "id": "set_4",
+      "file": "set_4.json",
+      "title": "Ocean Research / 海洋研究",
+      "description": "Research vessels, samples, oceans, and specimens. / 研究船、樣本、海洋及標本。",
+      "levelCount": 20
+    },
+    {
+      "id": "set_5",
+      "file": "set_5.json",
+      "title": "Green City / 綠色城市",
+      "description": "Sustainable transport, districts, and civic projects. / 可持續交通、地區及城市項目。",
+      "levelCount": 20
+    },
+    {
+      "id": "set_6",
+      "file": "set_6.json",
+      "title": "Fantasy Guild / 奇幻公會",
+      "description": "Adventurers, realms, quests, and artifacts. / 冒險者、領域、任務及神器。",
+      "levelCount": 20
+    },
+    {
+      "id": "set_7",
+      "file": "set_7.json",
+      "title": "Music Festival / 音樂節",
+      "description": "Performers, stages, songs, and equipment. / 表演者、舞台、歌曲及器材。",
+      "levelCount": 20
+    },
+    {
+      "id": "set_8",
+      "file": "set_8.json",
+      "title": "Sports Analytics / 運動分析",
+      "description": "Athletes, sports, medals, and trophies. / 運動員、項目、獎牌及獎盃。",
+      "levelCount": 20
+    },
+    {
+      "id": "set_9",
+      "file": "set_9.json",
+      "title": "Smart Factory / 智慧工廠",
+      "description": "Machines, production lines, units, and components. / 機器、生產線、產量及零件。",
+      "levelCount": 20
+    },
+    {
+      "id": "set_10",
+      "file": "set_10.json",
+      "title": "Global Café / 環球咖啡館",
+      "description": "Cafés, specialties, cities, orders, and menu items. / 咖啡館、特色、城市、訂單及餐單項目。",
+      "levelCount": 20
+    }
+  ]
+}

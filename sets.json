@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "defaultSet": "set_1",
+  "project": {
+    "title": "SQL Circuit 雙語 SQL 解謎實驗室",
+    "creator": "fyhung",
+    "collaborator": "ChatGPT 5.6 Sol",
+    "school": "TWGHs Mrs. Fung Wong Fung Ting College",
+    "class": "Information and Communication Technology",
+    "term": "2026 Summer"
+  },
+  "sets": [
+    {
+      "id": "set_1",
+      "file": "set_1.json",
+      "title": "Core Circuit / 核心電路",
+      "description": "The original 20-level SQL campaign. / 原創二十關 SQL 學習旅程。",
+      "levelCount": 20
+    },
+    {
+      "id": "set_2",
+      "file": "set_2.json",
+      "title": "Neon Expansion / 霓虹擴展",
+      "description": "Twenty new puzzles across racers, relics, drones, beasts, and traders. / 二十個以賽車、遺物、無人機、怪獸及交易員為主題的新謎題。",
+      "levelCount": 20
+    }
+  ]
+}

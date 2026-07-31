@@ -1,0 +1,816 @@
+{
+  "id": "set_10",
+  "title": "Global Café / 環球咖啡館",
+  "description": "Cafés, specialties, cities, orders, and menu items. / 咖啡館、特色、城市、訂單及餐單項目。",
+  "datasets": {
+    "cafes": [
+      {
+        "cafe": "Amber Cup",
+        "specialty": "Coffee",
+        "rating": 94,
+        "orders": 96,
+        "city": "Hong Kong",
+        "status": "active"
+      },
+      {
+        "cafe": "Bean Lab",
+        "specialty": "Tea",
+        "rating": 79,
+        "orders": 72,
+        "city": "Taipei",
+        "status": "offline"
+      },
+      {
+        "cafe": "Cloud Café",
+        "specialty": "Coffee",
+        "rating": 86,
+        "orders": 88,
+        "city": "Hong Kong",
+        "status": "active"
+      },
+      {
+        "cafe": "Daily Brew",
+        "specialty": "Bakery",
+        "rating": 68,
+        "orders": 54,
+        "city": "Tokyo",
+        "status": "standby"
+      },
+      {
+        "cafe": "Echo Tea",
+        "specialty": "Tea",
+        "rating": 91,
+        "orders": 82,
+        "city": "Taipei",
+        "status": "active"
+      },
+      {
+        "cafe": "Flour & Fire",
+        "specialty": "Bakery",
+        "rating": 74,
+        "orders": 60,
+        "city": "Tokyo",
+        "status": "offline"
+      }
+    ],
+    "menu_items": [
+      {
+        "menu_item": "Galaxy Latte",
+        "specialty": "Coffee",
+        "price": 68,
+        "city": "Hong Kong"
+      },
+      {
+        "menu_item": "Jade Tea",
+        "specialty": "Tea",
+        "price": 52,
+        "city": "Taipei"
+      },
+      {
+        "menu_item": "Cloud Cake",
+        "specialty": "Coffee",
+        "price": 61,
+        "city": "Hong Kong"
+      },
+      {
+        "menu_item": "Fire Tart",
+        "specialty": "Bakery",
+        "price": 35,
+        "city": "Tokyo"
+      },
+      {
+        "menu_item": "Moon Mocha",
+        "specialty": "Tea",
+        "price": 74,
+        "city": "Taipei"
+      },
+      {
+        "menu_item": "Echo Scone",
+        "specialty": "Bakery",
+        "price": 46,
+        "city": "Tokyo"
+      }
+    ]
+  },
+  "levels": [
+    {
+      "id": "set_10_l01",
+      "title": "Field Scan",
+      "titleZh": "欄位掃描",
+      "mission": {
+        "zh": "只選取「咖啡館名稱」欄。",
+        "en": "Select only the cafe field."
+      },
+      "table": "cafes",
+      "concept": "SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cafe"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l02",
+      "title": "Dual Readout",
+      "titleZh": "雙欄讀取",
+      "mission": {
+        "zh": "依序傳回「咖啡館名稱」及「評分」。",
+        "en": "Return cafe and rating in that order."
+      },
+      "table": "cafes",
+      "concept": "MULTI SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cafe"
+          },
+          {
+            "type": "field",
+            "name": "rating"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l03",
+      "title": "Column Reversal",
+      "titleZh": "欄位倒序",
+      "mission": {
+        "zh": "先傳回「評分」，然後傳回「咖啡館名稱」。",
+        "en": "Return rating first, then cafe."
+      },
+      "table": "cafes",
+      "concept": "FIELD ORDER",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "rating"
+          },
+          {
+            "type": "field",
+            "name": "cafe"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l04",
+      "title": "Regional Signal",
+      "titleZh": "區域訊號",
+      "mission": {
+        "zh": "顯示位於 Hong Kong 的咖啡館，並傳回「咖啡館名稱」及「城市」。",
+        "en": "Show records from Hong Kong, returning cafe and city."
+      },
+      "table": "cafes",
+      "concept": "WHERE =",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cafe"
+          },
+          {
+            "type": "field",
+            "name": "city"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "city"
+            },
+            "op": "=",
+            "right": "Hong Kong",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l05",
+      "title": "Quality Gate",
+      "titleZh": "品質閘門",
+      "mission": {
+        "zh": "顯示「評分」為 80 或以上的咖啡館。",
+        "en": "Show cafe and rating where rating is at least 80."
+      },
+      "table": "cafes",
+      "concept": "COMPARISON",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cafe"
+          },
+          {
+            "type": "field",
+            "name": "rating"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "rating"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l06",
+      "title": "Range Window",
+      "titleZh": "範圍視窗",
+      "mission": {
+        "zh": "顯示「訂單數」介乎 60 至 96 的咖啡館。",
+        "en": "Show cafe and orders where orders is between 60 and 96."
+      },
+      "table": "cafes",
+      "concept": "BETWEEN",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cafe"
+          },
+          {
+            "type": "field",
+            "name": "orders"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "orders"
+            },
+            "op": "BETWEEN",
+            "right": [
+              60,
+              96
+            ],
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l07",
+      "title": "Category Lock",
+      "titleZh": "類別鎖定",
+      "mission": {
+        "zh": "找出 Coffee 類別中「評分」為 80 或以上的記錄。",
+        "en": "Find Coffee records with rating of at least 80."
+      },
+      "table": "cafes",
+      "concept": "AND",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cafe"
+          },
+          {
+            "type": "field",
+            "name": "rating"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "specialty"
+            },
+            "op": "=",
+            "right": "Coffee",
+            "not": false
+          },
+          {
+            "join": "AND",
+            "left": {
+              "type": "field",
+              "name": "rating"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l08",
+      "title": "Twin Regions",
+      "titleZh": "雙區搜尋",
+      "mission": {
+        "zh": "列出位於 Hong Kong 或 Taipei 的咖啡館。",
+        "en": "List records from Hong Kong or Taipei, returning cafe and city."
+      },
+      "table": "cafes",
+      "concept": "OR / IN",
+      "extraValues": [
+        [
+          "Hong Kong",
+          "Taipei"
+        ]
+      ],
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cafe"
+          },
+          {
+            "type": "field",
+            "name": "city"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "city"
+            },
+            "op": "=",
+            "right": "Hong Kong",
+            "not": false
+          },
+          {
+            "join": "OR",
+            "left": {
+              "type": "field",
+              "name": "city"
+            },
+            "op": "=",
+            "right": "Taipei",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l09",
+      "title": "Active Network",
+      "titleZh": "在線網絡",
+      "mission": {
+        "zh": "傳回狀態並非離線的咖啡館及其狀態。",
+        "en": "Return cafe and status for records that are not offline."
+      },
+      "table": "cafes",
+      "concept": "NOT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cafe"
+          },
+          {
+            "type": "field",
+            "name": "status"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "status"
+            },
+            "op": "=",
+            "right": "offline",
+            "not": true
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l10",
+      "title": "Ascending Scan",
+      "titleZh": "遞增掃描",
+      "mission": {
+        "zh": "按「評分」由低至高排列咖啡館。",
+        "en": "Order cafe by rating, lowest first."
+      },
+      "table": "cafes",
+      "concept": "ORDER BY ASC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cafe"
+          },
+          {
+            "type": "field",
+            "name": "rating"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "rating"
+            },
+            "dir": "ASC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l11",
+      "title": "Descending Load",
+      "titleZh": "遞減負載",
+      "mission": {
+        "zh": "按「訂單數」由高至低排列咖啡館。",
+        "en": "Order cafe by orders, highest first."
+      },
+      "table": "cafes",
+      "concept": "ORDER BY DESC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cafe"
+          },
+          {
+            "type": "field",
+            "name": "orders"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "orders"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l12",
+      "title": "Top Three",
+      "titleZh": "最高三項",
+      "mission": {
+        "zh": "顯示「價格」最高的 3 項餐單項目。",
+        "en": "Show the 3 menu_item records with the highest price."
+      },
+      "table": "menu_items",
+      "concept": "LIMIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "menu_item"
+          },
+          {
+            "type": "field",
+            "name": "price"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "price"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": 3
+      }
+    },
+    {
+      "id": "set_10_l13",
+      "title": "Unique Categories",
+      "titleZh": "獨特類別",
+      "mission": {
+        "zh": "每個「特色」只顯示一次。",
+        "en": "Return each specialty exactly once."
+      },
+      "table": "cafes",
+      "concept": "DISTINCT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "specialty"
+          }
+        ],
+        "distinct": true,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l14",
+      "title": "Record Census",
+      "titleZh": "記錄統計",
+      "mission": {
+        "zh": "計算 cafes 中所有記錄的數量。",
+        "en": "Count every record in cafes."
+      },
+      "table": "cafes",
+      "concept": "COUNT",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l15",
+      "title": "Score Total",
+      "titleZh": "數值總和",
+      "mission": {
+        "zh": "計算 cafes 中「評分」的總和。",
+        "en": "Calculate the total rating across cafes."
+      },
+      "table": "cafes",
+      "concept": "SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "rating"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l16",
+      "title": "Quantity Mean",
+      "titleZh": "數量平均",
+      "mission": {
+        "zh": "計算 cafes 中「訂單數」的平均值。",
+        "en": "Calculate the average orders across cafes."
+      },
+      "table": "cafes",
+      "concept": "AVG",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "orders"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l17",
+      "title": "Category Count",
+      "titleZh": "類別計數",
+      "mission": {
+        "zh": "按「特色」分組，計算每組的記錄數量。",
+        "en": "Group by specialty and count the records in each group."
+      },
+      "table": "cafes",
+      "concept": "GROUP BY",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "specialty"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "specialty"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l18",
+      "title": "Regional Totals",
+      "titleZh": "區域總和",
+      "mission": {
+        "zh": "按「城市」分組，計算每組「評分」的總和。",
+        "en": "Group by city and total rating for each group."
+      },
+      "table": "cafes",
+      "concept": "GROUP + SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "city"
+          },
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "rating"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "city"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l19",
+      "title": "Repeated Categories",
+      "titleZh": "重複類別",
+      "mission": {
+        "zh": "按「特色」分組，只保留記錄數量大於 1 的組別。",
+        "en": "Count records by specialty, keeping groups with counts above 1."
+      },
+      "table": "cafes",
+      "concept": "HAVING",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "specialty"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "specialty"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "COUNT",
+              "field": "*"
+            },
+            "op": ">",
+            "right": 1,
+            "not": false
+          }
+        ],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_10_l20",
+      "title": "Command Summary",
+      "titleZh": "指揮總結",
+      "mission": {
+        "zh": "按「特色」計算「評分」平均值，只保留平均值為 80 或以上的組別，並由高至低排列。",
+        "en": "Average rating by specialty; keep averages of at least 80 and order highest first."
+      },
+      "table": "cafes",
+      "concept": "FINAL CIRCUIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "specialty"
+          },
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "rating"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "specialty"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "rating"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "rating"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    }
+  ]
+}

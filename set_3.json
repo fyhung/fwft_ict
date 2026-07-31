@@ -1,0 +1,816 @@
+{
+  "id": "set_3",
+  "title": "Space Academy / 太空學院",
+  "description": "Cadets, missions, planets, and space relics. / 學員、任務、行星及太空遺物。",
+  "datasets": {
+    "space_cadets": [
+      {
+        "cadet": "Aria",
+        "division": "Nova",
+        "score": 92,
+        "missions": 8,
+        "planet": "Mars",
+        "status": "active"
+      },
+      {
+        "cadet": "Blaze",
+        "division": "Solar",
+        "score": 78,
+        "missions": 5,
+        "planet": "Earth",
+        "status": "offline"
+      },
+      {
+        "cadet": "Cosmo",
+        "division": "Nova",
+        "score": 84,
+        "missions": 7,
+        "planet": "Mars",
+        "status": "active"
+      },
+      {
+        "cadet": "Dara",
+        "division": "Lunar",
+        "score": 66,
+        "missions": 4,
+        "planet": "Venus",
+        "status": "standby"
+      },
+      {
+        "cadet": "Elio",
+        "division": "Solar",
+        "score": 88,
+        "missions": 9,
+        "planet": "Earth",
+        "status": "active"
+      },
+      {
+        "cadet": "Faye",
+        "division": "Lunar",
+        "score": 74,
+        "missions": 6,
+        "planet": "Venus",
+        "status": "offline"
+      }
+    ],
+    "space_relics": [
+      {
+        "relic": "Solar Key",
+        "division": "Nova",
+        "value": 940,
+        "planet": "Mars"
+      },
+      {
+        "relic": "Moon Lens",
+        "division": "Solar",
+        "value": 720,
+        "planet": "Earth"
+      },
+      {
+        "relic": "Nova Map",
+        "division": "Nova",
+        "value": 840,
+        "planet": "Mars"
+      },
+      {
+        "relic": "Comet Coin",
+        "division": "Lunar",
+        "value": 310,
+        "planet": "Venus"
+      },
+      {
+        "relic": "Star Crown",
+        "division": "Solar",
+        "value": 1100,
+        "planet": "Earth"
+      },
+      {
+        "relic": "Orbit Bell",
+        "division": "Lunar",
+        "value": 650,
+        "planet": "Venus"
+      }
+    ]
+  },
+  "levels": [
+    {
+      "id": "set_3_l01",
+      "title": "Field Scan",
+      "titleZh": "欄位掃描",
+      "mission": {
+        "zh": "只選取「學員名稱」欄。",
+        "en": "Select only the cadet field."
+      },
+      "table": "space_cadets",
+      "concept": "SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cadet"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l02",
+      "title": "Dual Readout",
+      "titleZh": "雙欄讀取",
+      "mission": {
+        "zh": "依序傳回「學員名稱」及「分數」。",
+        "en": "Return cadet and score in that order."
+      },
+      "table": "space_cadets",
+      "concept": "MULTI SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cadet"
+          },
+          {
+            "type": "field",
+            "name": "score"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l03",
+      "title": "Column Reversal",
+      "titleZh": "欄位倒序",
+      "mission": {
+        "zh": "先傳回「分數」，然後傳回「學員名稱」。",
+        "en": "Return score first, then cadet."
+      },
+      "table": "space_cadets",
+      "concept": "FIELD ORDER",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "score"
+          },
+          {
+            "type": "field",
+            "name": "cadet"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l04",
+      "title": "Regional Signal",
+      "titleZh": "區域訊號",
+      "mission": {
+        "zh": "顯示位於 Mars 的學員，並傳回「學員名稱」及「行星」。",
+        "en": "Show records from Mars, returning cadet and planet."
+      },
+      "table": "space_cadets",
+      "concept": "WHERE =",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cadet"
+          },
+          {
+            "type": "field",
+            "name": "planet"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "planet"
+            },
+            "op": "=",
+            "right": "Mars",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l05",
+      "title": "Quality Gate",
+      "titleZh": "品質閘門",
+      "mission": {
+        "zh": "顯示「分數」為 80 或以上的學員。",
+        "en": "Show cadet and score where score is at least 80."
+      },
+      "table": "space_cadets",
+      "concept": "COMPARISON",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cadet"
+          },
+          {
+            "type": "field",
+            "name": "score"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "score"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l06",
+      "title": "Range Window",
+      "titleZh": "範圍視窗",
+      "mission": {
+        "zh": "顯示「任務數」介乎 5 至 8 的學員。",
+        "en": "Show cadet and missions where missions is between 5 and 8."
+      },
+      "table": "space_cadets",
+      "concept": "BETWEEN",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cadet"
+          },
+          {
+            "type": "field",
+            "name": "missions"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "missions"
+            },
+            "op": "BETWEEN",
+            "right": [
+              5,
+              8
+            ],
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l07",
+      "title": "Category Lock",
+      "titleZh": "類別鎖定",
+      "mission": {
+        "zh": "找出 Nova 類別中「分數」為 80 或以上的記錄。",
+        "en": "Find Nova records with score of at least 80."
+      },
+      "table": "space_cadets",
+      "concept": "AND",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cadet"
+          },
+          {
+            "type": "field",
+            "name": "score"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "division"
+            },
+            "op": "=",
+            "right": "Nova",
+            "not": false
+          },
+          {
+            "join": "AND",
+            "left": {
+              "type": "field",
+              "name": "score"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l08",
+      "title": "Twin Regions",
+      "titleZh": "雙區搜尋",
+      "mission": {
+        "zh": "列出位於 Mars 或 Earth 的學員。",
+        "en": "List records from Mars or Earth, returning cadet and planet."
+      },
+      "table": "space_cadets",
+      "concept": "OR / IN",
+      "extraValues": [
+        [
+          "Mars",
+          "Earth"
+        ]
+      ],
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cadet"
+          },
+          {
+            "type": "field",
+            "name": "planet"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "planet"
+            },
+            "op": "=",
+            "right": "Mars",
+            "not": false
+          },
+          {
+            "join": "OR",
+            "left": {
+              "type": "field",
+              "name": "planet"
+            },
+            "op": "=",
+            "right": "Earth",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l09",
+      "title": "Active Network",
+      "titleZh": "在線網絡",
+      "mission": {
+        "zh": "傳回狀態並非離線的學員及其狀態。",
+        "en": "Return cadet and status for records that are not offline."
+      },
+      "table": "space_cadets",
+      "concept": "NOT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cadet"
+          },
+          {
+            "type": "field",
+            "name": "status"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "status"
+            },
+            "op": "=",
+            "right": "offline",
+            "not": true
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l10",
+      "title": "Ascending Scan",
+      "titleZh": "遞增掃描",
+      "mission": {
+        "zh": "按「分數」由低至高排列學員。",
+        "en": "Order cadet by score, lowest first."
+      },
+      "table": "space_cadets",
+      "concept": "ORDER BY ASC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cadet"
+          },
+          {
+            "type": "field",
+            "name": "score"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "score"
+            },
+            "dir": "ASC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l11",
+      "title": "Descending Load",
+      "titleZh": "遞減負載",
+      "mission": {
+        "zh": "按「任務數」由高至低排列學員。",
+        "en": "Order cadet by missions, highest first."
+      },
+      "table": "space_cadets",
+      "concept": "ORDER BY DESC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "cadet"
+          },
+          {
+            "type": "field",
+            "name": "missions"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "missions"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l12",
+      "title": "Top Three",
+      "titleZh": "最高三項",
+      "mission": {
+        "zh": "顯示「價值」最高的 3 項遺物。",
+        "en": "Show the 3 relic records with the highest value."
+      },
+      "table": "space_relics",
+      "concept": "LIMIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "relic"
+          },
+          {
+            "type": "field",
+            "name": "value"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "value"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": 3
+      }
+    },
+    {
+      "id": "set_3_l13",
+      "title": "Unique Categories",
+      "titleZh": "獨特類別",
+      "mission": {
+        "zh": "每個「分部」只顯示一次。",
+        "en": "Return each division exactly once."
+      },
+      "table": "space_cadets",
+      "concept": "DISTINCT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "division"
+          }
+        ],
+        "distinct": true,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l14",
+      "title": "Record Census",
+      "titleZh": "記錄統計",
+      "mission": {
+        "zh": "計算 space_cadets 中所有記錄的數量。",
+        "en": "Count every record in space_cadets."
+      },
+      "table": "space_cadets",
+      "concept": "COUNT",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l15",
+      "title": "Score Total",
+      "titleZh": "數值總和",
+      "mission": {
+        "zh": "計算 space_cadets 中「分數」的總和。",
+        "en": "Calculate the total score across space_cadets."
+      },
+      "table": "space_cadets",
+      "concept": "SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "score"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l16",
+      "title": "Quantity Mean",
+      "titleZh": "數量平均",
+      "mission": {
+        "zh": "計算 space_cadets 中「任務數」的平均值。",
+        "en": "Calculate the average missions across space_cadets."
+      },
+      "table": "space_cadets",
+      "concept": "AVG",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "missions"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l17",
+      "title": "Category Count",
+      "titleZh": "類別計數",
+      "mission": {
+        "zh": "按「分部」分組，計算每組的記錄數量。",
+        "en": "Group by division and count the records in each group."
+      },
+      "table": "space_cadets",
+      "concept": "GROUP BY",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "division"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "division"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l18",
+      "title": "Regional Totals",
+      "titleZh": "區域總和",
+      "mission": {
+        "zh": "按「行星」分組，計算每組「分數」的總和。",
+        "en": "Group by planet and total score for each group."
+      },
+      "table": "space_cadets",
+      "concept": "GROUP + SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "planet"
+          },
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "score"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "planet"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l19",
+      "title": "Repeated Categories",
+      "titleZh": "重複類別",
+      "mission": {
+        "zh": "按「分部」分組，只保留記錄數量大於 1 的組別。",
+        "en": "Count records by division, keeping groups with counts above 1."
+      },
+      "table": "space_cadets",
+      "concept": "HAVING",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "division"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "division"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "COUNT",
+              "field": "*"
+            },
+            "op": ">",
+            "right": 1,
+            "not": false
+          }
+        ],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_3_l20",
+      "title": "Command Summary",
+      "titleZh": "指揮總結",
+      "mission": {
+        "zh": "按「分部」計算「分數」平均值，只保留平均值為 80 或以上的組別，並由高至低排列。",
+        "en": "Average score by division; keep averages of at least 80 and order highest first."
+      },
+      "table": "space_cadets",
+      "concept": "FINAL CIRCUIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "division"
+          },
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "score"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "division"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "score"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "score"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    }
+  ]
+}

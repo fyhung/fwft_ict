@@ -1,0 +1,816 @@
+{
+  "id": "set_6",
+  "title": "Fantasy Guild / 奇幻公會",
+  "description": "Adventurers, realms, quests, and artifacts. / 冒險者、領域、任務及神器。",
+  "datasets": {
+    "adventurers": [
+      {
+        "adventurer": "Aerin",
+        "class": "Mage",
+        "power": 93,
+        "quests": 14,
+        "realm": "Ember",
+        "status": "active"
+      },
+      {
+        "adventurer": "Bram",
+        "class": "Ranger",
+        "power": 77,
+        "quests": 9,
+        "realm": "Frost",
+        "status": "offline"
+      },
+      {
+        "adventurer": "Cleo",
+        "class": "Mage",
+        "power": 85,
+        "quests": 12,
+        "realm": "Ember",
+        "status": "active"
+      },
+      {
+        "adventurer": "Dorin",
+        "class": "Guardian",
+        "power": 67,
+        "quests": 7,
+        "realm": "Forest",
+        "status": "standby"
+      },
+      {
+        "adventurer": "Eira",
+        "class": "Ranger",
+        "power": 89,
+        "quests": 13,
+        "realm": "Frost",
+        "status": "active"
+      },
+      {
+        "adventurer": "Finn",
+        "class": "Guardian",
+        "power": 72,
+        "quests": 8,
+        "realm": "Forest",
+        "status": "offline"
+      }
+    ],
+    "artifacts": [
+      {
+        "artifact": "Rune Staff",
+        "class": "Mage",
+        "value": 970,
+        "realm": "Ember"
+      },
+      {
+        "artifact": "Frost Bow",
+        "class": "Ranger",
+        "value": 740,
+        "realm": "Frost"
+      },
+      {
+        "artifact": "Ember Orb",
+        "class": "Mage",
+        "value": 860,
+        "realm": "Ember"
+      },
+      {
+        "artifact": "Stone Seal",
+        "class": "Guardian",
+        "value": 320,
+        "realm": "Forest"
+      },
+      {
+        "artifact": "Phoenix Ring",
+        "class": "Ranger",
+        "value": 1160,
+        "realm": "Frost"
+      },
+      {
+        "artifact": "Moon Shield",
+        "class": "Guardian",
+        "value": 620,
+        "realm": "Forest"
+      }
+    ]
+  },
+  "levels": [
+    {
+      "id": "set_6_l01",
+      "title": "Field Scan",
+      "titleZh": "欄位掃描",
+      "mission": {
+        "zh": "只選取「冒險者名稱」欄。",
+        "en": "Select only the adventurer field."
+      },
+      "table": "adventurers",
+      "concept": "SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "adventurer"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l02",
+      "title": "Dual Readout",
+      "titleZh": "雙欄讀取",
+      "mission": {
+        "zh": "依序傳回「冒險者名稱」及「力量」。",
+        "en": "Return adventurer and power in that order."
+      },
+      "table": "adventurers",
+      "concept": "MULTI SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "adventurer"
+          },
+          {
+            "type": "field",
+            "name": "power"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l03",
+      "title": "Column Reversal",
+      "titleZh": "欄位倒序",
+      "mission": {
+        "zh": "先傳回「力量」，然後傳回「冒險者名稱」。",
+        "en": "Return power first, then adventurer."
+      },
+      "table": "adventurers",
+      "concept": "FIELD ORDER",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "power"
+          },
+          {
+            "type": "field",
+            "name": "adventurer"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l04",
+      "title": "Regional Signal",
+      "titleZh": "區域訊號",
+      "mission": {
+        "zh": "顯示位於 Ember 的冒險者，並傳回「冒險者名稱」及「領域」。",
+        "en": "Show records from Ember, returning adventurer and realm."
+      },
+      "table": "adventurers",
+      "concept": "WHERE =",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "adventurer"
+          },
+          {
+            "type": "field",
+            "name": "realm"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "realm"
+            },
+            "op": "=",
+            "right": "Ember",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l05",
+      "title": "Quality Gate",
+      "titleZh": "品質閘門",
+      "mission": {
+        "zh": "顯示「力量」為 80 或以上的冒險者。",
+        "en": "Show adventurer and power where power is at least 80."
+      },
+      "table": "adventurers",
+      "concept": "COMPARISON",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "adventurer"
+          },
+          {
+            "type": "field",
+            "name": "power"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "power"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l06",
+      "title": "Range Window",
+      "titleZh": "範圍視窗",
+      "mission": {
+        "zh": "顯示「任務數」介乎 8 至 14 的冒險者。",
+        "en": "Show adventurer and quests where quests is between 8 and 14."
+      },
+      "table": "adventurers",
+      "concept": "BETWEEN",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "adventurer"
+          },
+          {
+            "type": "field",
+            "name": "quests"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "quests"
+            },
+            "op": "BETWEEN",
+            "right": [
+              8,
+              14
+            ],
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l07",
+      "title": "Category Lock",
+      "titleZh": "類別鎖定",
+      "mission": {
+        "zh": "找出 Mage 類別中「力量」為 80 或以上的記錄。",
+        "en": "Find Mage records with power of at least 80."
+      },
+      "table": "adventurers",
+      "concept": "AND",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "adventurer"
+          },
+          {
+            "type": "field",
+            "name": "power"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "class"
+            },
+            "op": "=",
+            "right": "Mage",
+            "not": false
+          },
+          {
+            "join": "AND",
+            "left": {
+              "type": "field",
+              "name": "power"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l08",
+      "title": "Twin Regions",
+      "titleZh": "雙區搜尋",
+      "mission": {
+        "zh": "列出位於 Ember 或 Frost 的冒險者。",
+        "en": "List records from Ember or Frost, returning adventurer and realm."
+      },
+      "table": "adventurers",
+      "concept": "OR / IN",
+      "extraValues": [
+        [
+          "Ember",
+          "Frost"
+        ]
+      ],
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "adventurer"
+          },
+          {
+            "type": "field",
+            "name": "realm"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "realm"
+            },
+            "op": "=",
+            "right": "Ember",
+            "not": false
+          },
+          {
+            "join": "OR",
+            "left": {
+              "type": "field",
+              "name": "realm"
+            },
+            "op": "=",
+            "right": "Frost",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l09",
+      "title": "Active Network",
+      "titleZh": "在線網絡",
+      "mission": {
+        "zh": "傳回狀態並非離線的冒險者及其狀態。",
+        "en": "Return adventurer and status for records that are not offline."
+      },
+      "table": "adventurers",
+      "concept": "NOT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "adventurer"
+          },
+          {
+            "type": "field",
+            "name": "status"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "status"
+            },
+            "op": "=",
+            "right": "offline",
+            "not": true
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l10",
+      "title": "Ascending Scan",
+      "titleZh": "遞增掃描",
+      "mission": {
+        "zh": "按「力量」由低至高排列冒險者。",
+        "en": "Order adventurer by power, lowest first."
+      },
+      "table": "adventurers",
+      "concept": "ORDER BY ASC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "adventurer"
+          },
+          {
+            "type": "field",
+            "name": "power"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "power"
+            },
+            "dir": "ASC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l11",
+      "title": "Descending Load",
+      "titleZh": "遞減負載",
+      "mission": {
+        "zh": "按「任務數」由高至低排列冒險者。",
+        "en": "Order adventurer by quests, highest first."
+      },
+      "table": "adventurers",
+      "concept": "ORDER BY DESC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "adventurer"
+          },
+          {
+            "type": "field",
+            "name": "quests"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "quests"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l12",
+      "title": "Top Three",
+      "titleZh": "最高三項",
+      "mission": {
+        "zh": "顯示「價值」最高的 3 項神器。",
+        "en": "Show the 3 artifact records with the highest value."
+      },
+      "table": "artifacts",
+      "concept": "LIMIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "artifact"
+          },
+          {
+            "type": "field",
+            "name": "value"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "value"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": 3
+      }
+    },
+    {
+      "id": "set_6_l13",
+      "title": "Unique Categories",
+      "titleZh": "獨特類別",
+      "mission": {
+        "zh": "每個「職業」只顯示一次。",
+        "en": "Return each class exactly once."
+      },
+      "table": "adventurers",
+      "concept": "DISTINCT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "class"
+          }
+        ],
+        "distinct": true,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l14",
+      "title": "Record Census",
+      "titleZh": "記錄統計",
+      "mission": {
+        "zh": "計算 adventurers 中所有記錄的數量。",
+        "en": "Count every record in adventurers."
+      },
+      "table": "adventurers",
+      "concept": "COUNT",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l15",
+      "title": "Score Total",
+      "titleZh": "數值總和",
+      "mission": {
+        "zh": "計算 adventurers 中「力量」的總和。",
+        "en": "Calculate the total power across adventurers."
+      },
+      "table": "adventurers",
+      "concept": "SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "power"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l16",
+      "title": "Quantity Mean",
+      "titleZh": "數量平均",
+      "mission": {
+        "zh": "計算 adventurers 中「任務數」的平均值。",
+        "en": "Calculate the average quests across adventurers."
+      },
+      "table": "adventurers",
+      "concept": "AVG",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "quests"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l17",
+      "title": "Category Count",
+      "titleZh": "類別計數",
+      "mission": {
+        "zh": "按「職業」分組，計算每組的記錄數量。",
+        "en": "Group by class and count the records in each group."
+      },
+      "table": "adventurers",
+      "concept": "GROUP BY",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "class"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "class"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l18",
+      "title": "Regional Totals",
+      "titleZh": "區域總和",
+      "mission": {
+        "zh": "按「領域」分組，計算每組「力量」的總和。",
+        "en": "Group by realm and total power for each group."
+      },
+      "table": "adventurers",
+      "concept": "GROUP + SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "realm"
+          },
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "power"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "realm"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l19",
+      "title": "Repeated Categories",
+      "titleZh": "重複類別",
+      "mission": {
+        "zh": "按「職業」分組，只保留記錄數量大於 1 的組別。",
+        "en": "Count records by class, keeping groups with counts above 1."
+      },
+      "table": "adventurers",
+      "concept": "HAVING",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "class"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "class"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "COUNT",
+              "field": "*"
+            },
+            "op": ">",
+            "right": 1,
+            "not": false
+          }
+        ],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_6_l20",
+      "title": "Command Summary",
+      "titleZh": "指揮總結",
+      "mission": {
+        "zh": "按「職業」計算「力量」平均值，只保留平均值為 80 或以上的組別，並由高至低排列。",
+        "en": "Average power by class; keep averages of at least 80 and order highest first."
+      },
+      "table": "adventurers",
+      "concept": "FINAL CIRCUIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "class"
+          },
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "power"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "class"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "power"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "power"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    }
+  ]
+}

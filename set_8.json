@@ -1,0 +1,816 @@
+{
+  "id": "set_8",
+  "title": "Sports Analytics / 運動分析",
+  "description": "Athletes, sports, medals, and trophies. / 運動員、項目、獎牌及獎盃。",
+  "datasets": {
+    "athletes": [
+      {
+        "athlete": "Aiko",
+        "sport": "Sprint",
+        "points": 96,
+        "medals": 9,
+        "region": "East",
+        "status": "active"
+      },
+      {
+        "athlete": "Ben",
+        "sport": "Jump",
+        "points": 79,
+        "medals": 5,
+        "region": "West",
+        "status": "offline"
+      },
+      {
+        "athlete": "Cora",
+        "sport": "Sprint",
+        "points": 87,
+        "medals": 8,
+        "region": "East",
+        "status": "active"
+      },
+      {
+        "athlete": "Dane",
+        "sport": "Swim",
+        "points": 69,
+        "medals": 4,
+        "region": "Central",
+        "status": "standby"
+      },
+      {
+        "athlete": "Erin",
+        "sport": "Jump",
+        "points": 90,
+        "medals": 7,
+        "region": "West",
+        "status": "active"
+      },
+      {
+        "athlete": "Fong",
+        "sport": "Swim",
+        "points": 73,
+        "medals": 6,
+        "region": "Central",
+        "status": "offline"
+      }
+    ],
+    "trophies": [
+      {
+        "trophy": "Gold Dash",
+        "sport": "Sprint",
+        "points": 990,
+        "region": "East"
+      },
+      {
+        "trophy": "Sky Cup",
+        "sport": "Jump",
+        "points": 770,
+        "region": "West"
+      },
+      {
+        "trophy": "Relay Shield",
+        "sport": "Sprint",
+        "points": 870,
+        "region": "East"
+      },
+      {
+        "trophy": "Wave Medal",
+        "sport": "Swim",
+        "points": 360,
+        "region": "Central"
+      },
+      {
+        "trophy": "Champion Star",
+        "sport": "Jump",
+        "points": 1140,
+        "region": "West"
+      },
+      {
+        "trophy": "Team Plate",
+        "sport": "Swim",
+        "points": 660,
+        "region": "Central"
+      }
+    ]
+  },
+  "levels": [
+    {
+      "id": "set_8_l01",
+      "title": "Field Scan",
+      "titleZh": "欄位掃描",
+      "mission": {
+        "zh": "只選取「運動員名稱」欄。",
+        "en": "Select only the athlete field."
+      },
+      "table": "athletes",
+      "concept": "SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "athlete"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l02",
+      "title": "Dual Readout",
+      "titleZh": "雙欄讀取",
+      "mission": {
+        "zh": "依序傳回「運動員名稱」及「積分」。",
+        "en": "Return athlete and points in that order."
+      },
+      "table": "athletes",
+      "concept": "MULTI SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "athlete"
+          },
+          {
+            "type": "field",
+            "name": "points"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l03",
+      "title": "Column Reversal",
+      "titleZh": "欄位倒序",
+      "mission": {
+        "zh": "先傳回「積分」，然後傳回「運動員名稱」。",
+        "en": "Return points first, then athlete."
+      },
+      "table": "athletes",
+      "concept": "FIELD ORDER",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "points"
+          },
+          {
+            "type": "field",
+            "name": "athlete"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l04",
+      "title": "Regional Signal",
+      "titleZh": "區域訊號",
+      "mission": {
+        "zh": "顯示位於 East 的運動員，並傳回「運動員名稱」及「地區」。",
+        "en": "Show records from East, returning athlete and region."
+      },
+      "table": "athletes",
+      "concept": "WHERE =",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "athlete"
+          },
+          {
+            "type": "field",
+            "name": "region"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "region"
+            },
+            "op": "=",
+            "right": "East",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l05",
+      "title": "Quality Gate",
+      "titleZh": "品質閘門",
+      "mission": {
+        "zh": "顯示「積分」為 80 或以上的運動員。",
+        "en": "Show athlete and points where points is at least 80."
+      },
+      "table": "athletes",
+      "concept": "COMPARISON",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "athlete"
+          },
+          {
+            "type": "field",
+            "name": "points"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "points"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l06",
+      "title": "Range Window",
+      "titleZh": "範圍視窗",
+      "mission": {
+        "zh": "顯示「獎牌數」介乎 5 至 9 的運動員。",
+        "en": "Show athlete and medals where medals is between 5 and 9."
+      },
+      "table": "athletes",
+      "concept": "BETWEEN",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "athlete"
+          },
+          {
+            "type": "field",
+            "name": "medals"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "medals"
+            },
+            "op": "BETWEEN",
+            "right": [
+              5,
+              9
+            ],
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l07",
+      "title": "Category Lock",
+      "titleZh": "類別鎖定",
+      "mission": {
+        "zh": "找出 Sprint 類別中「積分」為 80 或以上的記錄。",
+        "en": "Find Sprint records with points of at least 80."
+      },
+      "table": "athletes",
+      "concept": "AND",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "athlete"
+          },
+          {
+            "type": "field",
+            "name": "points"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "sport"
+            },
+            "op": "=",
+            "right": "Sprint",
+            "not": false
+          },
+          {
+            "join": "AND",
+            "left": {
+              "type": "field",
+              "name": "points"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l08",
+      "title": "Twin Regions",
+      "titleZh": "雙區搜尋",
+      "mission": {
+        "zh": "列出位於 East 或 West 的運動員。",
+        "en": "List records from East or West, returning athlete and region."
+      },
+      "table": "athletes",
+      "concept": "OR / IN",
+      "extraValues": [
+        [
+          "East",
+          "West"
+        ]
+      ],
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "athlete"
+          },
+          {
+            "type": "field",
+            "name": "region"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "region"
+            },
+            "op": "=",
+            "right": "East",
+            "not": false
+          },
+          {
+            "join": "OR",
+            "left": {
+              "type": "field",
+              "name": "region"
+            },
+            "op": "=",
+            "right": "West",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l09",
+      "title": "Active Network",
+      "titleZh": "在線網絡",
+      "mission": {
+        "zh": "傳回狀態並非離線的運動員及其狀態。",
+        "en": "Return athlete and status for records that are not offline."
+      },
+      "table": "athletes",
+      "concept": "NOT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "athlete"
+          },
+          {
+            "type": "field",
+            "name": "status"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "status"
+            },
+            "op": "=",
+            "right": "offline",
+            "not": true
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l10",
+      "title": "Ascending Scan",
+      "titleZh": "遞增掃描",
+      "mission": {
+        "zh": "按「積分」由低至高排列運動員。",
+        "en": "Order athlete by points, lowest first."
+      },
+      "table": "athletes",
+      "concept": "ORDER BY ASC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "athlete"
+          },
+          {
+            "type": "field",
+            "name": "points"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "points"
+            },
+            "dir": "ASC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l11",
+      "title": "Descending Load",
+      "titleZh": "遞減負載",
+      "mission": {
+        "zh": "按「獎牌數」由高至低排列運動員。",
+        "en": "Order athlete by medals, highest first."
+      },
+      "table": "athletes",
+      "concept": "ORDER BY DESC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "athlete"
+          },
+          {
+            "type": "field",
+            "name": "medals"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "medals"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l12",
+      "title": "Top Three",
+      "titleZh": "最高三項",
+      "mission": {
+        "zh": "顯示「積分」最高的 3 項獎盃。",
+        "en": "Show the 3 trophy records with the highest points."
+      },
+      "table": "trophies",
+      "concept": "LIMIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "trophy"
+          },
+          {
+            "type": "field",
+            "name": "points"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "points"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": 3
+      }
+    },
+    {
+      "id": "set_8_l13",
+      "title": "Unique Categories",
+      "titleZh": "獨特類別",
+      "mission": {
+        "zh": "每個「運動項目」只顯示一次。",
+        "en": "Return each sport exactly once."
+      },
+      "table": "athletes",
+      "concept": "DISTINCT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "sport"
+          }
+        ],
+        "distinct": true,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l14",
+      "title": "Record Census",
+      "titleZh": "記錄統計",
+      "mission": {
+        "zh": "計算 athletes 中所有記錄的數量。",
+        "en": "Count every record in athletes."
+      },
+      "table": "athletes",
+      "concept": "COUNT",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l15",
+      "title": "Score Total",
+      "titleZh": "數值總和",
+      "mission": {
+        "zh": "計算 athletes 中「積分」的總和。",
+        "en": "Calculate the total points across athletes."
+      },
+      "table": "athletes",
+      "concept": "SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "points"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l16",
+      "title": "Quantity Mean",
+      "titleZh": "數量平均",
+      "mission": {
+        "zh": "計算 athletes 中「獎牌數」的平均值。",
+        "en": "Calculate the average medals across athletes."
+      },
+      "table": "athletes",
+      "concept": "AVG",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "medals"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l17",
+      "title": "Category Count",
+      "titleZh": "類別計數",
+      "mission": {
+        "zh": "按「運動項目」分組，計算每組的記錄數量。",
+        "en": "Group by sport and count the records in each group."
+      },
+      "table": "athletes",
+      "concept": "GROUP BY",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "sport"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "sport"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l18",
+      "title": "Regional Totals",
+      "titleZh": "區域總和",
+      "mission": {
+        "zh": "按「地區」分組，計算每組「積分」的總和。",
+        "en": "Group by region and total points for each group."
+      },
+      "table": "athletes",
+      "concept": "GROUP + SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "region"
+          },
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "points"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "region"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l19",
+      "title": "Repeated Categories",
+      "titleZh": "重複類別",
+      "mission": {
+        "zh": "按「運動項目」分組，只保留記錄數量大於 1 的組別。",
+        "en": "Count records by sport, keeping groups with counts above 1."
+      },
+      "table": "athletes",
+      "concept": "HAVING",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "sport"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "sport"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "COUNT",
+              "field": "*"
+            },
+            "op": ">",
+            "right": 1,
+            "not": false
+          }
+        ],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_8_l20",
+      "title": "Command Summary",
+      "titleZh": "指揮總結",
+      "mission": {
+        "zh": "按「運動項目」計算「積分」平均值，只保留平均值為 80 或以上的組別，並由高至低排列。",
+        "en": "Average points by sport; keep averages of at least 80 and order highest first."
+      },
+      "table": "athletes",
+      "concept": "FINAL CIRCUIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "sport"
+          },
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "points"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "sport"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "points"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "points"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    }
+  ]
+}

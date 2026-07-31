@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="author" content="fyhung">
+<meta name="description" content="A bilingual SQL puzzle game created by fyhung with help from ChatGPT 5.6 Sol for Information and Communication Technology at TWGHs Mrs. Fung Wong Fung Ting College, Summer 2026.">
+<title>SQL Circuit 雙語 SQL 解謎實驗室 — 2026 Summer</title>
+<style>
+  :root{
+    --ink:#eefcff;--muted:#89a9b8;--bg:#060b16;--panel:#0c1525e8;--panel2:#101d31;
+    --line:#24445b;--cyan:#55e6ff;--green:#86f79a;--amber:#ffd166;--pink:#ff70b8;
+    --red:#ff6b7d;--purple:#b394ff;--shadow:0 18px 50px #0008;--radius:18px;
+    --font:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--font)}
+  body{background:
+    radial-gradient(circle at 14% -8%,#14324d 0,transparent 35%),
+    radial-gradient(circle at 85% 0,#271744 0,transparent 31%),
+    linear-gradient(#07101d,#050914);overflow-x:hidden}
+  body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;background-image:
+    linear-gradient(#64dbff12 1px,transparent 1px),linear-gradient(90deg,#64dbff12 1px,transparent 1px);
+    background-size:32px 32px;mask-image:linear-gradient(to bottom,#000,transparent 80%)}
+  button{font:inherit}
+  button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+  .app{width:min(1560px,100%);margin:auto;padding:18px clamp(12px,2vw,28px) 32px;position:relative}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brandmark{width:42px;height:42px;border:1px solid #4ce8ff80;border-radius:13px;display:grid;place-items:center;
+    background:linear-gradient(145deg,#14354c,#091525);box-shadow:0 0 24px #55e6ff25,inset 0 0 14px #55e6ff10}
+  .brandmark i{width:18px;height:18px;border:3px solid var(--cyan);display:block;transform:rotate(45deg);box-shadow:0 0 10px var(--cyan)}
+  .brand h1{font-size:clamp(18px,2.2vw,27px);letter-spacing:.09em;margin:0;line-height:1}
+  .brand h1 span{color:var(--cyan)}
+  .brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.18em;margin-top:5px}
+  .iconrow{display:flex;gap:8px}
+  .setnav{min-height:42px;min-width:205px;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;column-gap:12px;
+    text-align:left;color:var(--ink);border:1px solid #32718a;background:#0d2132;border-radius:11px;padding:6px 11px;cursor:pointer;transition:.18s}
+  .setnav span{font-size:8px;letter-spacing:.15em;color:var(--cyan)}.setnav b{font-size:11px;grid-column:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:175px}
+  .setnav i{grid-column:2;grid-row:1/3;align-self:center;color:var(--cyan);font-style:normal;font-size:16px}
+  .setnav:hover{transform:translateY(-2px);border-color:var(--cyan);background:#123047}
+  .iconbtn,.action{color:var(--ink);border:1px solid var(--line);background:#0d1929;border-radius:11px;cursor:pointer;
+    min-height:40px;padding:9px 12px;transition:.18s transform,.18s border-color,.18s background}
+  .iconbtn{width:42px;padding:0;font-size:18px}
+  .iconbtn:hover,.action:hover{transform:translateY(-2px);border-color:var(--cyan);background:#12243a}
+  .hud{position:sticky;top:8px;z-index:12;display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:14px;
+    padding:12px 16px;background:#0a1424ee;border:1px solid #2a516b;border-radius:16px;box-shadow:var(--shadow);backdrop-filter:blur(16px)}
+  .mission{min-width:0}.eyebrow{color:var(--cyan);font-size:10px;letter-spacing:.18em;text-transform:uppercase}
+  .mission strong{display:block;margin-top:3px;white-space:normal;font-size:14px;line-height:1.28}
+  .mission-zh{display:block;color:var(--ink)}.mission-en{display:block;color:#a7c1ce;font-size:11px;margin-top:2px}
+  .stat{min-width:110px;border-left:1px solid var(--line);padding-left:14px}
+  .stat label{display:block;color:var(--muted);font-size:9px;letter-spacing:.16em}
+  .stat b{font-size:20px;letter-spacing:.03em}
+  #scoreStat{position:relative}.deduct{position:absolute;right:0;top:-4px;color:var(--red);font-weight:800;opacity:0;pointer-events:none}
+  .deduct.fly{animation:deduct .8s ease-out}.score-pulse b{animation:pulse .3s ease}
+  .score-mid b{color:var(--amber)}.score-low b{color:var(--red);text-shadow:0 0 12px #ff6b7d90}
+  .progress{height:4px;background:#15283a;border-radius:9px;margin:12px 2px 16px;overflow:hidden}
+  .progress i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 0 10px var(--cyan);transition:width .35s}
+  .databanner{display:flex;align-items:center;gap:10px;margin:-5px 2px 14px;padding:9px 12px;border:1px solid #754b2d;border-radius:10px;
+    background:#21160d;color:#ffd5a6;font-size:10px;line-height:1.45}.databanner[hidden]{display:none}.databanner b{color:var(--amber);white-space:nowrap}
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+  .panel{min-width:0;background:linear-gradient(160deg,#0e1a2bdc,#091220ee);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:0 13px 36px #0005;overflow:hidden;position:relative}
+  .panel:before{content:"";position:absolute;left:0;top:0;width:45%;height:1px;background:linear-gradient(90deg,var(--cyan),transparent)}
+  .panelhead{min-height:48px;padding:12px 15px;border-bottom:1px solid #1b3448;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .paneltitle{display:flex;align-items:center;gap:9px;font-size:12px;letter-spacing:.13em}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+  .target .dot{background:var(--pink);box-shadow:0 0 10px var(--pink)}
+  .badge{font-size:9px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:4px 8px}
+  .tablebox{height:270px;overflow:auto;padding:12px 14px 6px}
+  table{border-collapse:separate;border-spacing:0;width:100%;min-width:max-content;font-size:12px}
+  th,td{padding:10px 13px;text-align:left;border-bottom:1px solid #1a3448;white-space:nowrap}
+  th{position:sticky;top:0;z-index:1;background:#13243a;color:#8feeff;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+  th:first-child{border-radius:8px 0 0 0}th:last-child{border-radius:0 8px 0 0}
+  td{color:#d9eef5;background:#0b1625cc;transition:.25s transform,.25s opacity,.25s background}
+  tr:nth-child(even) td{background:#0e1b2dcc}
+  .target td{background:#171526cc}.target tr:nth-child(even) td{background:#1d172dcc}.target th{background:#28203f;color:#ffc0e0}
+  .table-animate tbody tr{animation:rowin .35s both}.table-animate tbody tr:nth-child(2){animation-delay:.04s}
+  .table-animate tbody tr:nth-child(3){animation-delay:.08s}.table-animate tbody tr:nth-child(4){animation-delay:.12s}
+  .matched td{animation:cellmatch .7s ease both}
+  .tablefoot{height:34px;padding:4px 15px 10px;color:var(--muted);font-size:10px;display:flex;justify-content:space-between}
+  .signal{color:var(--green)}.target .signal{color:var(--pink)}
+  .query-panel,.palette-panel{min-height:365px}
+  .querybody{padding:15px;display:flex;flex-direction:column;height:315px}
+  .queryarea{flex:1;min-height:175px;border:1px dashed #31536a;border-radius:12px;padding:14px;background:#07101b;overflow:auto}
+  .emptyquery{color:#587387;font-size:12px;display:flex;align-items:center;height:100%;justify-content:center;text-align:center}
+  .qline{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:34px;margin-bottom:3px}
+  .qline.indent{padding-left:25px}
+  .qblock{--c:#55e6ff;position:relative;display:inline-flex;align-items:center;min-height:29px;padding:5px 11px;
+    border:1px solid color-mix(in srgb,var(--c),transparent 30%);border-radius:6px;color:#06111b;background:var(--c);font-size:11px;font-weight:800;
+    box-shadow:inset 0 -3px 0 #0003,0 3px 10px #0004;animation:blockin .18s ease-out}
+  .qblock:before,.block:before{content:"";position:absolute;width:9px;height:4px;border-radius:3px 3px 0 0;top:-5px;left:12px;background:inherit;border:inherit;border-bottom:0}
+  .qblock.field{--c:#86f79a}.qblock.value{--c:#ffd166}.qblock.op{--c:#ff70b8}.qblock.agg{--c:#b394ff}.qblock.table{--c:#72b7ff}
+  .comma{color:#57758a}
+  .querystatus{font-size:10px;color:var(--amber);height:20px;padding:7px 2px 0}
+  .queryactions{display:flex;gap:8px;margin-top:12px}
+  .action{font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+  .action.primary{background:#173c50;border-color:#43dff7;color:#bdf7ff}
+  .action.danger{color:#ffc0c8;border-color:#573040}
+  .action:disabled{opacity:.35;cursor:not-allowed;transform:none}
+  .palette{height:315px;overflow:auto;padding:12px 14px 16px}
+  .group{margin:0 0 13px}.grouplabel{font-size:9px;letter-spacing:.15em;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .grouplabel:after{content:"";height:1px;background:#1b3448;flex:1}
+  .blocks{display:flex;flex-wrap:wrap;gap:8px}
+  .block{--c:#55e6ff;position:relative;border:1px solid color-mix(in srgb,var(--c),white 12%);border-radius:7px;background:#102233;
+    color:var(--c);font-size:10px;font-weight:800;padding:7px 10px;min-height:31px;cursor:pointer;box-shadow:inset 0 -2px 0 #0005;transition:.14s}
+  .block:hover:not(:disabled){transform:translateY(-2px);background:color-mix(in srgb,var(--c),#07111c 77%);box-shadow:0 4px 12px color-mix(in srgb,var(--c),transparent 76%)}
+  .block:active:not(:disabled){transform:translateY(1px)}
+  .block.field{--c:#86f79a}.block.value{--c:#ffd166}.block.op{--c:#ff70b8}.block.agg{--c:#b394ff}.block.table{--c:#72b7ff}
+  .block:disabled{opacity:.22;filter:saturate(.35);cursor:not-allowed}
+  .modalwrap{position:fixed;inset:0;z-index:50;background:#02050bd9;backdrop-filter:blur(12px);display:grid;place-items:center;padding:18px}
+  .modalwrap[hidden]{display:none}.modal{width:min(760px,100%);max-height:90vh;overflow:auto;border:1px solid #39627d;border-radius:22px;
+    background:linear-gradient(145deg,#101e31,#080f1d);padding:26px;box-shadow:0 30px 90px #000}
+  .modal h2{margin:0 0 8px;font-size:clamp(22px,4vw,38px);letter-spacing:.05em}
+  .modal p{color:var(--muted);line-height:1.6;font-size:13px}
+  .complete h2{color:var(--green);text-shadow:0 0 22px #86f79a55}
+  .rank{font-size:66px;float:right;line-height:1;color:var(--amber);filter:drop-shadow(0 0 15px #ffd16660)}
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:18px 0}
+  .summary div{background:#08111e;border:1px solid #203e53;border-radius:11px;padding:11px}
+  .summary small{display:block;color:var(--muted);font-size:9px;margin-bottom:5px}.summary b{font-size:17px}
+  .finalsql{background:#050b14;border:1px solid #234158;border-radius:12px;padding:14px;white-space:pre-wrap;color:#baf6ff;font-size:11px;line-height:1.7}
+  .modalactions{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}
+  .modalactions .action{flex:1;min-width:130px}
+  .playerfield{display:flex;align-items:center;gap:12px;width:min(360px,100%);margin:16px 0 4px;padding:8px 10px;
+    border:1px solid #294b61;border-radius:11px;background:#08111e}
+  .playerfield span{flex:none;color:var(--cyan);font-size:9px;letter-spacing:.14em}
+  .playerfield input{width:100%;min-width:0;border:0;border-bottom:1px solid #36566c;background:transparent;color:var(--ink);
+    padding:5px 3px;font:700 13px var(--font);outline:0}
+  .playerfield input:focus{border-color:var(--cyan);box-shadow:0 2px 0 #55e6ff30}
+  .setpicker{display:flex;gap:8px;overflow-x:auto;margin:15px 0 6px;padding:3px 2px 7px}
+  .setheading{margin-top:17px;color:var(--cyan);font-size:9px;font-weight:900;letter-spacing:.16em}
+  .setbtn{flex:0 0 auto;border:1px solid #294b61;border-radius:10px;background:#091625;color:var(--muted);padding:9px 12px;
+    cursor:pointer;font-size:10px;font-weight:800;letter-spacing:.06em;transition:.18s}
+  .setbtn:hover{border-color:var(--cyan);color:var(--ink)}.setbtn.active{border-color:var(--cyan);color:#04101a;background:var(--cyan);box-shadow:0 0 16px #55e6ff45}
+  .setmeta{min-height:18px;margin:0;color:var(--muted);font-size:10px}
+  .setscore{display:flex;align-items:baseline;gap:10px;margin:11px 0 0;padding:11px 14px;border:1px solid #28536a;border-radius:12px;
+    background:linear-gradient(90deg,#0a1c2c,#0b1524);box-shadow:inset 3px 0 0 var(--cyan)}
+  .setscore span{color:var(--muted);font-size:9px;font-weight:900;letter-spacing:.14em}
+  .setscore strong{margin-left:auto;color:var(--cyan);font-size:28px;line-height:1;text-shadow:0 0 15px #55e6ff66}
+  .setscore small{color:#8ca7b5;font-size:10px}
+  .loaderror{border:1px solid #663447;background:#1c101b;border-radius:12px;padding:14px;color:#ffc4cc;font-size:12px;line-height:1.6}
+  .levelgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:18px}
+  .level{min-height:112px;border:1px solid #294b61;border-radius:12px;background:#0a1726;color:var(--ink);cursor:pointer;
+    display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;padding:8px}
+  .level:hover:not(:disabled){border-color:var(--cyan);transform:translateY(-2px)}.level:disabled{opacity:.28}
+  .level.done{border-color:#4fa76a}.level.current{box-shadow:0 0 0 2px var(--cyan)}
+  .levelno{font-size:10px!important;color:var(--muted);letter-spacing:.14em}.level small{font-size:8px;color:var(--muted);text-align:center}
+  .bestscore{font-size:29px;line-height:1.05;letter-spacing:-.05em;text-shadow:0 0 15px currentColor}
+  .gradetag{font-size:8px;font-weight:900;letter-spacing:.1em}
+  .grade-s{color:#63f28b}.grade-a{color:#a8e76e}.grade-b{color:#e2d960}.grade-c{color:#ffb457}.grade-d{color:#ff855e}.grade-fail{color:#ff556c}
+  .settingsrow{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:13px 0;border-bottom:1px solid #1c364b}
+  .toggle{width:52px;height:29px;border:1px solid #36566c;border-radius:99px;background:#0a1422;position:relative;cursor:pointer}
+  .toggle:after{content:"";position:absolute;width:21px;height:21px;left:3px;top:3px;border-radius:50%;background:#688192;transition:.2s}
+  .toggle.on{border-color:var(--cyan);background:#14384a}.toggle.on:after{transform:translateX(23px);background:var(--cyan)}
+  .toast{position:fixed;z-index:90;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;background:#101e30;border:1px solid var(--line);
+    padding:10px 15px;border-radius:10px;font-size:11px;transition:.25s;pointer-events:none}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .credits{margin:16px 2px 0;padding:14px 16px;border:1px solid #1f3b50;border-radius:14px;background:#08111dcc;
+    color:var(--muted);font-size:10px;line-height:1.65;text-align:center}
+  .credits strong{color:var(--cyan);letter-spacing:.08em}.credits .zh{display:block;color:#afc8d3}
+  .successwave{position:fixed;inset:0;z-index:45;pointer-events:none;background:radial-gradient(circle,#86f79a45,transparent 55%);animation:wave .8s both}
+  .sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  @keyframes rowin{from{opacity:0;transform:translateY(9px)}}
+  @keyframes blockin{from{opacity:0;transform:scale(.8) translateY(-5px)}}
+  @keyframes deduct{0%{opacity:0;transform:translateY(8px)}20%{opacity:1}100%{opacity:0;transform:translateY(-18px)}}
+  @keyframes pulse{50%{transform:scale(1.16);color:var(--red)}}
+  @keyframes wave{from{opacity:0;transform:scale(.7)}35%{opacity:1}to{opacity:0;transform:scale(1.15)}}
+  @keyframes cellmatch{40%{background:#174936;color:#fff;box-shadow:inset 0 0 16px #86f79a55}}
+  @media(max-width:900px){
+    .topbar{flex-wrap:wrap}.iconrow{width:100%}.setnav{flex:1}
+    .hud{grid-template-columns:1fr 1fr 1fr}.mission{grid-column:1/-1}.stat{min-width:0}
+    .grid{grid-template-columns:1fr}.tablebox{height:240px}.query-panel,.palette-panel{min-height:340px}
+    .querybody,.palette{height:290px}.levelgrid{grid-template-columns:repeat(4,1fr)}
+  }
+  @media(max-width:560px){
+    .app{padding:10px 9px 24px}.brand small{display:none}.hud{gap:7px;padding:10px}.stat{padding-left:8px}.stat b{font-size:16px}
+    .stat label{font-size:8px}.panelhead{padding:10px 12px}.tablebox{padding:9px}.summary{grid-template-columns:1fr 1fr}
+    .modal{padding:20px 16px}.levelgrid{grid-template-columns:repeat(4,1fr)}.iconbtn{width:39px}.setnav{min-width:150px}.setnav b{max-width:118px}
+    .setscore{flex-wrap:wrap;gap:5px 9px}.setscore strong{font-size:24px}
+  }
+  @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important}}
+  body.reduce-motion *,body.reduce-motion *:before,body.reduce-motion *:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><div class="brandmark" aria-hidden="true"><i></i></div><div><h1>SQL <span>CIRCUIT</span></h1><small>雙語 SQL 解謎實驗室 // 2026 SUMMER</small></div></div>
+    <div class="iconrow">
+      <button class="setnav" id="levelsBtn" aria-label="Select puzzle set and level" title="Select puzzle set and level"><span>PUZZLE SET</span><b id="currentSetName">01 // Core Circuit</b><i>⌄</i></button>
+      <button class="iconbtn" id="soundBtn" aria-label="Mute sound" title="Sound">♪</button>
+      <button class="iconbtn" id="settingsBtn" aria-label="Settings" title="Settings">⚙</button>
+      <button class="iconbtn" id="helpBtn" aria-label="How to play" title="How to play">?</button>
+    </div>
+  </header>
+
+  <section class="hud" aria-label="Game status">
+    <div class="mission"><span class="eyebrow" id="levelLabel">LOADING SETS</span><strong id="missionText">Connecting puzzle manifest…</strong></div>
+    <div class="stat"><label>POINTS</label><b id="score">200</b><span class="deduct" id="deduct">−1 BLOCK</span></div>
+    <div class="stat"><label>TIME</label><b id="time">00:00</b></div>
+    <div class="stat"><label>BEST</label><b id="best">—</b></div>
+  </section>
+  <div class="progress" aria-hidden="true"><i id="progressBar"></i></div>
+  <div class="databanner" id="dataBanner" hidden><b>PUZZLE DATA OFFLINE</b><span id="dataBannerText"></span></div>
+
+  <main class="grid">
+    <section class="panel source" aria-labelledby="liveTitle">
+      <div class="panelhead"><div class="paneltitle"><i class="dot"></i><span id="liveTitle">SOURCE TABLE</span></div><span class="badge" id="tableName"></span></div>
+      <div class="tablebox" id="liveTable"></div>
+      <div class="tablefoot"><span id="liveCount"></span><span class="signal" id="liveSignal">● SOURCE FEED</span></div>
+    </section>
+
+    <section class="panel target" aria-labelledby="targetTitle">
+      <div class="panelhead"><div class="paneltitle"><i class="dot"></i><span id="targetTitle">TARGET TABLE</span></div><span class="badge">EXACT MATCH</span></div>
+      <div class="tablebox" id="targetTable"></div>
+      <div class="tablefoot"><span id="targetCount"></span><span class="signal">◆ GOAL LOCKED</span></div>
+    </section>
+
+    <section class="panel query-panel" aria-labelledby="queryTitle">
+      <div class="panelhead"><div class="paneltitle"><i class="dot"></i><span id="queryTitle">QUERY CIRCUIT</span></div><span class="badge" id="blockCount">0 BLOCKS</span></div>
+      <div class="querybody">
+        <div class="queryarea" id="queryArea" aria-live="polite"></div>
+        <div class="querystatus" id="queryStatus"></div>
+        <div class="queryactions">
+          <button class="action primary" id="undoBtn">↶ UNDO <span aria-hidden="true">−1</span></button>
+          <button class="action danger" id="restartBtn">↻ RESTART PUZZLE</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel palette-panel" aria-labelledby="paletteTitle">
+      <div class="panelhead"><div class="paneltitle"><i class="dot"></i><span id="paletteTitle">BLOCK PALETTE</span></div><span class="badge">CLICK TO CONNECT</span></div>
+      <div class="palette" id="palette"></div>
+    </section>
+  </main>
+  <footer class="credits">
+    <strong>SQL CIRCUIT — BILINGUAL SQL PUZZLE LAB</strong><br>
+    Created by fyhung with help from ChatGPT 5.6 Sol · TWGHs Mrs. Fung Wong Fung Ting College · Information and Communication Technology · Summer 2026
+    <span class="zh">由 fyhung 製作，ChatGPT 5.6 Sol 協作 · 東華三院馮黃鳳亭中學 · 資訊及通訊科技科 · 2026 年夏季</span>
+  </footer>
+</div>
+
+<div class="modalwrap" id="completeModal" hidden>
+  <section class="modal complete" role="dialog" aria-modal="true" aria-labelledby="completeTitle">
+    <div class="rank" id="rank">S</div><span class="eyebrow">TARGET SYNCHRONIZED</span><h2 id="completeTitle">PUZZLE COMPLETE</h2>
+    <p id="completeText"></p>
+    <div class="summary">
+      <div><small>FINAL SCORE</small><b id="sumScore"></b></div><div><small>BLOCKS</small><b id="sumBlocks"></b></div>
+      <div><small>UNDOS</small><b id="sumUndos"></b></div><div><small>TIME</small><b id="sumTime"></b></div>
+    </div>
+    <pre class="finalsql" id="finalSql"></pre>
+    <div class="modalactions">
+      <button class="action primary" id="nextBtn">NEXT PUZZLE →</button>
+      <button class="action" id="replayBtn">REPLAY</button><button class="action" id="completeLevelsBtn">LEVEL SELECT</button>
+    </div>
+  </section>
+</div>
+
+<div class="modalwrap" id="levelsModal" hidden>
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="levelsTitle">
+    <span class="eyebrow">CAMPAIGN MAP</span><h2 id="levelsTitle">LEVEL SELECT</h2>
+    <p>Completed levels retain their best score on this device.</p>
+    <label class="playerfield"><span>PLAYER NAME</span><input id="playerName" type="text" maxlength="24" autocomplete="nickname" placeholder="Enter name"></label>
+    <div class="setheading">SELECT PUZZLE SET</div>
+    <div class="setpicker" id="setPicker" aria-label="Puzzle set selector"></div>
+    <p class="setmeta" id="setMeta"></p>
+    <div class="setscore" aria-live="polite">
+      <span>CURRENT SET TOTAL / 本組總分</span>
+      <strong id="setTotalScore">0</strong>
+      <small id="setTotalMax">/ 4000</small>
+    </div>
+    <div class="levelgrid" id="levelGrid"></div>
+    <div class="modalactions"><button class="action" data-close="levelsModal">CLOSE</button></div>
+  </section>
+</div>
+
+<div class="modalwrap" id="helpModal" hidden>
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <span class="eyebrow">FIELD MANUAL</span><h2 id="helpTitle">BUILD. RUN. MATCH.</h2>
+    <p>Click the glowing Lego-style blocks to assemble a query. The palette only enables blocks that fit the current position. Once the query is valid, the source table transforms immediately.</p>
+    <p>Match every target column, row, value, and ordering exactly. Each inserted block costs 1 point, each Undo costs another point, and time costs 1 point every 2 seconds. There is no move limit, and you can keep solving at zero.</p>
+    <p><strong style="color:var(--cyan)">Tip:</strong> Punctuation and formatting are wired automatically, so you only pay for meaningful SQL blocks.</p>
+    <div class="modalactions"><button class="action primary" data-close="helpModal">ENTER THE LAB</button></div>
+  </section>
+</div>
+
+<div class="modalwrap" id="settingsModal" hidden>
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <span class="eyebrow">LAB CONTROLS</span><h2 id="settingsTitle">SETTINGS</h2>
+    <div class="settingsrow"><span>Sound effects</span><button class="toggle" id="soundToggle" role="switch" aria-label="Sound effects"></button></div>
+    <div class="settingsrow"><span>Reduced motion</span><button class="toggle" id="motionToggle" role="switch" aria-label="Reduced motion"></button></div>
+    <div class="modalactions"><button class="action primary" data-close="settingsModal">DONE</button></div>
+  </section>
+</div>
+
+<div class="modalwrap" id="dataErrorModal" hidden>
+  <section class="modal" role="alertdialog" aria-modal="true" aria-labelledby="dataErrorTitle">
+    <span class="eyebrow">DATA LINK OFFLINE</span><h2 id="dataErrorTitle">PUZZLE SETS NOT FOUND</h2>
+    <div class="loaderror" id="dataErrorText"></div>
+    <p>Keep <strong>index.html</strong> (or <strong>sql-circuit.html</strong>), <strong>sets.json</strong>, and every <strong>set_*.json</strong> file in the same folder. Open the folder through a small local web server; browsers usually block JSON loading when an HTML file is double-clicked.</p>
+    <div class="modalactions"><button class="action primary" id="retryDataBtn">RETRY</button></div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<div class="sr" id="announcer" aria-live="assertive"></div>
+
+<script>
+(()=>{
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const el={score:$("#score"),time:$("#time"),best:$("#best"),deduct:$("#deduct"),mission:$("#missionText"),level:$("#levelLabel"),
+ progress:$("#progressBar"),live:$("#liveTable"),target:$("#targetTable"),liveTitle:$("#liveTitle"),liveCount:$("#liveCount"),
+ targetCount:$("#targetCount"),tableName:$("#tableName"),liveSignal:$("#liveSignal"),query:$("#queryArea"),status:$("#queryStatus"),
+ blockCount:$("#blockCount"),palette:$("#palette"),toast:$("#toast"),announce:$("#announcer")};
+
+const F=name=>({type:"field",name}), A=(fn,field)=>({type:"agg",fn,field});
+const G=(select=[],extra={})=>({select,distinct:false,where:[],groupBy:[],having:[],orderBy:[],limit:null,...extra});
+const storeKey="sqlCircuitProgressV2",legacyKey="sqlCircuitProgressV1";
+const fallbackManifest={version:2,defaultSet:"set_1",sets:[
+ {id:"set_1",file:"set_1.json",title:"Core Circuit / 核心電路",description:"The original SQL campaign / 原創 SQL 學習旅程",levelCount:20},
+ {id:"set_2",file:"set_2.json",title:"Neon Expansion / 霓虹擴展",description:"Racers, relics, drones, beasts, and traders / 賽車、遺物、無人機、怪獸及交易員",levelCount:20},
+ {id:"set_3",file:"set_3.json",title:"Space Academy / 太空學院",description:"Cadets, missions, planets, and space relics / 學員、任務、行星及太空遺物",levelCount:20},
+ {id:"set_4",file:"set_4.json",title:"Ocean Research / 海洋研究",description:"Research vessels, samples, oceans, and specimens / 研究船、樣本、海洋及標本",levelCount:20},
+ {id:"set_5",file:"set_5.json",title:"Green City / 綠色城市",description:"Sustainable transport, districts, and civic projects / 可持續交通、地區及城市項目",levelCount:20},
+ {id:"set_6",file:"set_6.json",title:"Fantasy Guild / 奇幻公會",description:"Adventurers, realms, quests, and artifacts / 冒險者、領域、任務及神器",levelCount:20},
+ {id:"set_7",file:"set_7.json",title:"Music Festival / 音樂節",description:"Performers, stages, songs, and equipment / 表演者、舞台、歌曲及器材",levelCount:20},
+ {id:"set_8",file:"set_8.json",title:"Sports Analytics / 運動分析",description:"Athletes, sports, medals, and trophies / 運動員、項目、獎牌及獎盃",levelCount:20},
+ {id:"set_9",file:"set_9.json",title:"Smart Factory / 智慧工廠",description:"Machines, production lines, units, and components / 機器、生產線、產量及零件",levelCount:20},
+ {id:"set_10",file:"set_10.json",title:"Global Café / 環球咖啡館",description:"Cafés, specialties, cities, orders, and menu items / 咖啡館、特色、城市、訂單及餐單項目",levelCount:20}
+]};
+let saved,legacy;
+try{saved=JSON.parse(localStorage.getItem(storeKey))||{};legacy=JSON.parse(localStorage.getItem(legacyKey))||{}}catch(e){saved={};legacy={}}
+const progress={
+ sound:saved.sound??legacy.sound??true,reduced:saved.reduced??legacy.reduced??false,
+ playerName:saved.playerName??legacy.playerName??"",lastSet:saved.lastSet||"set_1",sets:saved.sets||{},
+ seenHelp:saved.seenHelp??legacy.seenHelp??false
+};
+let manifest=fallbackManifest,setIndex=0,currentSet=null,datasets={},levels=[],levelIndex=0,tokens=[],parsed=null,lastValid=null;
+let startTime=0,elapsed=0,insertions=0,undos=0,solved=false,timer=null,lastTimerPenalty=0,audioCtx=null;
+
+const setProgress=()=>progress.sets[currentSet?.id||progress.lastSet]||(progress.sets[currentSet?.id||progress.lastSet]={unlocked:1,best:{},completed:{},last:1});
+const save=()=>{if(currentSet){const sp=setProgress();sp.last=levelIndex+1;progress.lastSet=currentSet.id}localStorage.setItem(storeKey,JSON.stringify(progress))};
+const valueLabel=v=>Array.isArray(v)?"("+v.map(valueLabel).join(", ")+")":v===null?"NULL":typeof v==="string"?"'"+v+"'":String(v);
+const aggName=a=>a.fn.toLowerCase()+(a.field==="*"?"":"_"+a.field);
+const exprLabel=e=>e.type==="field"?e.name:e.fn+"("+e.field+")";
+const clone=o=>JSON.parse(JSON.stringify(o));
+
+function compare(a,b,op){
+  if(op==="IS NULL")return a==null;if(op==="IS NOT NULL")return a!=null;
+  if(op==="=")return a===b;if(op==="!=")return a!==b;if(op===">")return a>b;if(op===">=")return a>=b;if(op==="<")return a<b;if(op==="<=")return a<=b;
+  if(op==="BETWEEN")return a>=b[0]&&a<=b[1];if(op==="IN")return b.includes(a);
+  if(op==="LIKE"){const rx=new RegExp("^"+String(b).replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replaceAll("%",".*").replaceAll("_",".")+"$","i");return rx.test(String(a??""))}
+  return false;
+}
+function calcAgg(rows,a){
+  if(a.fn==="COUNT")return a.field==="*"?rows.length:rows.filter(r=>r[a.field]!=null).length;
+  const vals=rows.map(r=>r[a.field]).filter(v=>v!=null).map(Number);
+  if(!vals.length)return null;
+  if(a.fn==="SUM")return vals.reduce((x,y)=>x+y,0);
+  if(a.fn==="AVG")return Math.round((vals.reduce((x,y)=>x+y,0)/vals.length)*100)/100;
+  if(a.fn==="MIN")return Math.min(...vals);if(a.fn==="MAX")return Math.max(...vals);return null;
+}
+function operandValue(expr,ctx){return expr.type==="field"?(ctx.result[expr.name]??ctx.source?.[expr.name]):calcAgg(ctx.rows,expr)}
+function testConditions(conds,ctx){
+  if(!conds.length)return true;
+  const vals=conds.map(c=>{let ok=compare(operandValue(c.left,ctx),c.right,c.op);return c.not?!ok:ok});
+  let groups=[],cur=vals[0];for(let i=1;i<vals.length;i++){if(conds[i].join==="OR"){groups.push(cur);cur=vals[i]}else cur=cur&&vals[i]}groups.push(cur);
+  return groups.some(Boolean);
+}
+function evaluate(ast,source){
+  let rows=source.filter(r=>testConditions(ast.where,{source:r,result:r,rows:[r]}));
+  const aggregating=ast.groupBy.length||ast.select.some(x=>x.type==="agg");
+  let records=[];
+  if(aggregating){
+    const map=new Map();
+    rows.forEach(r=>{const key=ast.groupBy.map(f=>JSON.stringify(r[f])).join("|")||"__all__";if(!map.has(key))map.set(key,[]);map.get(key).push(r)});
+    if(!rows.length&&!ast.groupBy.length)map.set("__all__",[]);
+    for(const groupRows of map.values()){
+      const first=groupRows[0]||{}, result={};
+      ast.select.forEach(x=>{result[x.type==="field"?x.name:aggName(x)]=x.type==="field"?first[x.name]:calcAgg(groupRows,x)});
+      const ctx={source:first,result,rows:groupRows};if(testConditions(ast.having,ctx))records.push(ctx);
+    }
+  }else records=rows.map(r=>{const result={};ast.select.forEach(x=>result[x.name]=r[x.name]);return{source:r,result,rows:[r]}});
+  if(ast.distinct){const seen=new Set();records=records.filter(x=>{const k=JSON.stringify(x.result);if(seen.has(k))return false;seen.add(k);return true})}
+  if(ast.orderBy.length)records.sort((a,b)=>{for(const o of ast.orderBy){const av=operandValue(o.expr,a),bv=operandValue(o.expr,b);let n=av===bv?0:av==null?1:bv==null?-1:av>bv?1:-1;if(n)return o.dir==="DESC"?-n:n}return 0});
+  if(ast.limit!=null)records=records.slice(0,ast.limit);
+  return{columns:ast.select.map(x=>x.type==="field"?x.name:aggName(x)),rows:records.map(x=>x.result),grouped:!!ast.groupBy.length};
+}
+function exact(a,b){return JSON.stringify(a.columns)===JSON.stringify(b.columns)&&JSON.stringify(a.rows)===JSON.stringify(b.rows)}
+
+function token(type,value,label=value,kind=type){return{type,value,label,kind}}
+function parse(ts){
+  const ast=G([]);let i=0,state="start",clause="",pendingAgg=null,current=null,negate=false;
+  const out=(valid,msg,next)=>({valid,msg,next,ast,state});
+  while(i<ts.length){
+    const t=ts[i++];
+    if(state==="start"){if(t.type!=="SELECT")return out(false,"Begin with SELECT",["SELECT"]);state="selectStart";continue}
+    if(state==="selectStart"){
+      if(t.type==="DISTINCT"&&!ast.select.length&&!ast.distinct){ast.distinct=true;continue}
+      if(t.type==="field"){ast.select.push(F(t.value));state="selectDone";continue}
+      if(t.type==="agg"){pendingAgg=t.value;state="aggFieldSelect";continue}
+      return out(false,"Choose a field or aggregate",["field","agg","DISTINCT"]);
+    }
+    if(state==="aggFieldSelect"){if(t.type!=="field")return out(false,"Choose a field for the aggregate",["field"]);ast.select.push(A(pendingAgg,t.value));pendingAgg=null;state="selectDone";continue}
+    if(state==="selectDone"){
+      if(t.type==="field"){ast.select.push(F(t.value));continue}
+      if(t.type==="agg"){pendingAgg=t.value;state="aggFieldSelect";continue}
+      if(t.type==="FROM"){state="fromTable";continue}
+      return out(false,"Add a field or FROM",["field","agg","FROM"]);
+    }
+    if(state==="fromTable"){if(t.type!=="table")return out(false,"Choose the source table",["table"]);state="post";continue}
+    if(state==="post"||state==="conditionDone"||state==="groupDone"||state==="orderDone"){
+      if((state==="post"||state==="conditionDone")&&t.type==="WHERE"&&!ast.where.length){clause="where";state="condOperand";continue}
+      if((state==="post"||state==="conditionDone")&&t.type==="GROUP BY"&&!ast.groupBy.length){state="groupField";continue}
+      if((state==="groupDone")&&t.type==="HAVING"&&!ast.having.length){clause="having";state="condOperand";continue}
+      if(t.type==="ORDER BY"&&!ast.orderBy.length){state="orderExpr";continue}
+      if(t.type==="LIMIT"&&ast.limit==null){state="limitValue";continue}
+      if(state==="conditionDone"&&(t.type==="AND"||t.type==="OR")){current={join:t.type};state="condOperand";continue}
+      if(state==="groupDone"&&t.type==="field"){ast.groupBy.push(t.value);continue}
+      if(state==="orderDone"&&t.type==="field"){current={expr:F(t.value),dir:"ASC"};ast.orderBy.push(current);state="orderDir";continue}
+      if(state==="orderDone"&&t.type==="agg"){pendingAgg=t.value;state="orderAggField";continue}
+      return out(false,"That block cannot connect here",[]);
+    }
+    if(state==="condOperand"){
+      if(t.type==="NOT"&&!negate){negate=true;continue}
+      current=current||{};current.not=negate;negate=false;
+      if(t.type==="field"){current.left=F(t.value);state="condOp";continue}
+      if(t.type==="agg"&&clause==="having"){pendingAgg=t.value;state="condAggField";continue}
+      return out(false,"Choose a field"+(clause==="having"?" or aggregate":""),clause==="having"?["field","agg","NOT"]:["field","NOT"]);
+    }
+    if(state==="condAggField"){if(t.type!=="field")return out(false,"Choose an aggregate field",["field"]);current.left=A(pendingAgg,t.value);pendingAgg=null;state="condOp";continue}
+    if(state==="condOp"){
+      if(t.type!=="op")return out(false,"Choose a comparison operator",["op"]);current.op=t.value;
+      if(t.value==="IS NULL"||t.value==="IS NOT NULL"){(clause==="where"?ast.where:ast.having).push(current);current=null;state="conditionDone"}else state="condValue";
+      continue;
+    }
+    if(state==="condValue"){
+      if(t.type!=="value")return out(false,"Choose a value",["value"]);
+      if(current.op==="BETWEEN"&&!Array.isArray(t.value)){current.right=[t.value];state="betweenSecond";continue}
+      if(current.op==="IN"&&!Array.isArray(t.value))return out(false,"Choose a value-set block",["valueSet"]);
+      current.right=t.value;(clause==="where"?ast.where:ast.having).push(current);current=null;state="conditionDone";continue;
+    }
+    if(state==="betweenSecond"){if(t.type!=="value"||Array.isArray(t.value))return out(false,"Choose the second range value",["scalarValue"]);current.right.push(t.value);(clause==="where"?ast.where:ast.having).push(current);current=null;state="conditionDone";continue}
+    if(state==="groupField"){if(t.type!=="field")return out(false,"Choose a GROUP BY field",["field"]);ast.groupBy.push(t.value);state="groupDone";continue}
+    if(state==="orderExpr"){
+      if(t.type==="field"){ast.orderBy.push({expr:F(t.value),dir:"ASC"});state="orderDir";continue}
+      if(t.type==="agg"){pendingAgg=t.value;state="orderAggField";continue}
+      return out(false,"Choose a field to sort",["field","agg"]);
+    }
+    if(state==="orderAggField"){if(t.type!=="field")return out(false,"Choose an aggregate field",["field"]);ast.orderBy.push({expr:A(pendingAgg,t.value),dir:"ASC"});pendingAgg=null;state="orderDir";continue}
+    if(state==="orderDir"){
+      if(t.type==="ASC"||t.type==="DESC"){ast.orderBy.at(-1).dir=t.type;state="orderDone";continue}
+      return out(false,"Choose ASC or DESC",["ASC","DESC"]);
+    }
+    if(state==="limitValue"){if(t.type!=="value"||typeof t.value!=="number"||!Number.isInteger(t.value)||t.value<0)return out(false,"Choose a whole-number limit",["limitValue"]);ast.limit=t.value;state="post";continue}
+  }
+  const valid=["post","conditionDone","groupDone","orderDone","orderDir"].includes(state);
+  const messages={start:"Begin with SELECT",selectStart:"Choose a field",aggFieldSelect:"Choose an aggregate field",selectDone:"Add another field or FROM",
+   fromTable:"Choose the source table",condOperand:"Choose a condition field",condAggField:"Choose an aggregate field",condOp:"Choose a comparison operator",
+   condValue:"Choose a value",betweenSecond:"Choose the upper range value",groupField:"Choose a GROUP BY field",orderExpr:"Choose a field to sort",
+   orderAggField:"Choose an aggregate field",orderDir:"Choose ASC or DESC",limitValue:"Choose a row limit"};
+  let next=[];
+  if(state==="start")next=["SELECT"];
+  if(state==="selectStart")next=["field","agg","DISTINCT"];
+  if(state==="aggFieldSelect"||state==="condAggField"||state==="orderAggField")next=["field"];
+  if(state==="selectDone")next=["field","agg","FROM"];
+  if(state==="fromTable")next=["table"];
+  if(["post","conditionDone","groupDone","orderDone"].includes(state))next=["clause"];
+  if(state==="condOperand")next=clause==="having"?["field","agg","NOT"]:["field","NOT"];
+  if(state==="condOp")next=["op"];if(state==="condValue")next=["value"];if(state==="betweenSecond")next=["scalarValue"];
+  if(state==="groupField")next=["field"];if(state==="orderExpr")next=["field","agg"];if(state==="orderDir")next=["ASC","DESC"];if(state==="limitValue")next=["limitValue"];
+  return out(valid,valid?"Circuit active • result updating":messages[state]||"Continue building",next);
+}
+
+function formatQuery(ts){
+  if(!ts.length)return"";
+  let lines=[],line=[],indent=false;
+  const push=()=>{if(line.length){lines.push({tokens:line,indent});line=[]}};
+  ts.forEach((t,idx)=>{
+    if(["FROM","WHERE","GROUP BY","HAVING","ORDER BY"].includes(t.type)){push();indent=false}
+    if((t.type==="AND"||t.type==="OR")&&(["where","having"].includes(findClause(ts,idx)))){push();indent=true}
+    const prev=ts[idx-1],here=findClause(ts,idx);
+    const needsComma=idx>0&&(
+      (here==="select"&&((t.type==="field"&&prev?.type==="field")||(t.type==="agg"&&prev?.type==="field")))||
+      (here==="group"&&t.type==="field"&&prev?.type==="field")||
+      (here==="order"&&(t.type==="field"||t.type==="agg")&&["field","ASC","DESC"].includes(prev?.type))
+    );
+    line.push({...t,comma:needsComma,_idx:idx});
+  });push();return lines;
+}
+function findClause(ts,idx){let c="";for(let i=0;i<=idx;i++){if(ts[i].type==="SELECT")c="select";if(ts[i].type==="FROM")c="from";if(ts[i].type==="WHERE")c="where";if(ts[i].type==="GROUP BY")c="group";if(ts[i].type==="HAVING")c="having";if(ts[i].type==="ORDER BY")c="order";if(ts[i].type==="LIMIT")c="limit"}return c}
+function sqlText(ast){
+  const expr=x=>x.type==="field"?x.name:x.fn+"("+x.field+")";
+  const selectExpr=x=>x.type==="field"?x.name:expr(x)+" AS "+aggName(x);
+  const right=c=>c.op.startsWith("IS ")?"":c.op==="BETWEEN"?" "+valueLabel(c.right[0])+" AND "+valueLabel(c.right[1]):" "+valueLabel(c.right);
+  const conds=cs=>cs.map((c,i)=>(i?(c.join||"AND")+" ":"")+(c.not?"NOT ":"")+expr(c.left)+" "+c.op+right(c)).join("\n  ");
+  let s="SELECT "+(ast.distinct?"DISTINCT ":"")+ast.select.map(selectExpr).join(", ")+"\nFROM "+levels[levelIndex].table;
+  if(ast.where.length)s+="\nWHERE "+conds(ast.where);if(ast.groupBy.length)s+="\nGROUP BY "+ast.groupBy.join(", ");
+  if(ast.having.length)s+="\nHAVING "+conds(ast.having);if(ast.orderBy.length)s+="\nORDER BY "+ast.orderBy.map(o=>expr(o.expr)+" "+o.dir).join(", ");
+  if(ast.limit!=null)s+="\nLIMIT "+ast.limit;return s;
+}
+function targetFor(lvl){return evaluate(lvl.goal,datasets[lvl.table])}
+
+function availableBlocks(){
+  const lvl=levels[levelIndex], fields=Object.keys(datasets[lvl.table][0]), values=[], seen=new Set();
+  const addValue=v=>{const k=JSON.stringify(v);if(!seen.has(k)){seen.add(k);values.push(v)}};
+  datasets[lvl.table].forEach(r=>fields.forEach(f=>addValue(r[f])));
+  [0,1,2,3,4,5,10,50,80,100].forEach(addValue);
+  [...(lvl.goal.where||[]),...(lvl.goal.having||[])].forEach(c=>Array.isArray(c.right)?c.right.forEach(addValue):addValue(c.right));
+  if(lvl.goal.limit!=null)addValue(lvl.goal.limit);
+  (lvl.extraValues||[]).forEach(addValue);
+  return[
+   {name:"SQL CLAUSES",items:["SELECT","FROM","WHERE","GROUP BY","HAVING","ORDER BY","LIMIT","DISTINCT"].map(x=>token(x,x,x,"clause"))},
+   {name:"TABLE & FIELDS",items:[token("table",lvl.table,lvl.table,"table"),...fields.map(x=>token("field",x,x,"field")),token("field","*","*","field")]},
+   {name:"AGGREGATE FUNCTIONS",items:["COUNT","SUM","AVG","MIN","MAX"].map(x=>token("agg",x,x,"agg"))},
+   {name:"COMPARISONS",items:["=","!=",">",">=","<","<=","LIKE","BETWEEN","IN","IS NULL","IS NOT NULL"].map(x=>token("op",x,x,"op"))},
+   {name:"LOGIC & SORTING",items:["AND","OR","NOT","ASC","DESC"].map(x=>token(x,x,x,["AND","OR","NOT"].includes(x)?"op":"clause"))},
+   {name:"VALUES",items:values.map(v=>token("value",v,valueLabel(v),"value"))}
+  ];
+}
+const unlock={SELECT:1,FROM:1,WHERE:4,"=":4,">":5,">=":5,"<":5,"<=":5,"!=":6,AND:7,OR:8,IN:8,NOT:9,"ORDER BY":10,ASC:10,DESC:11,LIMIT:12,DISTINCT:13,
+ COUNT:14,SUM:15,AVG:16,MIN:16,MAX:16,"GROUP BY":17,HAVING:19,LIKE:6,BETWEEN:6,"IS NULL":6,"IS NOT NULL":6};
+function enabled(t){
+  const p=parsed, n=p.next, st=p.state, levelNo=levelIndex+1;if((unlock[t.type]||unlock[t.value]||1)>levelNo)return false;
+  if(t.type==="field"&&t.value==="*"&&!["aggFieldSelect","condAggField","orderAggField"].includes(st))return false;
+  if(n.includes(t.type)||n.includes(t.kind))return true;
+  if(n.includes("field")&&t.type==="field")return true;if(n.includes("agg")&&t.type==="agg")return true;
+  if(n.includes("op")&&t.type==="op")return true;
+  if(n.includes("value")&&t.type==="value"){
+    if(st==="condValue"&&parsed.ast){
+      const op=lastOp();if(op==="IN")return Array.isArray(t.value);if(op==="BETWEEN")return !Array.isArray(t.value);
+    }return true
+  }
+  if(n.includes("scalarValue")&&t.type==="value")return !Array.isArray(t.value);
+  if(n.includes("limitValue")&&t.type==="value")return typeof t.value==="number"&&Number.isInteger(t.value)&&t.value>=0&&t.value<=100;
+  if(n.includes("clause")){
+    if(t.type==="WHERE")return st==="post"&&!p.ast.where.length;
+    if(t.type==="GROUP BY")return ["post","conditionDone"].includes(st)&&!p.ast.groupBy.length;
+    if(t.type==="HAVING")return st==="groupDone"&&!p.ast.having.length;
+    if(t.type==="ORDER BY")return !p.ast.orderBy.length;
+    if(t.type==="LIMIT")return p.ast.limit==null;
+    if((t.type==="AND"||t.type==="OR")&&st==="conditionDone")return true;
+    if(st==="groupDone"&&t.type==="field")return true;
+    if(st==="orderDone"&&(t.type==="field"||t.type==="agg"))return true;
+  }
+  return false;
+}
+function lastOp(){for(let i=tokens.length-1;i>=0;i--)if(tokens[i].type==="op")return tokens[i].value;return null}
+
+function tableHTML(data,animated=false){
+  if(!data||!data.columns.length)return'<div class="emptyquery">No result columns</div>';
+  const cells=v=>v===null?'<span style="color:var(--purple)">NULL</span>':String(v);
+  return`<table class="${animated?"table-animate":""}"><thead><tr>${data.columns.map(c=>`<th>${escapeHtml(c)}</th>`).join("")}</tr></thead><tbody>${data.rows.map(r=>`<tr>${data.columns.map(c=>`<td>${escapeHtml(cells(r[c]))}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function sourceData(lvl){const rows=datasets[lvl.table], columns=Object.keys(rows[0]);return{columns,rows}}
+function renderQuery(){
+  if(!tokens.length)el.query.innerHTML='<div class="emptyquery">Connect a <strong style="color:var(--cyan);margin:0 5px">SELECT</strong> block to begin the circuit.</div>';
+  else el.query.innerHTML=formatQuery(tokens).map(l=>`<div class="qline ${l.indent?"indent":""}">${l.tokens.map((t,i)=>{
+    const prev=l.tokens[i-1],aggregateField=t.type==="field"&&prev?.type==="agg";
+    const alias=aggregateField&&findClause(tokens,t._idx)==="select"?" AS "+aggName(A(prev.value,t.value)):"";
+    return(t.comma?'<span class="comma">,</span>':"")+(aggregateField?'<span class="comma">(</span>':"")+`<span class="qblock ${t.kind}">${escapeHtml(t.label)}</span>`+(aggregateField?`<span class="comma">)${escapeHtml(alias)}</span>`:"")
+   }).join("")}</div>`).join("");
+  el.status.textContent=parsed.msg;el.status.style.color=parsed.valid?"var(--green)":"var(--amber)";
+  el.blockCount.textContent=`${tokens.length} BLOCK${tokens.length===1?"":"S"}`;$("#undoBtn").disabled=!tokens.length||solved;
+}
+function renderPalette(){
+  el.palette.innerHTML=availableBlocks().map(g=>`<section class="group"><div class="grouplabel">${g.name}</div><div class="blocks">${g.items.map((t,i)=>{
+    const ok=enabled(t), locked=(unlock[t.type]||unlock[t.value]||1)>levelIndex+1;
+    return`<button class="block ${t.kind}" data-token="${encodeURIComponent(JSON.stringify(t))}" ${ok?"":"disabled"} title="${locked?"Unlocks at level "+(unlock[t.type]||unlock[t.value]):ok?"Insert "+t.label:"Not valid at this position"}">${escapeHtml(t.label)}</button>`
+  }).join("")}</div></section>`).join("");
+}
+function renderTables(animate=false){
+  const lvl=levels[levelIndex], target=targetFor(lvl), live=lastValid||sourceData(lvl);
+  el.live.innerHTML=tableHTML(live,animate);el.target.innerHTML=tableHTML(target,false);
+  el.liveTitle.textContent=lastValid?"LIVE RESULT":"SOURCE TABLE";el.liveSignal.textContent=lastValid?"● QUERY ACTIVE":"● SOURCE FEED";
+  el.liveCount.textContent=lastValid?(live.grouped?`${live.rows.length} groups`:`${live.rows.length} rows selected`):`${live.rows.length} rows`;
+  el.targetCount.textContent=`${target.rows.length} ${target.grouped?"groups":"target rows"}`;el.tableName.textContent=lvl.table.toUpperCase();
+}
+function renderHud(){
+  const score=currentScore(),sp=setProgress();el.score.textContent=score;el.time.textContent=formatTime(elapsed);el.best.textContent=sp.best[levelIndex+1]??"—";
+  el.level.textContent=`${currentSet.id.toUpperCase().replace("_"," ")} • LEVEL ${String(levelIndex+1).padStart(2,"0")} / ${levels.length}`;
+  const mission=levels[levelIndex].mission,zh=typeof mission==="object"?(mission.zh||mission["zh-Hant"]||""):"",en=typeof mission==="object"?(mission.en||""):String(mission||"");
+  el.mission.innerHTML=`<span class="mission-zh">${escapeHtml(zh)}</span><span class="mission-en">${escapeHtml(en)}</span>`;
+  $("#currentSetName").textContent=`${String(setIndex+1).padStart(2,"0")} // ${currentSet.title}`;
+  el.progress.style.width=((levelIndex+1)/levels.length*100)+"%";
+  const stat=el.score.parentElement;stat.classList.toggle("score-mid",score<=100&&score>50);stat.classList.toggle("score-low",score<=50);
+}
+function currentScore(){return Math.max(0,200-insertions-undos-Math.floor(elapsed/2))}
+function formatTime(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function penalty(label){
+  el.deduct.textContent="−1 "+label;el.deduct.classList.remove("fly");void el.deduct.offsetWidth;el.deduct.classList.add("fly");
+  const stat=el.score.parentElement;stat.classList.remove("score-pulse");void stat.offsetWidth;stat.classList.add("score-pulse");
+}
+function beep(type){
+  if(!progress.sound)return;try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+   o.connect(g);g.connect(audioCtx.destination);const now=audioCtx.currentTime;let f=type==="success"?660:type==="undo"?180:type==="error"?120:330;
+   o.frequency.setValueAtTime(f,now);if(type==="success")o.frequency.exponentialRampToValueAtTime(990,now+.22);
+   g.gain.setValueAtTime(.045,now);g.gain.exponentialRampToValueAtTime(.001,now+(type==="success"?.34:.09));o.start(now);o.stop(now+(type==="success"?.35:.1))
+  }catch(e){}}
+function flashToast(msg){el.toast.textContent=msg;el.toast.classList.add("show");clearTimeout(flashToast.t);flashToast.t=setTimeout(()=>el.toast.classList.remove("show"),1500)}
+function levelTitle(level){return level.titleZh?`${level.titleZh} / ${level.title}`:level.title}
+
+function update(animate=true){
+  parsed=parse(tokens);
+  if(parsed.valid){try{lastValid=evaluate(parsed.ast,datasets[levels[levelIndex].table])}catch(e){parsed.msg="Circuit incomplete";parsed.valid=false}}
+  renderQuery();renderPalette();renderTables(animate);renderHud();
+  if(parsed.valid&&!solved&&exact(lastValid,targetFor(levels[levelIndex])))complete();
+}
+function insert(t){
+  if(solved||!enabled(t))return;tokens.push(t);insertions++;penalty("BLOCK");beep("click");update(true);
+}
+function undo(){
+  if(!tokens.length||solved)return;tokens.pop();undos++;lastValid=null;parsed=parse(tokens);
+  for(let i=tokens.length;i>0;i--){const candidate=parse(tokens.slice(0,i));if(candidate.valid){lastValid=evaluate(candidate.ast,datasets[levels[levelIndex].table]);break}}
+  penalty("UNDO");beep("undo");update(true);
+}
+function startLevel(idx){
+  levelIndex=idx;tokens=[];parsed=parse(tokens);lastValid=null;insertions=0;undos=0;elapsed=0;lastTimerPenalty=0;solved=false;startTime=Date.now();
+  clearInterval(timer);timer=setInterval(()=>{if(solved)return;const now=Math.floor((Date.now()-startTime)/1000);if(now!==elapsed){const old=Math.floor(elapsed/2);elapsed=now;
+    if(Math.floor(elapsed/2)>old){penalty("TIME");beep("time")}renderHud()}},250);
+  closeAll();update(false);save();flashToast(`${String(idx+1).padStart(2,"0")} // ${levelTitle(levels[idx])}`);
+}
+function restart(){startLevel(levelIndex)}
+function complete(){
+  solved=true;clearInterval(timer);const final=currentScore(),id=levelIndex+1;
+  const sp=setProgress();sp.best[id]=Math.max(sp.best[id]||0,final);sp.completed[id]=true;sp.unlocked=Math.max(sp.unlocked,Math.min(levels.length,id+1));
+  progress.total=Object.values(progress.sets).reduce((sum,set)=>sum+Object.values(set.best||{}).reduce((s,n)=>s+Number(n||0),0),0);save();
+  beep("success");el.announce.textContent=`Puzzle complete. Final score ${final}.`;
+  el.live.classList.add("matched");el.target.classList.add("matched");setTimeout(()=>{el.live.classList.remove("matched");el.target.classList.remove("matched")},850);
+  const wave=document.createElement("div");wave.className="successwave";document.body.append(wave);setTimeout(()=>wave.remove(),900);
+  setTimeout(()=>{const modal=$("#completeModal");$("#rank").textContent=final>=175?"S":final>=140?"A":final>=100?"B":final>0?"C":"D";
+    $("#sumScore").textContent=final;$("#sumBlocks").textContent=insertions;$("#sumUndos").textContent=undos;$("#sumTime").textContent=formatTime(elapsed);
+    $("#completeText").textContent=`${progress.playerName?progress.playerName+", ":""}${levelTitle(levels[levelIndex])} synchronized. Time deduction: ${Math.floor(elapsed/2)} points.`;
+    $("#finalSql").textContent=sqlText(parsed.ast);$("#nextBtn").disabled=levelIndex===levels.length-1;openModal(modal)},650);
+}
+function openModal(m){closeAll();m.hidden=false;setTimeout(()=>m.querySelector("button")?.focus(),0)}
+function closeAll(){$$(".modalwrap").forEach(m=>m.hidden=true)}
+function gradeFor(score){
+  if(score==null)return{label:"UNPLAYED",cls:""};
+  if(score>=175)return{label:"S GRADE",cls:"grade-s"};if(score>=150)return{label:"A GRADE",cls:"grade-a"};
+  if(score>=120)return{label:"B GRADE",cls:"grade-b"};if(score>=80)return{label:"C GRADE",cls:"grade-c"};
+  if(score>0)return{label:"D GRADE",cls:"grade-d"};return{label:"FAIL",cls:"grade-fail"};
+}
+function showLevels(){
+  const sp=setProgress();
+  const setTotal=levels.reduce((sum,_,i)=>sum+Number(sp.best[i+1]||0),0),setMaximum=levels.length*200;
+  $("#setPicker").innerHTML=manifest.sets.map((s,i)=>`<button class="setbtn ${i===setIndex?"active":""}" data-set="${i}" aria-pressed="${i===setIndex}">${String(i+1).padStart(2,"0")} // ${escapeHtml(s.title)}</button>`).join("");
+  $("#setMeta").textContent=`${currentSet?.description||manifest.sets[setIndex]?.description||""} • ${currentSet?levels.length:manifest.sets[setIndex]?.levelCount||20} PUZZLES`;
+  $("#setTotalScore").textContent=setTotal.toLocaleString();
+  $("#setTotalMax").textContent=`/ ${setMaximum.toLocaleString()} BEST-SCORE POINTS`;
+  $("#levelGrid").innerHTML=currentSet?levels.map((l,i)=>{const n=i+1,locked=n>sp.unlocked,best=sp.best[n];
+   const grade=gradeFor(best);
+   return`<button class="level ${sp.completed[n]?"done":""} ${i===levelIndex?"current":""}" data-level="${i}" ${locked?"disabled":""}>
+    <b class="levelno">LEVEL ${String(n).padStart(2,"0")}</b>
+    ${locked?'<strong class="bestscore">—</strong><span class="gradetag">LOCKED</span>':best!=null?`<strong class="bestscore ${grade.cls}">${best}</strong><span class="gradetag ${grade.cls}">${grade.label}</span>`:`<strong class="bestscore">—</strong><small>${l.concept}</small>`}
+   </button>`}).join(""):'<div class="loaderror" style="grid-column:1/-1">The set selector is working, but this preview cannot load the adjacent JSON puzzle file. Serve the complete folder to play.</div>';
+  $("#playerName").value=progress.playerName;
+  openModal($("#levelsModal"));
+}
+async function readJSON(file){
+  const response=await fetch(file,{cache:"no-store"});if(!response.ok)throw new Error(`${file} returned ${response.status}`);
+  return response.json();
+}
+function validateSet(data,meta){
+  if(!data||data.id!==meta.id||!data.datasets||!Array.isArray(data.levels))throw new Error(`${meta.file} has an invalid puzzle-set structure`);
+  if(meta.levelCount&&data.levels.length!==meta.levelCount)throw new Error(`${meta.file} should contain ${meta.levelCount} puzzles`);
+  data.levels.forEach((level,i)=>{if(!level.goal||!data.datasets[level.table])throw new Error(`${meta.file}, puzzle ${i+1}, references missing data`)});
+}
+function migrateLegacy(){
+  if(progress.sets.set_1||!Object.keys(legacy.best||{}).length)return;
+  progress.sets.set_1={unlocked:Math.max(1,legacy.unlocked||1),best:legacy.best||{},completed:legacy.completed||{},last:legacy.last||1};
+}
+async function loadSet(index,reopenMap=false){
+  const meta=manifest.sets[index];if(!meta)return;
+  clearInterval(timer);solved=true;el.level.textContent="LOADING PUZZLE SET";el.mission.textContent=meta.title;
+  $("#currentSetName").textContent=`${String(index+1).padStart(2,"0")} // ${meta.title}`;
+  const data=await readJSON(meta.file);validateSet(data,meta);
+  setIndex=index;currentSet=data;datasets=data.datasets;levels=data.levels;progress.lastSet=data.id;
+  const sp=setProgress();levelIndex=Math.min(levels.length-1,Math.max(0,(sp.last||1)-1),Math.max(0,sp.unlocked-1));
+  startLevel(levelIndex);if(reopenMap)showLevels();
+}
+function showDataError(error){
+  clearInterval(timer);solved=true;el.level.textContent="DATA LINK OFFLINE";el.mission.textContent="Puzzle manifest could not be loaded";
+  $("#currentSetName").textContent=currentSet?`${String(setIndex+1).padStart(2,"0")} // ${currentSet.title}`:"SELECT PUZZLE SET";
+  $("#dataBannerText").textContent="The in-chat viewer and file:// mode cannot load sibling JSON. Use GitHub Pages or a local server.";
+  $("#dataBanner").hidden=false;$("#dataErrorText").textContent=error?.message||"Unknown puzzle data error";
+}
+async function initialize(){
+  applySettings();
+  try{
+    manifest=await readJSON("sets.json");
+    if(!manifest||!Array.isArray(manifest.sets)||!manifest.sets.length)throw new Error("sets.json does not list any puzzle sets");
+    migrateLegacy();
+    const wanted=manifest.sets.findIndex(s=>s.id===progress.lastSet);
+    await loadSet(wanted>=0?wanted:Math.max(0,manifest.sets.findIndex(s=>s.id===manifest.defaultSet)));
+    $("#dataBanner").hidden=true;
+    save();
+    if(!progress.seenHelp){progress.seenHelp=true;save();setTimeout(()=>openModal($("#helpModal")),500)}
+  }catch(error){manifest=fallbackManifest;showDataError(error)}
+}
+function applySettings(){
+  document.body.classList.toggle("reduce-motion",progress.reduced);
+  $("#soundToggle").classList.toggle("on",progress.sound);$("#soundToggle").setAttribute("aria-checked",progress.sound);
+  $("#motionToggle").classList.toggle("on",progress.reduced);$("#motionToggle").setAttribute("aria-checked",progress.reduced);
+  $("#soundBtn").textContent=progress.sound?"♪":"×";$("#soundBtn").setAttribute("aria-label",progress.sound?"Mute sound":"Unmute sound");
+}
+
+el.palette.addEventListener("click",e=>{const b=e.target.closest("[data-token]");if(b&&!b.disabled)insert(JSON.parse(decodeURIComponent(b.dataset.token)))});
+$("#undoBtn").addEventListener("click",undo);$("#restartBtn").addEventListener("click",restart);
+$("#levelsBtn").addEventListener("click",()=>manifest.sets.length&&showLevels());$("#completeLevelsBtn").addEventListener("click",showLevels);
+$("#helpBtn").addEventListener("click",()=>openModal($("#helpModal")));$("#settingsBtn").addEventListener("click",()=>openModal($("#settingsModal")));
+$("#soundBtn").addEventListener("click",()=>{progress.sound=!progress.sound;applySettings();save();if(progress.sound)beep("click")});
+$("#soundToggle").addEventListener("click",()=>{progress.sound=!progress.sound;applySettings();save();if(progress.sound)beep("click")});
+$("#motionToggle").addEventListener("click",()=>{progress.reduced=!progress.reduced;applySettings();save()});
+$("#playerName").addEventListener("input",e=>{progress.playerName=e.target.value.trimStart();save()});
+$("#replayBtn").addEventListener("click",restart);$("#nextBtn").addEventListener("click",()=>startLevel(Math.min(levels.length-1,levelIndex+1)));
+$("#levelGrid").addEventListener("click",e=>{const b=e.target.closest("[data-level]");if(b&&!b.disabled)startLevel(+b.dataset.level)});
+$("#setPicker").addEventListener("click",async e=>{const b=e.target.closest("[data-set]");if(!b||+b.dataset.set===setIndex)return;try{await loadSet(+b.dataset.set,true);save()}catch(error){showDataError(error)}});
+$("#retryDataBtn").addEventListener("click",initialize);
+$$("[data-close]").forEach(b=>b.addEventListener("click",()=>$("#"+b.dataset.close).hidden=true));
+$$(".modalwrap").forEach(m=>m.addEventListener("click",e=>{if(e.target===m&&m.id!=="completeModal")m.hidden=true}));
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeAll();if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"){e.preventDefault();undo()}});
+initialize();
+})();
+</script>
+</body>
+</html>

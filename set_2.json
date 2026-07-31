@@ -1,0 +1,922 @@
+{
+  "id": "set_2",
+  "title": "Neon Expansion / 霓虹擴展",
+  "description": "Twenty new puzzles across racers, relics, drones, beasts, and traders. / 二十個以賽車、遺物、無人機、怪獸及交易員為主題的新謎題。",
+  "datasets": {
+    "racers": [
+      {
+        "racer": "Axiom",
+        "team": "Pulse",
+        "lap_time": 64,
+        "boosts": 4,
+        "planet": "Mars"
+      },
+      {
+        "racer": "Bex",
+        "team": "Nova",
+        "lap_time": 71,
+        "boosts": 2,
+        "planet": "Earth"
+      },
+      {
+        "racer": "Cypher",
+        "team": "Pulse",
+        "lap_time": 67,
+        "boosts": 3,
+        "planet": "Venus"
+      },
+      {
+        "racer": "Drift",
+        "team": "Ion",
+        "lap_time": 76,
+        "boosts": 1,
+        "planet": "Mars"
+      },
+      {
+        "racer": "Ember",
+        "team": "Nova",
+        "lap_time": 69,
+        "boosts": 4,
+        "planet": "Earth"
+      },
+      {
+        "racer": "Frost",
+        "team": "Ion",
+        "lap_time": 73,
+        "boosts": 2,
+        "planet": "Venus"
+      }
+    ],
+    "relics": [
+      {
+        "relic": "Sun Key",
+        "rarity": "Epic",
+        "value": 940,
+        "cursed": "no",
+        "vault": "A"
+      },
+      {
+        "relic": "Void Bell",
+        "rarity": "Rare",
+        "value": 720,
+        "cursed": "yes",
+        "vault": "C"
+      },
+      {
+        "relic": "Moon Lens",
+        "rarity": "Epic",
+        "value": 880,
+        "cursed": "no",
+        "vault": "B"
+      },
+      {
+        "relic": "Ash Coin",
+        "rarity": "Common",
+        "value": 210,
+        "cursed": "no",
+        "vault": "A"
+      },
+      {
+        "relic": "Star Crown",
+        "rarity": "Legendary",
+        "value": 1200,
+        "cursed": "yes",
+        "vault": "C"
+      },
+      {
+        "relic": "Echo Map",
+        "rarity": "Rare",
+        "value": 650,
+        "cursed": "no",
+        "vault": "B"
+      }
+    ],
+    "drones": [
+      {
+        "drone": "D-11",
+        "sector": "North",
+        "battery": 88,
+        "payload": 24,
+        "status": "active"
+      },
+      {
+        "drone": "D-24",
+        "sector": "South",
+        "battery": 43,
+        "payload": 38,
+        "status": "offline"
+      },
+      {
+        "drone": "D-37",
+        "sector": "North",
+        "battery": 71,
+        "payload": 31,
+        "status": "active"
+      },
+      {
+        "drone": "D-42",
+        "sector": "West",
+        "battery": 95,
+        "payload": 18,
+        "status": "active"
+      },
+      {
+        "drone": "D-58",
+        "sector": "South",
+        "battery": 62,
+        "payload": 29,
+        "status": "charging"
+      },
+      {
+        "drone": "D-63",
+        "sector": "West",
+        "battery": 36,
+        "payload": 42,
+        "status": "offline"
+      }
+    ],
+    "beasts": [
+      {
+        "beast": "Aurawolf",
+        "habitat": "Tundra",
+        "danger": 82,
+        "sightings": 7
+      },
+      {
+        "beast": "Mireling",
+        "habitat": "Swamp",
+        "danger": 48,
+        "sightings": 14
+      },
+      {
+        "beast": "Pyroclaw",
+        "habitat": "Volcano",
+        "danger": 94,
+        "sightings": 3
+      },
+      {
+        "beast": "Glasswing",
+        "habitat": "Tundra",
+        "danger": 66,
+        "sightings": 11
+      },
+      {
+        "beast": "Bog Titan",
+        "habitat": "Swamp",
+        "danger": 78,
+        "sightings": 5
+      },
+      {
+        "beast": "Cinder Drake",
+        "habitat": "Volcano",
+        "danger": 88,
+        "sightings": 4
+      }
+    ],
+    "traders": [
+      {
+        "trader": "Mara",
+        "guild": "Comet",
+        "credits": 1500,
+        "deals": 12,
+        "world": "Luna"
+      },
+      {
+        "trader": "Nox",
+        "guild": "Orbit",
+        "credits": 980,
+        "deals": 8,
+        "world": "Mars"
+      },
+      {
+        "trader": "Oriel",
+        "guild": "Comet",
+        "credits": 1320,
+        "deals": 10,
+        "world": "Earth"
+      },
+      {
+        "trader": "Pax",
+        "guild": "Zenith",
+        "credits": 1760,
+        "deals": 15,
+        "world": "Luna"
+      },
+      {
+        "trader": "Quin",
+        "guild": "Orbit",
+        "credits": 1180,
+        "deals": 9,
+        "world": "Earth"
+      },
+      {
+        "trader": "Rhea",
+        "guild": "Zenith",
+        "credits": 1420,
+        "deals": 11,
+        "world": "Mars"
+      }
+    ]
+  },
+  "levels": [
+    {
+      "id": "s2_l01",
+      "title": "Starting Grid",
+      "mission": {
+        "zh": "只選取賽車手名稱。",
+        "en": "Select only the racer names."
+      },
+      "table": "racers",
+      "concept": "SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "racer"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l02",
+      "title": "Lap Telemetry",
+      "mission": {
+        "zh": "依序傳回賽車手及圈速。",
+        "en": "Return racer and lap_time in that order."
+      },
+      "table": "racers",
+      "concept": "MULTI SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "racer"
+          },
+          {
+            "type": "field",
+            "name": "lap_time"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l03",
+      "title": "Team Broadcast",
+      "mission": {
+        "zh": "先傳回車隊，然後傳回賽車手。",
+        "en": "Return team first, then racer."
+      },
+      "table": "racers",
+      "concept": "FIELD ORDER",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "team"
+          },
+          {
+            "type": "field",
+            "name": "racer"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l04",
+      "title": "Mars Qualifiers",
+      "mission": {
+        "zh": "顯示來自火星的賽車手及其行星。",
+        "en": "Show racer and planet for Mars racers."
+      },
+      "table": "racers",
+      "concept": "WHERE =",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "racer"
+          },
+          {
+            "type": "field",
+            "name": "planet"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "planet"
+            },
+            "op": "=",
+            "right": "Mars",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l05",
+      "title": "Sub-Seventy Club",
+      "mission": {
+        "zh": "顯示圈速少於 70 的賽車手。",
+        "en": "Show racers with lap times below 70."
+      },
+      "table": "racers",
+      "concept": "COMPARISON",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "racer"
+          },
+          {
+            "type": "field",
+            "name": "lap_time"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "lap_time"
+            },
+            "op": "<",
+            "right": 70,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l06",
+      "title": "Boost Window",
+      "mission": {
+        "zh": "顯示擁有 2 至 4 次加速的賽車手。",
+        "en": "Show racers carrying between 2 and 4 boosts."
+      },
+      "table": "racers",
+      "concept": "BETWEEN",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "racer"
+          },
+          {
+            "type": "field",
+            "name": "boosts"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "boosts"
+            },
+            "op": "BETWEEN",
+            "right": [
+              2,
+              4
+            ],
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l07",
+      "title": "Pulse Advantage",
+      "mission": {
+        "zh": "找出 Pulse 車隊中至少有 3 次加速的賽車手。",
+        "en": "Find Pulse racers with at least 3 boosts."
+      },
+      "table": "racers",
+      "concept": "AND",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "racer"
+          },
+          {
+            "type": "field",
+            "name": "boosts"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "team"
+            },
+            "op": "=",
+            "right": "Pulse",
+            "not": false
+          },
+          {
+            "join": "AND",
+            "left": {
+              "type": "field",
+              "name": "boosts"
+            },
+            "op": ">=",
+            "right": 3,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l08",
+      "title": "Inner Worlds",
+      "mission": {
+        "zh": "列出來自火星或地球的賽車手。",
+        "en": "List racers from Mars or Earth."
+      },
+      "table": "racers",
+      "concept": "OR / IN",
+      "extraValues": [
+        [
+          "Mars",
+          "Earth"
+        ]
+      ],
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "racer"
+          },
+          {
+            "type": "field",
+            "name": "planet"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "planet"
+            },
+            "op": "=",
+            "right": "Mars",
+            "not": false
+          },
+          {
+            "join": "OR",
+            "left": {
+              "type": "field",
+              "name": "planet"
+            },
+            "op": "=",
+            "right": "Earth",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l09",
+      "title": "Drone Wake",
+      "mission": {
+        "zh": "傳回狀態並非離線的無人機。",
+        "en": "Return drones that are not offline."
+      },
+      "table": "drones",
+      "concept": "NOT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "drone"
+          },
+          {
+            "type": "field",
+            "name": "status"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "status"
+            },
+            "op": "=",
+            "right": "offline",
+            "not": true
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l10",
+      "title": "Pole Position",
+      "mission": {
+        "zh": "按圈速由快至慢排列賽車手。",
+        "en": "Order racers by fastest lap time first."
+      },
+      "table": "racers",
+      "concept": "ORDER BY ASC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "racer"
+          },
+          {
+            "type": "field",
+            "name": "lap_time"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "lap_time"
+            },
+            "dir": "ASC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l11",
+      "title": "Credit Leaders",
+      "mission": {
+        "zh": "按信用點由高至低排列交易員。",
+        "en": "Order traders by credits, highest first."
+      },
+      "table": "traders",
+      "concept": "ORDER BY DESC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "trader"
+          },
+          {
+            "type": "field",
+            "name": "credits"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "credits"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l12",
+      "title": "Vault Showcase",
+      "mission": {
+        "zh": "顯示價值最高的 3 件遺物。",
+        "en": "Show the 3 most valuable relics."
+      },
+      "table": "relics",
+      "concept": "LIMIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "relic"
+          },
+          {
+            "type": "field",
+            "name": "value"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "value"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": 3
+      }
+    },
+    {
+      "id": "s2_l13",
+      "title": "Guild Directory",
+      "mission": {
+        "zh": "每個交易員公會只顯示一次。",
+        "en": "Return every trader guild exactly once."
+      },
+      "table": "traders",
+      "concept": "DISTINCT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "guild"
+          }
+        ],
+        "distinct": true,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l14",
+      "title": "Drone Census",
+      "mission": {
+        "zh": "計算所有無人機記錄的數量。",
+        "en": "Count every drone record."
+      },
+      "table": "drones",
+      "concept": "COUNT",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l15",
+      "title": "Trade Treasury",
+      "mission": {
+        "zh": "計算所有交易員的信用點總和。",
+        "en": "Calculate the total trader credits."
+      },
+      "table": "traders",
+      "concept": "SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "credits"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l16",
+      "title": "Threat Baseline",
+      "mission": {
+        "zh": "計算怪獸危險度的平均值。",
+        "en": "Calculate the average beast danger rating."
+      },
+      "table": "beasts",
+      "concept": "AVG",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "danger"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l17",
+      "title": "Team Registry",
+      "mission": {
+        "zh": "按車隊分組，計算每隊的賽車手數量。",
+        "en": "Count racers in each team."
+      },
+      "table": "racers",
+      "concept": "GROUP BY",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "team"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "team"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l18",
+      "title": "Payload Network",
+      "mission": {
+        "zh": "按區域分組，計算無人機的載重量總和。",
+        "en": "Total drone payload for each sector."
+      },
+      "table": "drones",
+      "concept": "GROUP + SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "sector"
+          },
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "payload"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "sector"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l19",
+      "title": "Rarity Clusters",
+      "mission": {
+        "zh": "按遺物稀有度分組，只保留數量大於 1 的組別。",
+        "en": "Count relics by rarity, keeping counts above 1."
+      },
+      "table": "relics",
+      "concept": "HAVING",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "rarity"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "rarity"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "COUNT",
+              "field": "*"
+            },
+            "op": ">",
+            "right": 1,
+            "not": false
+          }
+        ],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s2_l20",
+      "title": "Guild Command",
+      "mission": {
+        "zh": "按公會計算平均信用點，只保留平均值為 1300 或以上的公會，並由高至低排列。",
+        "en": "Average credits by guild; keep averages ≥ 1300, highest first."
+      },
+      "table": "traders",
+      "concept": "FINAL CIRCUIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "guild"
+          },
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "credits"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "guild"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "credits"
+            },
+            "op": ">=",
+            "right": 1300,
+            "not": false
+          }
+        ],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "credits"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    }
+  ]
+}

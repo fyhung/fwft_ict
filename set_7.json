@@ -1,0 +1,816 @@
+{
+  "id": "set_7",
+  "title": "Music Festival / 音樂節",
+  "description": "Performers, stages, songs, and equipment. / 表演者、舞台、歌曲及器材。",
+  "datasets": {
+    "performers": [
+      {
+        "performer": "Aria-X",
+        "genre": "Synth",
+        "rating": 95,
+        "songs": 12,
+        "stage": "Main",
+        "status": "active"
+      },
+      {
+        "performer": "Bassline",
+        "genre": "Rock",
+        "rating": 78,
+        "songs": 8,
+        "stage": "River",
+        "status": "offline"
+      },
+      {
+        "performer": "Chroma",
+        "genre": "Synth",
+        "rating": 86,
+        "songs": 10,
+        "stage": "Main",
+        "status": "active"
+      },
+      {
+        "performer": "Dusk",
+        "genre": "Jazz",
+        "rating": 68,
+        "songs": 6,
+        "stage": "Sky",
+        "status": "standby"
+      },
+      {
+        "performer": "Echo-Q",
+        "genre": "Rock",
+        "rating": 91,
+        "songs": 11,
+        "stage": "River",
+        "status": "active"
+      },
+      {
+        "performer": "Flux",
+        "genre": "Jazz",
+        "rating": 74,
+        "songs": 7,
+        "stage": "Sky",
+        "status": "offline"
+      }
+    ],
+    "equipment": [
+      {
+        "equipment": "Laser Rig",
+        "genre": "Synth",
+        "cost": 1020,
+        "stage": "Main"
+      },
+      {
+        "equipment": "Bass Stack",
+        "genre": "Rock",
+        "cost": 750,
+        "stage": "River"
+      },
+      {
+        "equipment": "Synth Deck",
+        "genre": "Synth",
+        "cost": 890,
+        "stage": "Main"
+      },
+      {
+        "equipment": "Jazz Kit",
+        "genre": "Jazz",
+        "cost": 350,
+        "stage": "Sky"
+      },
+      {
+        "equipment": "Light Wall",
+        "genre": "Rock",
+        "cost": 1180,
+        "stage": "River"
+      },
+      {
+        "equipment": "Mix Board",
+        "genre": "Jazz",
+        "cost": 670,
+        "stage": "Sky"
+      }
+    ]
+  },
+  "levels": [
+    {
+      "id": "set_7_l01",
+      "title": "Field Scan",
+      "titleZh": "欄位掃描",
+      "mission": {
+        "zh": "只選取「表演者名稱」欄。",
+        "en": "Select only the performer field."
+      },
+      "table": "performers",
+      "concept": "SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "performer"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l02",
+      "title": "Dual Readout",
+      "titleZh": "雙欄讀取",
+      "mission": {
+        "zh": "依序傳回「表演者名稱」及「評分」。",
+        "en": "Return performer and rating in that order."
+      },
+      "table": "performers",
+      "concept": "MULTI SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "performer"
+          },
+          {
+            "type": "field",
+            "name": "rating"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l03",
+      "title": "Column Reversal",
+      "titleZh": "欄位倒序",
+      "mission": {
+        "zh": "先傳回「評分」，然後傳回「表演者名稱」。",
+        "en": "Return rating first, then performer."
+      },
+      "table": "performers",
+      "concept": "FIELD ORDER",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "rating"
+          },
+          {
+            "type": "field",
+            "name": "performer"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l04",
+      "title": "Regional Signal",
+      "titleZh": "區域訊號",
+      "mission": {
+        "zh": "顯示位於 Main 的表演者，並傳回「表演者名稱」及「舞台」。",
+        "en": "Show records from Main, returning performer and stage."
+      },
+      "table": "performers",
+      "concept": "WHERE =",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "performer"
+          },
+          {
+            "type": "field",
+            "name": "stage"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "stage"
+            },
+            "op": "=",
+            "right": "Main",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l05",
+      "title": "Quality Gate",
+      "titleZh": "品質閘門",
+      "mission": {
+        "zh": "顯示「評分」為 80 或以上的表演者。",
+        "en": "Show performer and rating where rating is at least 80."
+      },
+      "table": "performers",
+      "concept": "COMPARISON",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "performer"
+          },
+          {
+            "type": "field",
+            "name": "rating"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "rating"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l06",
+      "title": "Range Window",
+      "titleZh": "範圍視窗",
+      "mission": {
+        "zh": "顯示「歌曲數」介乎 7 至 12 的表演者。",
+        "en": "Show performer and songs where songs is between 7 and 12."
+      },
+      "table": "performers",
+      "concept": "BETWEEN",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "performer"
+          },
+          {
+            "type": "field",
+            "name": "songs"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "songs"
+            },
+            "op": "BETWEEN",
+            "right": [
+              7,
+              12
+            ],
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l07",
+      "title": "Category Lock",
+      "titleZh": "類別鎖定",
+      "mission": {
+        "zh": "找出 Synth 類別中「評分」為 80 或以上的記錄。",
+        "en": "Find Synth records with rating of at least 80."
+      },
+      "table": "performers",
+      "concept": "AND",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "performer"
+          },
+          {
+            "type": "field",
+            "name": "rating"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "genre"
+            },
+            "op": "=",
+            "right": "Synth",
+            "not": false
+          },
+          {
+            "join": "AND",
+            "left": {
+              "type": "field",
+              "name": "rating"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l08",
+      "title": "Twin Regions",
+      "titleZh": "雙區搜尋",
+      "mission": {
+        "zh": "列出位於 Main 或 River 的表演者。",
+        "en": "List records from Main or River, returning performer and stage."
+      },
+      "table": "performers",
+      "concept": "OR / IN",
+      "extraValues": [
+        [
+          "Main",
+          "River"
+        ]
+      ],
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "performer"
+          },
+          {
+            "type": "field",
+            "name": "stage"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "stage"
+            },
+            "op": "=",
+            "right": "Main",
+            "not": false
+          },
+          {
+            "join": "OR",
+            "left": {
+              "type": "field",
+              "name": "stage"
+            },
+            "op": "=",
+            "right": "River",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l09",
+      "title": "Active Network",
+      "titleZh": "在線網絡",
+      "mission": {
+        "zh": "傳回狀態並非離線的表演者及其狀態。",
+        "en": "Return performer and status for records that are not offline."
+      },
+      "table": "performers",
+      "concept": "NOT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "performer"
+          },
+          {
+            "type": "field",
+            "name": "status"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "status"
+            },
+            "op": "=",
+            "right": "offline",
+            "not": true
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l10",
+      "title": "Ascending Scan",
+      "titleZh": "遞增掃描",
+      "mission": {
+        "zh": "按「評分」由低至高排列表演者。",
+        "en": "Order performer by rating, lowest first."
+      },
+      "table": "performers",
+      "concept": "ORDER BY ASC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "performer"
+          },
+          {
+            "type": "field",
+            "name": "rating"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "rating"
+            },
+            "dir": "ASC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l11",
+      "title": "Descending Load",
+      "titleZh": "遞減負載",
+      "mission": {
+        "zh": "按「歌曲數」由高至低排列表演者。",
+        "en": "Order performer by songs, highest first."
+      },
+      "table": "performers",
+      "concept": "ORDER BY DESC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "performer"
+          },
+          {
+            "type": "field",
+            "name": "songs"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "songs"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l12",
+      "title": "Top Three",
+      "titleZh": "最高三項",
+      "mission": {
+        "zh": "顯示「成本」最高的 3 項器材。",
+        "en": "Show the 3 equipment records with the highest cost."
+      },
+      "table": "equipment",
+      "concept": "LIMIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "equipment"
+          },
+          {
+            "type": "field",
+            "name": "cost"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "cost"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": 3
+      }
+    },
+    {
+      "id": "set_7_l13",
+      "title": "Unique Categories",
+      "titleZh": "獨特類別",
+      "mission": {
+        "zh": "每個「音樂類型」只顯示一次。",
+        "en": "Return each genre exactly once."
+      },
+      "table": "performers",
+      "concept": "DISTINCT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "genre"
+          }
+        ],
+        "distinct": true,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l14",
+      "title": "Record Census",
+      "titleZh": "記錄統計",
+      "mission": {
+        "zh": "計算 performers 中所有記錄的數量。",
+        "en": "Count every record in performers."
+      },
+      "table": "performers",
+      "concept": "COUNT",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l15",
+      "title": "Score Total",
+      "titleZh": "數值總和",
+      "mission": {
+        "zh": "計算 performers 中「評分」的總和。",
+        "en": "Calculate the total rating across performers."
+      },
+      "table": "performers",
+      "concept": "SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "rating"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l16",
+      "title": "Quantity Mean",
+      "titleZh": "數量平均",
+      "mission": {
+        "zh": "計算 performers 中「歌曲數」的平均值。",
+        "en": "Calculate the average songs across performers."
+      },
+      "table": "performers",
+      "concept": "AVG",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "songs"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l17",
+      "title": "Category Count",
+      "titleZh": "類別計數",
+      "mission": {
+        "zh": "按「音樂類型」分組，計算每組的記錄數量。",
+        "en": "Group by genre and count the records in each group."
+      },
+      "table": "performers",
+      "concept": "GROUP BY",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "genre"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "genre"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l18",
+      "title": "Regional Totals",
+      "titleZh": "區域總和",
+      "mission": {
+        "zh": "按「舞台」分組，計算每組「評分」的總和。",
+        "en": "Group by stage and total rating for each group."
+      },
+      "table": "performers",
+      "concept": "GROUP + SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "stage"
+          },
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "rating"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "stage"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l19",
+      "title": "Repeated Categories",
+      "titleZh": "重複類別",
+      "mission": {
+        "zh": "按「音樂類型」分組，只保留記錄數量大於 1 的組別。",
+        "en": "Count records by genre, keeping groups with counts above 1."
+      },
+      "table": "performers",
+      "concept": "HAVING",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "genre"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "genre"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "COUNT",
+              "field": "*"
+            },
+            "op": ">",
+            "right": 1,
+            "not": false
+          }
+        ],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_7_l20",
+      "title": "Command Summary",
+      "titleZh": "指揮總結",
+      "mission": {
+        "zh": "按「音樂類型」計算「評分」平均值，只保留平均值為 80 或以上的組別，並由高至低排列。",
+        "en": "Average rating by genre; keep averages of at least 80 and order highest first."
+      },
+      "table": "performers",
+      "concept": "FINAL CIRCUIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "genre"
+          },
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "rating"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "genre"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "rating"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "rating"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    }
+  ]
+}

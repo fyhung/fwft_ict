@@ -1,0 +1,816 @@
+{
+  "id": "set_5",
+  "title": "Green City / 綠色城市",
+  "description": "Sustainable transport, districts, and civic projects. / 可持續交通、地區及城市項目。",
+  "datasets": {
+    "city_transit": [
+      {
+        "vehicle": "Leaf-1",
+        "mode": "Metro",
+        "efficiency": 94,
+        "capacity": 90,
+        "district": "North",
+        "status": "active"
+      },
+      {
+        "vehicle": "Metro-X",
+        "mode": "Tram",
+        "efficiency": 79,
+        "capacity": 60,
+        "district": "Central",
+        "status": "offline"
+      },
+      {
+        "vehicle": "Tram-8",
+        "mode": "Metro",
+        "efficiency": 87,
+        "capacity": 84,
+        "district": "North",
+        "status": "active"
+      },
+      {
+        "vehicle": "EcoBus",
+        "mode": "Bus",
+        "efficiency": 69,
+        "capacity": 48,
+        "district": "South",
+        "status": "standby"
+      },
+      {
+        "vehicle": "Glide",
+        "mode": "Tram",
+        "efficiency": 90,
+        "capacity": 72,
+        "district": "Central",
+        "status": "active"
+      },
+      {
+        "vehicle": "Loop",
+        "mode": "Bus",
+        "efficiency": 75,
+        "capacity": 54,
+        "district": "South",
+        "status": "offline"
+      }
+    ],
+    "city_projects": [
+      {
+        "project": "Solar Roof",
+        "mode": "Metro",
+        "budget": 980,
+        "district": "North"
+      },
+      {
+        "project": "Cycle Hub",
+        "mode": "Tram",
+        "budget": 760,
+        "district": "Central"
+      },
+      {
+        "project": "Rain Garden",
+        "mode": "Metro",
+        "budget": 850,
+        "district": "North"
+      },
+      {
+        "project": "Tree Lane",
+        "mode": "Bus",
+        "budget": 330,
+        "district": "South"
+      },
+      {
+        "project": "Eco Station",
+        "mode": "Tram",
+        "budget": 1120,
+        "district": "Central"
+      },
+      {
+        "project": "River Walk",
+        "mode": "Bus",
+        "budget": 640,
+        "district": "South"
+      }
+    ]
+  },
+  "levels": [
+    {
+      "id": "set_5_l01",
+      "title": "Field Scan",
+      "titleZh": "欄位掃描",
+      "mission": {
+        "zh": "只選取「交通工具名稱」欄。",
+        "en": "Select only the vehicle field."
+      },
+      "table": "city_transit",
+      "concept": "SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vehicle"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l02",
+      "title": "Dual Readout",
+      "titleZh": "雙欄讀取",
+      "mission": {
+        "zh": "依序傳回「交通工具名稱」及「效率」。",
+        "en": "Return vehicle and efficiency in that order."
+      },
+      "table": "city_transit",
+      "concept": "MULTI SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vehicle"
+          },
+          {
+            "type": "field",
+            "name": "efficiency"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l03",
+      "title": "Column Reversal",
+      "titleZh": "欄位倒序",
+      "mission": {
+        "zh": "先傳回「效率」，然後傳回「交通工具名稱」。",
+        "en": "Return efficiency first, then vehicle."
+      },
+      "table": "city_transit",
+      "concept": "FIELD ORDER",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "efficiency"
+          },
+          {
+            "type": "field",
+            "name": "vehicle"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l04",
+      "title": "Regional Signal",
+      "titleZh": "區域訊號",
+      "mission": {
+        "zh": "顯示位於 North 的交通工具，並傳回「交通工具名稱」及「地區」。",
+        "en": "Show records from North, returning vehicle and district."
+      },
+      "table": "city_transit",
+      "concept": "WHERE =",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vehicle"
+          },
+          {
+            "type": "field",
+            "name": "district"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "district"
+            },
+            "op": "=",
+            "right": "North",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l05",
+      "title": "Quality Gate",
+      "titleZh": "品質閘門",
+      "mission": {
+        "zh": "顯示「效率」為 80 或以上的交通工具。",
+        "en": "Show vehicle and efficiency where efficiency is at least 80."
+      },
+      "table": "city_transit",
+      "concept": "COMPARISON",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vehicle"
+          },
+          {
+            "type": "field",
+            "name": "efficiency"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "efficiency"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l06",
+      "title": "Range Window",
+      "titleZh": "範圍視窗",
+      "mission": {
+        "zh": "顯示「載客量」介乎 54 至 90 的交通工具。",
+        "en": "Show vehicle and capacity where capacity is between 54 and 90."
+      },
+      "table": "city_transit",
+      "concept": "BETWEEN",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vehicle"
+          },
+          {
+            "type": "field",
+            "name": "capacity"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "capacity"
+            },
+            "op": "BETWEEN",
+            "right": [
+              54,
+              90
+            ],
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l07",
+      "title": "Category Lock",
+      "titleZh": "類別鎖定",
+      "mission": {
+        "zh": "找出 Metro 類別中「效率」為 80 或以上的記錄。",
+        "en": "Find Metro records with efficiency of at least 80."
+      },
+      "table": "city_transit",
+      "concept": "AND",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vehicle"
+          },
+          {
+            "type": "field",
+            "name": "efficiency"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "mode"
+            },
+            "op": "=",
+            "right": "Metro",
+            "not": false
+          },
+          {
+            "join": "AND",
+            "left": {
+              "type": "field",
+              "name": "efficiency"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l08",
+      "title": "Twin Regions",
+      "titleZh": "雙區搜尋",
+      "mission": {
+        "zh": "列出位於 North 或 Central 的交通工具。",
+        "en": "List records from North or Central, returning vehicle and district."
+      },
+      "table": "city_transit",
+      "concept": "OR / IN",
+      "extraValues": [
+        [
+          "North",
+          "Central"
+        ]
+      ],
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vehicle"
+          },
+          {
+            "type": "field",
+            "name": "district"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "district"
+            },
+            "op": "=",
+            "right": "North",
+            "not": false
+          },
+          {
+            "join": "OR",
+            "left": {
+              "type": "field",
+              "name": "district"
+            },
+            "op": "=",
+            "right": "Central",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l09",
+      "title": "Active Network",
+      "titleZh": "在線網絡",
+      "mission": {
+        "zh": "傳回狀態並非離線的交通工具及其狀態。",
+        "en": "Return vehicle and status for records that are not offline."
+      },
+      "table": "city_transit",
+      "concept": "NOT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vehicle"
+          },
+          {
+            "type": "field",
+            "name": "status"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "status"
+            },
+            "op": "=",
+            "right": "offline",
+            "not": true
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l10",
+      "title": "Ascending Scan",
+      "titleZh": "遞增掃描",
+      "mission": {
+        "zh": "按「效率」由低至高排列交通工具。",
+        "en": "Order vehicle by efficiency, lowest first."
+      },
+      "table": "city_transit",
+      "concept": "ORDER BY ASC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vehicle"
+          },
+          {
+            "type": "field",
+            "name": "efficiency"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "efficiency"
+            },
+            "dir": "ASC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l11",
+      "title": "Descending Load",
+      "titleZh": "遞減負載",
+      "mission": {
+        "zh": "按「載客量」由高至低排列交通工具。",
+        "en": "Order vehicle by capacity, highest first."
+      },
+      "table": "city_transit",
+      "concept": "ORDER BY DESC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vehicle"
+          },
+          {
+            "type": "field",
+            "name": "capacity"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "capacity"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l12",
+      "title": "Top Three",
+      "titleZh": "最高三項",
+      "mission": {
+        "zh": "顯示「預算」最高的 3 項項目。",
+        "en": "Show the 3 project records with the highest budget."
+      },
+      "table": "city_projects",
+      "concept": "LIMIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "project"
+          },
+          {
+            "type": "field",
+            "name": "budget"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "budget"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": 3
+      }
+    },
+    {
+      "id": "set_5_l13",
+      "title": "Unique Categories",
+      "titleZh": "獨特類別",
+      "mission": {
+        "zh": "每個「模式」只顯示一次。",
+        "en": "Return each mode exactly once."
+      },
+      "table": "city_transit",
+      "concept": "DISTINCT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "mode"
+          }
+        ],
+        "distinct": true,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l14",
+      "title": "Record Census",
+      "titleZh": "記錄統計",
+      "mission": {
+        "zh": "計算 city_transit 中所有記錄的數量。",
+        "en": "Count every record in city_transit."
+      },
+      "table": "city_transit",
+      "concept": "COUNT",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l15",
+      "title": "Score Total",
+      "titleZh": "數值總和",
+      "mission": {
+        "zh": "計算 city_transit 中「效率」的總和。",
+        "en": "Calculate the total efficiency across city_transit."
+      },
+      "table": "city_transit",
+      "concept": "SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "efficiency"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l16",
+      "title": "Quantity Mean",
+      "titleZh": "數量平均",
+      "mission": {
+        "zh": "計算 city_transit 中「載客量」的平均值。",
+        "en": "Calculate the average capacity across city_transit."
+      },
+      "table": "city_transit",
+      "concept": "AVG",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "capacity"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l17",
+      "title": "Category Count",
+      "titleZh": "類別計數",
+      "mission": {
+        "zh": "按「模式」分組，計算每組的記錄數量。",
+        "en": "Group by mode and count the records in each group."
+      },
+      "table": "city_transit",
+      "concept": "GROUP BY",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "mode"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "mode"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l18",
+      "title": "Regional Totals",
+      "titleZh": "區域總和",
+      "mission": {
+        "zh": "按「地區」分組，計算每組「效率」的總和。",
+        "en": "Group by district and total efficiency for each group."
+      },
+      "table": "city_transit",
+      "concept": "GROUP + SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "district"
+          },
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "efficiency"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "district"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l19",
+      "title": "Repeated Categories",
+      "titleZh": "重複類別",
+      "mission": {
+        "zh": "按「模式」分組，只保留記錄數量大於 1 的組別。",
+        "en": "Count records by mode, keeping groups with counts above 1."
+      },
+      "table": "city_transit",
+      "concept": "HAVING",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "mode"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "mode"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "COUNT",
+              "field": "*"
+            },
+            "op": ">",
+            "right": 1,
+            "not": false
+          }
+        ],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_5_l20",
+      "title": "Command Summary",
+      "titleZh": "指揮總結",
+      "mission": {
+        "zh": "按「模式」計算「效率」平均值，只保留平均值為 80 或以上的組別，並由高至低排列。",
+        "en": "Average efficiency by mode; keep averages of at least 80 and order highest first."
+      },
+      "table": "city_transit",
+      "concept": "FINAL CIRCUIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "mode"
+          },
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "efficiency"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "mode"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "efficiency"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "efficiency"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    }
+  ]
+}

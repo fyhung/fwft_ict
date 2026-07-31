@@ -1,0 +1,816 @@
+{
+  "id": "set_4",
+  "title": "Ocean Research / 海洋研究",
+  "description": "Research vessels, samples, oceans, and specimens. / 研究船、樣本、海洋及標本。",
+  "datasets": {
+    "research_vessels": [
+      {
+        "vessel": "Coral",
+        "zone": "Reef",
+        "depth_rating": 91,
+        "samples": 12,
+        "ocean": "Pacific",
+        "status": "active"
+      },
+      {
+        "vessel": "Nautilus",
+        "zone": "Abyss",
+        "depth_rating": 76,
+        "samples": 8,
+        "ocean": "Atlantic",
+        "status": "offline"
+      },
+      {
+        "vessel": "Pearl",
+        "zone": "Reef",
+        "depth_rating": 86,
+        "samples": 10,
+        "ocean": "Pacific",
+        "status": "active"
+      },
+      {
+        "vessel": "Triton",
+        "zone": "Current",
+        "depth_rating": 68,
+        "samples": 6,
+        "ocean": "Indian",
+        "status": "standby"
+      },
+      {
+        "vessel": "Wave",
+        "zone": "Abyss",
+        "depth_rating": 89,
+        "samples": 11,
+        "ocean": "Atlantic",
+        "status": "active"
+      },
+      {
+        "vessel": "Abyss",
+        "zone": "Current",
+        "depth_rating": 73,
+        "samples": 7,
+        "ocean": "Indian",
+        "status": "offline"
+      }
+    ],
+    "specimens": [
+      {
+        "specimen": "Blue Coral",
+        "zone": "Reef",
+        "value": 880,
+        "ocean": "Pacific"
+      },
+      {
+        "specimen": "Giant Scale",
+        "zone": "Abyss",
+        "value": 730,
+        "ocean": "Atlantic"
+      },
+      {
+        "specimen": "Pearl Moss",
+        "zone": "Reef",
+        "value": 820,
+        "ocean": "Pacific"
+      },
+      {
+        "specimen": "Thermal Rock",
+        "zone": "Current",
+        "value": 340,
+        "ocean": "Indian"
+      },
+      {
+        "specimen": "Abyss Shell",
+        "zone": "Abyss",
+        "value": 1050,
+        "ocean": "Atlantic"
+      },
+      {
+        "specimen": "Silver Kelp",
+        "zone": "Current",
+        "value": 610,
+        "ocean": "Indian"
+      }
+    ]
+  },
+  "levels": [
+    {
+      "id": "set_4_l01",
+      "title": "Field Scan",
+      "titleZh": "欄位掃描",
+      "mission": {
+        "zh": "只選取「研究船名稱」欄。",
+        "en": "Select only the vessel field."
+      },
+      "table": "research_vessels",
+      "concept": "SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vessel"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l02",
+      "title": "Dual Readout",
+      "titleZh": "雙欄讀取",
+      "mission": {
+        "zh": "依序傳回「研究船名稱」及「深度評分」。",
+        "en": "Return vessel and depth_rating in that order."
+      },
+      "table": "research_vessels",
+      "concept": "MULTI SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vessel"
+          },
+          {
+            "type": "field",
+            "name": "depth_rating"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l03",
+      "title": "Column Reversal",
+      "titleZh": "欄位倒序",
+      "mission": {
+        "zh": "先傳回「深度評分」，然後傳回「研究船名稱」。",
+        "en": "Return depth_rating first, then vessel."
+      },
+      "table": "research_vessels",
+      "concept": "FIELD ORDER",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "depth_rating"
+          },
+          {
+            "type": "field",
+            "name": "vessel"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l04",
+      "title": "Regional Signal",
+      "titleZh": "區域訊號",
+      "mission": {
+        "zh": "顯示位於 Pacific 的研究船，並傳回「研究船名稱」及「海洋」。",
+        "en": "Show records from Pacific, returning vessel and ocean."
+      },
+      "table": "research_vessels",
+      "concept": "WHERE =",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vessel"
+          },
+          {
+            "type": "field",
+            "name": "ocean"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "ocean"
+            },
+            "op": "=",
+            "right": "Pacific",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l05",
+      "title": "Quality Gate",
+      "titleZh": "品質閘門",
+      "mission": {
+        "zh": "顯示「深度評分」為 80 或以上的研究船。",
+        "en": "Show vessel and depth_rating where depth_rating is at least 80."
+      },
+      "table": "research_vessels",
+      "concept": "COMPARISON",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vessel"
+          },
+          {
+            "type": "field",
+            "name": "depth_rating"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "depth_rating"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l06",
+      "title": "Range Window",
+      "titleZh": "範圍視窗",
+      "mission": {
+        "zh": "顯示「樣本數」介乎 8 至 12 的研究船。",
+        "en": "Show vessel and samples where samples is between 8 and 12."
+      },
+      "table": "research_vessels",
+      "concept": "BETWEEN",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vessel"
+          },
+          {
+            "type": "field",
+            "name": "samples"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "samples"
+            },
+            "op": "BETWEEN",
+            "right": [
+              8,
+              12
+            ],
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l07",
+      "title": "Category Lock",
+      "titleZh": "類別鎖定",
+      "mission": {
+        "zh": "找出 Reef 類別中「深度評分」為 80 或以上的記錄。",
+        "en": "Find Reef records with depth_rating of at least 80."
+      },
+      "table": "research_vessels",
+      "concept": "AND",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vessel"
+          },
+          {
+            "type": "field",
+            "name": "depth_rating"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "zone"
+            },
+            "op": "=",
+            "right": "Reef",
+            "not": false
+          },
+          {
+            "join": "AND",
+            "left": {
+              "type": "field",
+              "name": "depth_rating"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l08",
+      "title": "Twin Regions",
+      "titleZh": "雙區搜尋",
+      "mission": {
+        "zh": "列出位於 Pacific 或 Atlantic 的研究船。",
+        "en": "List records from Pacific or Atlantic, returning vessel and ocean."
+      },
+      "table": "research_vessels",
+      "concept": "OR / IN",
+      "extraValues": [
+        [
+          "Pacific",
+          "Atlantic"
+        ]
+      ],
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vessel"
+          },
+          {
+            "type": "field",
+            "name": "ocean"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "ocean"
+            },
+            "op": "=",
+            "right": "Pacific",
+            "not": false
+          },
+          {
+            "join": "OR",
+            "left": {
+              "type": "field",
+              "name": "ocean"
+            },
+            "op": "=",
+            "right": "Atlantic",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l09",
+      "title": "Active Network",
+      "titleZh": "在線網絡",
+      "mission": {
+        "zh": "傳回狀態並非離線的研究船及其狀態。",
+        "en": "Return vessel and status for records that are not offline."
+      },
+      "table": "research_vessels",
+      "concept": "NOT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vessel"
+          },
+          {
+            "type": "field",
+            "name": "status"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "status"
+            },
+            "op": "=",
+            "right": "offline",
+            "not": true
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l10",
+      "title": "Ascending Scan",
+      "titleZh": "遞增掃描",
+      "mission": {
+        "zh": "按「深度評分」由低至高排列研究船。",
+        "en": "Order vessel by depth_rating, lowest first."
+      },
+      "table": "research_vessels",
+      "concept": "ORDER BY ASC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vessel"
+          },
+          {
+            "type": "field",
+            "name": "depth_rating"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "depth_rating"
+            },
+            "dir": "ASC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l11",
+      "title": "Descending Load",
+      "titleZh": "遞減負載",
+      "mission": {
+        "zh": "按「樣本數」由高至低排列研究船。",
+        "en": "Order vessel by samples, highest first."
+      },
+      "table": "research_vessels",
+      "concept": "ORDER BY DESC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "vessel"
+          },
+          {
+            "type": "field",
+            "name": "samples"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "samples"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l12",
+      "title": "Top Three",
+      "titleZh": "最高三項",
+      "mission": {
+        "zh": "顯示「研究價值」最高的 3 項標本。",
+        "en": "Show the 3 specimen records with the highest value."
+      },
+      "table": "specimens",
+      "concept": "LIMIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "specimen"
+          },
+          {
+            "type": "field",
+            "name": "value"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "value"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": 3
+      }
+    },
+    {
+      "id": "set_4_l13",
+      "title": "Unique Categories",
+      "titleZh": "獨特類別",
+      "mission": {
+        "zh": "每個「海域帶」只顯示一次。",
+        "en": "Return each zone exactly once."
+      },
+      "table": "research_vessels",
+      "concept": "DISTINCT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "zone"
+          }
+        ],
+        "distinct": true,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l14",
+      "title": "Record Census",
+      "titleZh": "記錄統計",
+      "mission": {
+        "zh": "計算 research_vessels 中所有記錄的數量。",
+        "en": "Count every record in research_vessels."
+      },
+      "table": "research_vessels",
+      "concept": "COUNT",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l15",
+      "title": "Score Total",
+      "titleZh": "數值總和",
+      "mission": {
+        "zh": "計算 research_vessels 中「深度評分」的總和。",
+        "en": "Calculate the total depth_rating across research_vessels."
+      },
+      "table": "research_vessels",
+      "concept": "SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "depth_rating"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l16",
+      "title": "Quantity Mean",
+      "titleZh": "數量平均",
+      "mission": {
+        "zh": "計算 research_vessels 中「樣本數」的平均值。",
+        "en": "Calculate the average samples across research_vessels."
+      },
+      "table": "research_vessels",
+      "concept": "AVG",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "samples"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l17",
+      "title": "Category Count",
+      "titleZh": "類別計數",
+      "mission": {
+        "zh": "按「海域帶」分組，計算每組的記錄數量。",
+        "en": "Group by zone and count the records in each group."
+      },
+      "table": "research_vessels",
+      "concept": "GROUP BY",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "zone"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "zone"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l18",
+      "title": "Regional Totals",
+      "titleZh": "區域總和",
+      "mission": {
+        "zh": "按「海洋」分組，計算每組「深度評分」的總和。",
+        "en": "Group by ocean and total depth_rating for each group."
+      },
+      "table": "research_vessels",
+      "concept": "GROUP + SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "ocean"
+          },
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "depth_rating"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "ocean"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l19",
+      "title": "Repeated Categories",
+      "titleZh": "重複類別",
+      "mission": {
+        "zh": "按「海域帶」分組，只保留記錄數量大於 1 的組別。",
+        "en": "Count records by zone, keeping groups with counts above 1."
+      },
+      "table": "research_vessels",
+      "concept": "HAVING",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "zone"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "zone"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "COUNT",
+              "field": "*"
+            },
+            "op": ">",
+            "right": 1,
+            "not": false
+          }
+        ],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "set_4_l20",
+      "title": "Command Summary",
+      "titleZh": "指揮總結",
+      "mission": {
+        "zh": "按「海域帶」計算「深度評分」平均值，只保留平均值為 80 或以上的組別，並由高至低排列。",
+        "en": "Average depth_rating by zone; keep averages of at least 80 and order highest first."
+      },
+      "table": "research_vessels",
+      "concept": "FINAL CIRCUIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "zone"
+          },
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "depth_rating"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "zone"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "depth_rating"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "depth_rating"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    }
+  ]
+}

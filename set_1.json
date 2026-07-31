@@ -1,0 +1,977 @@
+{
+  "id": "set_1",
+  "title": "Core Circuit / 核心電路",
+  "description": "The original 20-level SQL campaign. / 原創二十關 SQL 學習旅程。",
+  "datasets": {
+    "cadets": [
+      {
+        "callsign": "Astra",
+        "division": "Nova",
+        "score": 92,
+        "missions": 8
+      },
+      {
+        "callsign": "Comet",
+        "division": "Solar",
+        "score": 76,
+        "missions": 5
+      },
+      {
+        "callsign": "Lyra",
+        "division": "Nova",
+        "score": 85,
+        "missions": 7
+      },
+      {
+        "callsign": "Orion",
+        "division": "Lunar",
+        "score": 68,
+        "missions": 4
+      },
+      {
+        "callsign": "Vega",
+        "division": "Solar",
+        "score": 88,
+        "missions": 6
+      },
+      {
+        "callsign": "Pulsar",
+        "division": "Lunar",
+        "score": 81,
+        "missions": 9
+      }
+    ],
+    "robots": [
+      {
+        "robot": "Bolt",
+        "class": "Racer",
+        "speed": 92,
+        "energy": 64,
+        "planet": "Mars"
+      },
+      {
+        "robot": "Echo",
+        "class": "Scout",
+        "speed": 75,
+        "energy": 88,
+        "planet": "Earth"
+      },
+      {
+        "robot": "Nova",
+        "class": "Racer",
+        "speed": 95,
+        "energy": 41,
+        "planet": "Venus"
+      },
+      {
+        "robot": "Pixel",
+        "class": "Builder",
+        "speed": 52,
+        "energy": 90,
+        "planet": "Mars"
+      },
+      {
+        "robot": "Flux",
+        "class": "Scout",
+        "speed": 81,
+        "energy": 76,
+        "planet": "Venus"
+      },
+      {
+        "robot": "Rivet",
+        "class": "Builder",
+        "speed": 61,
+        "energy": 82,
+        "planet": "Earth"
+      }
+    ],
+    "potions": [
+      {
+        "potion": "Moon Mist",
+        "type": "Elixir",
+        "stock": 3,
+        "price": 24
+      },
+      {
+        "potion": "Ember Drop",
+        "type": "Tonic",
+        "stock": 8,
+        "price": 18
+      },
+      {
+        "potion": "Echo Sap",
+        "type": "Elixir",
+        "stock": 2,
+        "price": 31
+      },
+      {
+        "potion": "Moss Fizz",
+        "type": "Tonic",
+        "stock": 12,
+        "price": 9
+      },
+      {
+        "potion": "Star Salt",
+        "type": "Powder",
+        "stock": 4,
+        "price": 27
+      },
+      {
+        "potion": "Glow Ink",
+        "type": "Powder",
+        "stock": 7,
+        "price": 15
+      }
+    ],
+    "deliveries": [
+      {
+        "package": "ION-7",
+        "zone": "Outer",
+        "days": 2,
+        "cargo": 40
+      },
+      {
+        "package": "LUX-2",
+        "zone": "Core",
+        "days": 1,
+        "cargo": 22
+      },
+      {
+        "package": "NOVA-4",
+        "zone": "Outer",
+        "days": 4,
+        "cargo": 35
+      },
+      {
+        "package": "ARC-9",
+        "zone": "Rim",
+        "days": 3,
+        "cargo": 58
+      },
+      {
+        "package": "ZEN-1",
+        "zone": "Outer",
+        "days": 1,
+        "cargo": 28
+      },
+      {
+        "package": "PIX-6",
+        "zone": "Core",
+        "days": 5,
+        "cargo": 44
+      }
+    ],
+    "monsters": [
+      {
+        "monster": "Cinder",
+        "element": "Fire",
+        "power": 88,
+        "status": "awake"
+      },
+      {
+        "monster": "Glacia",
+        "element": "Ice",
+        "power": 91,
+        "status": "awake"
+      },
+      {
+        "monster": "Mote",
+        "element": "Air",
+        "power": 52,
+        "status": "sleeping"
+      },
+      {
+        "monster": "Scorch",
+        "element": "Fire",
+        "power": 79,
+        "status": "awake"
+      },
+      {
+        "monster": "Rime",
+        "element": "Ice",
+        "power": 73,
+        "status": "sleeping"
+      },
+      {
+        "monster": "Pebble",
+        "element": "Earth",
+        "power": 61,
+        "status": "awake"
+      }
+    ],
+    "arcade": [
+      {
+        "player": "Kira",
+        "game": "Vector",
+        "coins": 120,
+        "status": "online"
+      },
+      {
+        "player": "Milo",
+        "game": "Vector",
+        "coins": 85,
+        "status": "offline"
+      },
+      {
+        "player": "Zed",
+        "game": "Orbit",
+        "coins": 210,
+        "status": "online"
+      },
+      {
+        "player": "Nia",
+        "game": "Pulse",
+        "coins": 95,
+        "status": "online"
+      },
+      {
+        "player": "Ari",
+        "game": "Orbit",
+        "coins": 160,
+        "status": "offline"
+      },
+      {
+        "player": "Sol",
+        "game": "Pulse",
+        "coins": 130,
+        "status": "online"
+      }
+    ],
+    "heroes": [
+      {
+        "hero": "Volt",
+        "team": "Sky",
+        "score": 88,
+        "city": "Tokyo"
+      },
+      {
+        "hero": "Rune",
+        "team": "Night",
+        "score": 76,
+        "city": "Oslo"
+      },
+      {
+        "hero": "Prism",
+        "team": "Sky",
+        "score": 94,
+        "city": "Lima"
+      },
+      {
+        "hero": "Dash",
+        "team": "Metro",
+        "score": 81,
+        "city": "Tokyo"
+      },
+      {
+        "hero": "Halo",
+        "team": "Night",
+        "score": 69,
+        "city": "Lima"
+      },
+      {
+        "hero": "Quill",
+        "team": "Metro",
+        "score": 86,
+        "city": "Oslo"
+      }
+    ]
+  },
+  "levels": [
+    {
+      "id": "s1_l01",
+      "title": "Signal Extraction",
+      "mission": {
+        "zh": "只選取學員的呼號。",
+        "en": "Select only the cadet callsigns."
+      },
+      "table": "cadets",
+      "concept": "SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "callsign"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l02",
+      "title": "Dual Channel",
+      "mission": {
+        "zh": "依序傳回呼號及分數。",
+        "en": "Return callsign and score in that order."
+      },
+      "table": "cadets",
+      "concept": "MULTI SELECT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "callsign"
+          },
+          {
+            "type": "field",
+            "name": "score"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l03",
+      "title": "Sequence Matters",
+      "mission": {
+        "zh": "先傳回分數，然後傳回呼號。",
+        "en": "Return score first, then callsign."
+      },
+      "table": "cadets",
+      "concept": "FIELD ORDER",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "score"
+          },
+          {
+            "type": "field",
+            "name": "callsign"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l04",
+      "title": "Red Planet Relay",
+      "mission": {
+        "zh": "找出來自火星的機械人，並顯示機械人名稱及行星。",
+        "en": "Find robot and planet for Mars units."
+      },
+      "table": "robots",
+      "concept": "WHERE =",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "robot"
+          },
+          {
+            "type": "field",
+            "name": "planet"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "planet"
+            },
+            "op": "=",
+            "right": "Mars",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l05",
+      "title": "Elite Cadets",
+      "mission": {
+        "zh": "顯示分數為 80 或以上的學員呼號及分數。",
+        "en": "Show callsign and score for scores of 80 or more."
+      },
+      "table": "cadets",
+      "concept": "COMPARISON",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "callsign"
+          },
+          {
+            "type": "field",
+            "name": "score"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "score"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l06",
+      "title": "Low Stock Alarm",
+      "mission": {
+        "zh": "顯示存貨少於 5 件的藥水及存貨量。",
+        "en": "Show potion and stock when fewer than 5 remain."
+      },
+      "table": "potions",
+      "concept": "NUMERIC FILTER",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "potion"
+          },
+          {
+            "type": "field",
+            "name": "stock"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "stock"
+            },
+            "op": "<",
+            "right": 5,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l07",
+      "title": "Express Lane",
+      "mission": {
+        "zh": "找出外圍區中可於 2 天內送達的包裹。",
+        "en": "Find Outer-zone packages arriving within 2 days."
+      },
+      "table": "deliveries",
+      "concept": "AND",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "package"
+          },
+          {
+            "type": "field",
+            "name": "days"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "zone"
+            },
+            "op": "=",
+            "right": "Outer",
+            "not": false
+          },
+          {
+            "join": "AND",
+            "left": {
+              "type": "field",
+              "name": "days"
+            },
+            "op": "<=",
+            "right": 2,
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l08",
+      "title": "Element Hunt",
+      "mission": {
+        "zh": "列出火或冰屬性的怪物及其屬性。",
+        "en": "List Fire or Ice monsters with their element."
+      },
+      "table": "monsters",
+      "concept": "OR / IN",
+      "extraValues": [
+        [
+          "Fire",
+          "Ice"
+        ]
+      ],
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "monster"
+          },
+          {
+            "type": "field",
+            "name": "element"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "element"
+            },
+            "op": "=",
+            "right": "Fire",
+            "not": false
+          },
+          {
+            "join": "OR",
+            "left": {
+              "type": "field",
+              "name": "element"
+            },
+            "op": "=",
+            "right": "Ice",
+            "not": false
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l09",
+      "title": "Online Crew",
+      "mission": {
+        "zh": "傳回所有並非離線的玩家及其狀態。",
+        "en": "Return player and status for everyone not offline."
+      },
+      "table": "arcade",
+      "concept": "NOT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "player"
+          },
+          {
+            "type": "field",
+            "name": "status"
+          }
+        ],
+        "distinct": false,
+        "where": [
+          {
+            "left": {
+              "type": "field",
+              "name": "status"
+            },
+            "op": "=",
+            "right": "offline",
+            "not": true
+          }
+        ],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l10",
+      "title": "Speed Ladder",
+      "mission": {
+        "zh": "按速度由慢至快排列機械人。",
+        "en": "Order robots from slowest to fastest."
+      },
+      "table": "robots",
+      "concept": "ORDER BY ASC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "robot"
+          },
+          {
+            "type": "field",
+            "name": "speed"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "speed"
+            },
+            "dir": "ASC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l11",
+      "title": "Power Ranking",
+      "mission": {
+        "zh": "按能量由高至低排列機械人。",
+        "en": "Order robots by energy, highest first."
+      },
+      "table": "robots",
+      "concept": "ORDER BY DESC",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "robot"
+          },
+          {
+            "type": "field",
+            "name": "energy"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "energy"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l12",
+      "title": "Priority Drop",
+      "mission": {
+        "zh": "顯示送達日數最少的 3 個包裹。",
+        "en": "Show the 3 quickest packages by arrival days."
+      },
+      "table": "deliveries",
+      "concept": "LIMIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "package"
+          },
+          {
+            "type": "field",
+            "name": "days"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "field",
+              "name": "days"
+            },
+            "dir": "ASC"
+          }
+        ],
+        "limit": 3
+      }
+    },
+    {
+      "id": "s1_l13",
+      "title": "Planet Index",
+      "mission": {
+        "zh": "每個機械人所屬行星只顯示一次。",
+        "en": "Return each robot planet exactly once."
+      },
+      "table": "robots",
+      "concept": "DISTINCT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "planet"
+          }
+        ],
+        "distinct": true,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l14",
+      "title": "Cabinet Census",
+      "mission": {
+        "zh": "計算所有藥水記錄的數量。",
+        "en": "Count every potion record."
+      },
+      "table": "potions",
+      "concept": "COUNT",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l15",
+      "title": "Coin Reserve",
+      "mission": {
+        "zh": "計算遊戲機中心的金幣總數。",
+        "en": "Calculate the total arcade coin reserve."
+      },
+      "table": "arcade",
+      "concept": "SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "coins"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l16",
+      "title": "Hero Baseline",
+      "mission": {
+        "zh": "計算英雄的平均分數。",
+        "en": "Calculate the average hero score."
+      },
+      "table": "heroes",
+      "concept": "AVG",
+      "goal": {
+        "select": [
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "score"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l17",
+      "title": "Robot Registry",
+      "mission": {
+        "zh": "按機械人類別分組，計算每組數量。",
+        "en": "Count robots in each class."
+      },
+      "table": "robots",
+      "concept": "GROUP BY",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "class"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "class"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l18",
+      "title": "Cargo Network",
+      "mission": {
+        "zh": "按送貨區域分組，計算每區的貨物總量。",
+        "en": "Total cargo for every delivery zone."
+      },
+      "table": "deliveries",
+      "concept": "GROUP + SUM",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "zone"
+          },
+          {
+            "type": "agg",
+            "fn": "SUM",
+            "field": "cargo"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "zone"
+        ],
+        "having": [],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l19",
+      "title": "Element Clusters",
+      "mission": {
+        "zh": "按怪物屬性分組，只保留數量大於 1 的組別。",
+        "en": "Count monsters by element, keeping counts above 1."
+      },
+      "table": "monsters",
+      "concept": "HAVING",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "element"
+          },
+          {
+            "type": "agg",
+            "fn": "COUNT",
+            "field": "*"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "element"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "COUNT",
+              "field": "*"
+            },
+            "op": ">",
+            "right": 1,
+            "not": false
+          }
+        ],
+        "orderBy": [],
+        "limit": null
+      }
+    },
+    {
+      "id": "s1_l20",
+      "title": "Division Command",
+      "mission": {
+        "zh": "按學員分部計算平均分，只保留平均分為 80 或以上的分部，並由高至低排列。",
+        "en": "Average cadet score by division; keep averages ≥ 80, highest first."
+      },
+      "table": "cadets",
+      "concept": "FINAL CIRCUIT",
+      "goal": {
+        "select": [
+          {
+            "type": "field",
+            "name": "division"
+          },
+          {
+            "type": "agg",
+            "fn": "AVG",
+            "field": "score"
+          }
+        ],
+        "distinct": false,
+        "where": [],
+        "groupBy": [
+          "division"
+        ],
+        "having": [
+          {
+            "left": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "score"
+            },
+            "op": ">=",
+            "right": 80,
+            "not": false
+          }
+        ],
+        "orderBy": [
+          {
+            "expr": {
+              "type": "agg",
+              "fn": "AVG",
+              "field": "score"
+            },
+            "dir": "DESC"
+          }
+        ],
+        "limit": null
+      }
+    }
+  ]
+}
