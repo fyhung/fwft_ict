@@ -89,9 +89,15 @@
   .qline.indent{padding-left:25px}
   .qblock{--c:#55e6ff;position:relative;display:inline-flex;align-items:center;min-height:29px;padding:5px 11px;
     border:1px solid color-mix(in srgb,var(--c),transparent 30%);border-radius:6px;color:#06111b;background:var(--c);font-size:11px;font-weight:800;
-    box-shadow:inset 0 -3px 0 #0003,0 3px 10px #0004;animation:blockin .18s ease-out}
+    font-family:inherit;cursor:pointer;box-shadow:inset 0 -3px 0 #0003,0 3px 10px #0004;animation:blockin .18s ease-out}
+  .qblock:hover{filter:brightness(1.12);box-shadow:inset 0 -3px 0 #0003,0 0 0 2px #ff6688,0 3px 12px #0005}
+  .qblock:focus-visible{outline:2px solid #fff;outline-offset:2px}
   .qblock:before,.block:before{content:"";position:absolute;width:9px;height:4px;border-radius:3px 3px 0 0;top:-5px;left:12px;background:inherit;border:inherit;border-bottom:0}
   .qblock.field{--c:#86f79a}.qblock.value{--c:#ffd166}.qblock.op{--c:#ff70b8}.qblock.agg{--c:#b394ff}.qblock.table{--c:#72b7ff}
+  .insert-slot{position:relative;align-self:stretch;flex:0 0 7px;min-height:29px;margin:-1px -3px;border:0;background:transparent;cursor:text;padding:0}
+  .insert-slot:before{content:"";position:absolute;left:3px;top:4px;bottom:4px;width:2px;border-radius:2px;background:#55e6ff;opacity:.13;transition:.15s}
+  .insert-slot:hover:before,.insert-slot.active:before{opacity:1;box-shadow:0 0 10px #55e6ff}
+  .insert-slot.active:after{content:"";position:absolute;left:1px;top:0;width:6px;height:3px;border-radius:3px;background:#55e6ff;box-shadow:0 0 8px #55e6ff}
   .comma{color:#57758a}
   .querystatus{font-size:10px;color:var(--amber);height:20px;padding:7px 2px 0}
   .queryactions{display:flex;gap:8px;margin-top:12px}
@@ -279,6 +285,7 @@
   <section class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
     <span class="eyebrow">FIELD MANUAL</span><h2 id="helpTitle">BUILD. RUN. MATCH.</h2>
     <p>Click the glowing Lego-style blocks to assemble a query. The palette only enables blocks that fit the current position. Once the query is valid, the source table transforms immediately.</p>
+    <p><strong style="color:var(--cyan)">Edit anywhere:</strong> Click a thin gap in the query to move the glowing insertion cursor, then choose a palette block. Click an existing SQL block to delete it. Undo restores the previous insertion or deletion.</p>
     <p>Match every target column, row, value, and ordering exactly. Each inserted block costs 1 point, each Undo costs another point, and time costs 1 point every 2 seconds. There is no move limit, and you can keep solving at zero.</p>
     <p><strong style="color:var(--cyan)">Tip:</strong> Punctuation and formatting are wired automatically, so you only pay for meaningful SQL blocks.</p>
     <div class="modalactions"><button class="action primary" data-close="helpModal">ENTER THE LAB</button></div>
@@ -336,7 +343,7 @@ const progress={
  playerName:saved.playerName??legacy.playerName??"",lastSet:saved.lastSet||"set_1",sets:saved.sets||{},
  seenHelp:saved.seenHelp??legacy.seenHelp??false
 };
-let manifest=fallbackManifest,setIndex=0,currentSet=null,datasets={},levels=[],levelIndex=0,tokens=[],parsed=null,lastValid=null;
+let manifest=fallbackManifest,setIndex=0,currentSet=null,datasets={},levels=[],levelIndex=0,tokens=[],parsed=null,lastValid=null,insertAt=0,history=[];
 let startTime=0,elapsed=0,insertions=0,undos=0,solved=false,timer=null,lastTimerPenalty=0,audioCtx=null;
 
 const setProgress=()=>progress.sets[currentSet?.id||progress.lastSet]||(progress.sets[currentSet?.id||progress.lastSet]={unlocked:1,best:{},completed:{},last:1});
@@ -392,7 +399,7 @@ function exact(a,b){return JSON.stringify(a.columns)===JSON.stringify(b.columns)
 function token(type,value,label=value,kind=type){return{type,value,label,kind}}
 function parse(ts){
   const ast=G([]);let i=0,state="start",clause="",pendingAgg=null,current=null,negate=false;
-  const out=(valid,msg,next)=>({valid,msg,next,ast,state});
+  const out=(valid,msg,next,errorAt=valid?null:i-1)=>({valid,msg,next,ast,state,errorAt});
   while(i<ts.length){
     const t=ts[i++];
     if(state==="start"){if(t.type!=="SELECT")return out(false,"Begin with SELECT",["SELECT"]);state="selectStart";continue}
@@ -470,7 +477,7 @@ function parse(ts){
   if(state==="condOperand")next=clause==="having"?["field","agg","NOT"]:["field","NOT"];
   if(state==="condOp")next=["op"];if(state==="condValue")next=["value"];if(state==="betweenSecond")next=["scalarValue"];
   if(state==="groupField")next=["field"];if(state==="orderExpr")next=["field","agg"];if(state==="orderDir")next=["ASC","DESC"];if(state==="limitValue")next=["limitValue"];
-  return out(valid,valid?"Circuit active • result updating":messages[state]||"Continue building",next);
+  return out(valid,valid?"Circuit active • result updating":messages[state]||"Continue building",next,null);
 }
 
 function formatQuery(ts){
@@ -522,29 +529,10 @@ function availableBlocks(){
 const unlock={SELECT:1,FROM:1,WHERE:4,"=":4,">":5,">=":5,"<":5,"<=":5,"!=":6,AND:7,OR:8,IN:8,NOT:9,"ORDER BY":10,ASC:10,DESC:11,LIMIT:12,DISTINCT:13,
  COUNT:14,SUM:15,AVG:16,MIN:16,MAX:16,"GROUP BY":17,HAVING:19,LIKE:6,BETWEEN:6,"IS NULL":6,"IS NOT NULL":6};
 function enabled(t){
-  const p=parsed, n=p.next, st=p.state, levelNo=levelIndex+1;if((unlock[t.type]||unlock[t.value]||1)>levelNo)return false;
-  if(t.type==="field"&&t.value==="*"&&!["aggFieldSelect","condAggField","orderAggField"].includes(st))return false;
-  if(n.includes(t.type)||n.includes(t.kind))return true;
-  if(n.includes("field")&&t.type==="field")return true;if(n.includes("agg")&&t.type==="agg")return true;
-  if(n.includes("op")&&t.type==="op")return true;
-  if(n.includes("value")&&t.type==="value"){
-    if(st==="condValue"&&parsed.ast){
-      const op=lastOp();if(op==="IN")return Array.isArray(t.value);if(op==="BETWEEN")return !Array.isArray(t.value);
-    }return true
-  }
-  if(n.includes("scalarValue")&&t.type==="value")return !Array.isArray(t.value);
-  if(n.includes("limitValue")&&t.type==="value")return typeof t.value==="number"&&Number.isInteger(t.value)&&t.value>=0&&t.value<=100;
-  if(n.includes("clause")){
-    if(t.type==="WHERE")return st==="post"&&!p.ast.where.length;
-    if(t.type==="GROUP BY")return ["post","conditionDone"].includes(st)&&!p.ast.groupBy.length;
-    if(t.type==="HAVING")return st==="groupDone"&&!p.ast.having.length;
-    if(t.type==="ORDER BY")return !p.ast.orderBy.length;
-    if(t.type==="LIMIT")return p.ast.limit==null;
-    if((t.type==="AND"||t.type==="OR")&&st==="conditionDone")return true;
-    if(st==="groupDone"&&t.type==="field")return true;
-    if(st==="orderDone"&&(t.type==="field"||t.type==="agg"))return true;
-  }
-  return false;
+  const levelNo=levelIndex+1;if((unlock[t.type]||unlock[t.value]||1)>levelNo)return false;
+  if(t.type==="field"&&t.value==="*"&&tokens[insertAt-1]?.type!=="agg")return false;
+  const candidate=[...tokens.slice(0,insertAt),t,...tokens.slice(insertAt)];
+  return parse(candidate).errorAt===null;
 }
 function lastOp(){for(let i=tokens.length-1;i>=0;i--)if(tokens[i].type==="op")return tokens[i].value;return null}
 
@@ -557,13 +545,15 @@ function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":
 function sourceData(lvl){const rows=datasets[lvl.table], columns=Object.keys(rows[0]);return{columns,rows}}
 function renderQuery(){
   if(!tokens.length)el.query.innerHTML='<div class="emptyquery">Connect a <strong style="color:var(--cyan);margin:0 5px">SELECT</strong> block to begin the circuit.</div>';
-  else el.query.innerHTML=formatQuery(tokens).map(l=>`<div class="qline ${l.indent?"indent":""}">${l.tokens.map((t,i)=>{
+  else{const lines=formatQuery(tokens);el.query.innerHTML=lines.map((l,lineIndex)=>`<div class="qline ${l.indent?"indent":""}">${l.tokens.map((t,i)=>{
     const prev=l.tokens[i-1],aggregateField=t.type==="field"&&prev?.type==="agg";
     const alias=aggregateField&&findClause(tokens,t._idx)==="select"?" AS "+aggName(A(prev.value,t.value)):"";
-    return(t.comma?'<span class="comma">,</span>':"")+(aggregateField?'<span class="comma">(</span>':"")+`<span class="qblock ${t.kind}">${escapeHtml(t.label)}</span>`+(aggregateField?`<span class="comma">)${escapeHtml(alias)}</span>`:"")
-   }).join("")}</div>`).join("");
-  el.status.textContent=parsed.msg;el.status.style.color=parsed.valid?"var(--green)":"var(--amber)";
-  el.blockCount.textContent=`${tokens.length} BLOCK${tokens.length===1?"":"S"}`;$("#undoBtn").disabled=!tokens.length||solved;
+    const slot=`<button class="insert-slot ${insertAt===t._idx?"active":""}" data-insert="${t._idx}" aria-label="Insert before ${escapeHtml(t.label)}" title="Insert here"></button>`;
+    return slot+(t.comma?'<span class="comma">,</span>':"")+(aggregateField?'<span class="comma">(</span>':"")+`<button class="qblock ${t.kind}" data-delete="${t._idx}" aria-label="Delete ${escapeHtml(t.label)}" title="Click to delete">${escapeHtml(t.label)}</button>`+(aggregateField?`<span class="comma">)${escapeHtml(alias)}</span>`:"")
+   }).join("")+(lineIndex===lines.length-1?`<button class="insert-slot ${insertAt===tokens.length?"active":""}" data-insert="${tokens.length}" aria-label="Insert at end" title="Insert here"></button>`:"")}</div>`).join("")}
+  el.status.textContent=`${parsed.msg} • Click a gap to insert; click a block to delete.`;
+  el.status.style.color=parsed.valid?"var(--green)":"var(--amber)";
+  el.blockCount.textContent=`${tokens.length} BLOCK${tokens.length===1?"":"S"}`;$("#undoBtn").disabled=!history.length||solved;
 }
 function renderPalette(){
   el.palette.innerHTML=availableBlocks().map(g=>`<section class="group"><div class="grouplabel">${g.name}</div><div class="blocks">${g.items.map((t,i)=>{
@@ -609,15 +599,18 @@ function update(animate=true){
   if(parsed.valid&&!solved&&exact(lastValid,targetFor(levels[levelIndex])))complete();
 }
 function insert(t){
-  if(solved||!enabled(t))return;tokens.push(t);insertions++;penalty("BLOCK");beep("click");update(true);
+  if(solved||!enabled(t))return;history.push({tokens:clone(tokens),insertAt});tokens.splice(insertAt,0,t);insertAt++;insertions++;lastValid=null;penalty("BLOCK");beep("click");update(true);
+}
+function deleteToken(index){
+  if(solved||index<0||index>=tokens.length)return;history.push({tokens:clone(tokens),insertAt});tokens.splice(index,1);insertAt=Math.min(index,tokens.length);lastValid=null;beep("undo");update(true);
 }
 function undo(){
-  if(!tokens.length||solved)return;tokens.pop();undos++;lastValid=null;parsed=parse(tokens);
+  if(!history.length||solved)return;const previous=history.pop();tokens=previous.tokens;insertAt=previous.insertAt;undos++;lastValid=null;parsed=parse(tokens);
   for(let i=tokens.length;i>0;i--){const candidate=parse(tokens.slice(0,i));if(candidate.valid){lastValid=evaluate(candidate.ast,datasets[levels[levelIndex].table]);break}}
   penalty("UNDO");beep("undo");update(true);
 }
 function startLevel(idx){
-  levelIndex=idx;tokens=[];parsed=parse(tokens);lastValid=null;insertions=0;undos=0;elapsed=0;lastTimerPenalty=0;solved=false;startTime=Date.now();
+  levelIndex=idx;tokens=[];parsed=parse(tokens);lastValid=null;insertAt=0;history=[];insertions=0;undos=0;elapsed=0;lastTimerPenalty=0;solved=false;startTime=Date.now();
   clearInterval(timer);timer=setInterval(()=>{if(solved)return;const now=Math.floor((Date.now()-startTime)/1000);if(now!==elapsed){const old=Math.floor(elapsed/2);elapsed=now;
     if(Math.floor(elapsed/2)>old){penalty("TIME");beep("time")}renderHud()}},250);
   closeAll();update(false);save();flashToast(`${String(idx+1).padStart(2,"0")} // ${levelTitle(levels[idx])}`);
@@ -708,6 +701,8 @@ function applySettings(){
 }
 
 el.palette.addEventListener("click",e=>{const b=e.target.closest("[data-token]");if(b&&!b.disabled)insert(JSON.parse(decodeURIComponent(b.dataset.token)))});
+el.query.addEventListener("click",e=>{const slot=e.target.closest("[data-insert]");if(slot){insertAt=Math.max(0,Math.min(tokens.length,+slot.dataset.insert));renderQuery();renderPalette();return}
+ const block=e.target.closest("[data-delete]");if(block)deleteToken(+block.dataset.delete)});
 $("#undoBtn").addEventListener("click",undo);$("#restartBtn").addEventListener("click",restart);
 $("#levelsBtn").addEventListener("click",()=>manifest.sets.length&&showLevels());$("#completeLevelsBtn").addEventListener("click",showLevels);
 $("#helpBtn").addEventListener("click",()=>openModal($("#helpModal")));$("#settingsBtn").addEventListener("click",()=>openModal($("#settingsModal")));
