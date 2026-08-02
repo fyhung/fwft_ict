@@ -1,0 +1,1270 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f1e9">
+    <meta name="author" content="fyhung">
+    <meta name="description" content="An interactive binary, hexadecimal and decimal number systems lab for Information and Communication Technology.">
+    <title>Binary Number Systems Lab — ICT Summer 2026</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #f4f1e9;
+        --paper-deep: #e9e4d9;
+        --ink: #15212b;
+        --muted: #6c756f;
+        --line: #c9c7bd;
+        --white: #fffdf8;
+        --blue: #2f61d5;
+        --blue-soft: #e6ecff;
+        --yellow: #ffd74d;
+        --red: #c84a3d;
+        --shadow: 0 18px 50px rgba(31, 38, 35, .10);
+        --mono: "SFMono-Regular", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+        --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        background:
+          radial-gradient(circle at 10% 10%, rgba(255, 215, 77, .18), transparent 25rem),
+          linear-gradient(rgba(21, 33, 43, .035) 1px, transparent 1px),
+          var(--paper);
+        background-size: auto, 100% 32px, auto;
+        color: var(--ink);
+        font-family: var(--sans);
+      }
+
+      button, input { font: inherit; }
+
+      button { color: inherit; }
+
+      .shell {
+        width: min(1180px, calc(100% - 36px));
+        margin: 0 auto;
+        padding: 38px 0 34px;
+      }
+
+      header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 30px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        border: 2px solid var(--ink);
+        border-radius: 11px;
+        place-items: center;
+        background: var(--yellow);
+        box-shadow: 3px 3px 0 var(--ink);
+        font: 800 12px/1 var(--mono);
+        letter-spacing: -.05em;
+      }
+
+      .eyebrow {
+        margin: 0 0 4px;
+        color: var(--blue);
+        font: 700 11px/1 var(--mono);
+        letter-spacing: .16em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(25px, 4vw, 38px);
+        letter-spacing: -.045em;
+        line-height: 1;
+      }
+
+      .subtitle {
+        max-width: 390px;
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.55;
+        text-align: right;
+      }
+
+      .project-credit {
+        display: grid;
+        grid-template-columns: auto minmax(220px, .75fr) minmax(360px, 1.25fr);
+        gap: 18px;
+        align-items: center;
+        margin-top: 24px;
+        padding: 18px 20px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+      }
+
+      .credit-mark {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        place-items: center;
+        background: var(--ink);
+        color: var(--yellow);
+        font: 800 12px/1 var(--mono);
+      }
+
+      .credit-primary,
+      .credit-context {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .project-credit strong {
+        color: var(--ink);
+        font-size: 13px;
+      }
+
+      .project-credit span {
+        font-size: 11px;
+        line-height: 1.45;
+      }
+
+      .credit-context {
+        align-items: flex-end;
+        text-align: right;
+      }
+
+      .credit-label {
+        color: var(--blue);
+        font: 700 9px/1 var(--mono);
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+
+      .settings {
+        display: grid;
+        grid-template-columns: minmax(260px, .75fr) minmax(460px, 1.25fr);
+        gap: 12px;
+        margin-bottom: 22px;
+      }
+
+      fieldset {
+        min-width: 0;
+        margin: 0;
+        padding: 14px 16px 16px;
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        background: rgba(255, 253, 248, .72);
+      }
+
+      legend {
+        padding: 0 8px;
+        color: var(--muted);
+        font: 700 10px/1 var(--mono);
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+
+      .segments {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+
+      .segments label {
+        position: relative;
+        flex: 1 0 auto;
+        min-width: max-content;
+        cursor: pointer;
+      }
+
+      .segments input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .segments span {
+        display: block;
+        padding: 9px 12px;
+        border: 1px solid transparent;
+        border-radius: 9px;
+        color: var(--muted);
+        font: 650 12px/1 var(--mono);
+        text-align: center;
+        transition: background .18s, border-color .18s, color .18s, transform .18s;
+      }
+
+      .segments input:checked + span {
+        border-color: var(--ink);
+        background: var(--ink);
+        color: var(--white);
+        transform: translateY(-1px);
+      }
+
+      .segments input:focus-visible + span {
+        outline: 3px solid rgba(47, 97, 213, .32);
+        outline-offset: 2px;
+      }
+
+      .converter {
+        position: relative;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: rgba(255, 253, 248, .80);
+        box-shadow: var(--shadow);
+      }
+
+      .table-head,
+      .number-row {
+        display: grid;
+        grid-template-columns: var(--grid-columns);
+        gap: 14px;
+        align-items: stretch;
+      }
+
+      .table-head {
+        min-width: var(--table-min-width);
+        padding: 0 16px 9px;
+        color: var(--muted);
+        font: 700 10px/1 var(--mono);
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+
+      .head-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .head-note {
+        color: #9b9e97;
+        font-size: 9px;
+        letter-spacing: .04em;
+        text-transform: none;
+      }
+
+      .stack {
+        position: relative;
+        display: grid;
+        min-width: var(--table-min-width);
+        gap: 8px;
+      }
+
+      .number-row {
+        position: relative;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        border-radius: 14px;
+        background: transparent;
+        text-align: left;
+      }
+
+      .shadow-row { cursor: pointer; }
+
+      .shadow-row:focus-visible {
+        outline: 3px solid rgba(47, 97, 213, .38);
+        outline-offset: 2px;
+      }
+
+      .number-row.shadow-row {
+        opacity: .25;
+        filter: saturate(.5);
+        transition: opacity .18s;
+      }
+
+      .number-row.shadow-row.near {
+        opacity: .52;
+      }
+
+      .number-row.shadow-row:hover {
+        opacity: .86;
+      }
+
+      .cell {
+        position: relative;
+        display: flex;
+        min-width: 0;
+        min-height: 88px;
+        align-items: center;
+        padding: 13px 16px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--white);
+      }
+
+      .active-row .cell {
+        min-height: 88px;
+        border-color: var(--ink);
+        box-shadow: 3px 3px 0 rgba(21, 33, 43, .92);
+      }
+
+      .active-row .binary-cell {
+        background:
+          linear-gradient(90deg, rgba(47, 97, 213, .065), transparent 70%),
+          var(--white);
+      }
+
+      .step-tag {
+        position: absolute;
+        z-index: 2;
+        top: 50%;
+        left: -10px;
+        display: grid;
+        width: 26px;
+        height: 26px;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        place-items: center;
+        background: var(--paper);
+        color: var(--muted);
+        font: 700 9px/1 var(--mono);
+        transform: translate(-100%, -50%);
+      }
+
+      .bits {
+        display: flex;
+        width: 100%;
+        min-width: 0;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(2px, .45vw, 7px);
+      }
+
+      .bit {
+        display: grid;
+        width: clamp(18px, 2.5vw, 31px);
+        height: clamp(33px, 4.2vw, 48px);
+        flex: 0 1 31px;
+        padding: 0;
+        border: 1px solid #b9bdb7;
+        border-radius: 7px;
+        place-items: center;
+        background: #f6f5f0;
+        color: #9da39f;
+        font: 750 clamp(13px, 1.6vw, 19px)/1 var(--mono);
+        cursor: pointer;
+        transition: transform .14s, color .14s, border-color .14s, background .14s;
+      }
+
+      .bit:hover {
+        border-color: var(--blue);
+        transform: translateY(-2px);
+      }
+
+      .bit.static {
+        cursor: default;
+        pointer-events: none;
+      }
+
+      .bit.static:hover {
+        border-color: #b9bdb7;
+        transform: none;
+      }
+
+      .bit.static.on { border-color: var(--blue); }
+
+      .bit.static.sign-bit { border-color: var(--red); }
+
+      .bit:focus-visible {
+        outline: 3px solid rgba(47, 97, 213, .30);
+        outline-offset: 2px;
+      }
+
+      .bit.on {
+        border-color: var(--blue);
+        background: var(--blue);
+        color: white;
+        box-shadow: inset 0 -3px 0 rgba(8, 35, 99, .25);
+      }
+
+      .bit.sign-bit {
+        margin-right: clamp(2px, .5vw, 8px);
+        border-color: var(--red);
+      }
+
+      .bit.sign-bit.on {
+        background: var(--red);
+        color: white;
+      }
+
+      .group-gap { margin-left: clamp(3px, .7vw, 10px); }
+
+      .value-wrap {
+        display: flex;
+        width: 100%;
+        min-width: 0;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .prefix,
+      .suffix {
+        color: var(--muted);
+        font: 700 12px/1 var(--mono);
+      }
+
+      .value-input {
+        width: 100%;
+        min-width: 0;
+        padding: 6px 0;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        outline: 0;
+        background: transparent;
+        color: var(--ink);
+        font: 750 clamp(18px, 2.4vw, 27px)/1 var(--mono);
+        letter-spacing: -.045em;
+      }
+
+      .value-input:focus {
+        border-bottom-color: var(--blue);
+      }
+
+      .decimal-cell { justify-content: space-between; }
+
+      .sign-pill {
+        display: grid;
+        width: 30px;
+        height: 30px;
+        flex: 0 0 30px;
+        padding: 0;
+        border: 0;
+        border-radius: 8px;
+        place-items: center;
+        background: var(--blue-soft);
+        color: var(--blue);
+        font: 800 18px/1 var(--mono);
+      }
+
+      button.sign-pill { cursor: pointer; }
+
+      button.sign-pill:hover { filter: brightness(.96); }
+
+      button.sign-pill:focus-visible {
+        outline: 3px solid rgba(47, 97, 213, .30);
+        outline-offset: 2px;
+      }
+
+      button.sign-pill:disabled {
+        cursor: default;
+        opacity: 1;
+      }
+
+      .sign-pill.negative {
+        background: #ffe8e4;
+        color: var(--red);
+      }
+
+      .shadow-value {
+        overflow: hidden;
+        width: 100%;
+        font: 750 clamp(15px, 1.8vw, 21px)/1 var(--mono);
+        letter-spacing: -.035em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .footer-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-top: 17px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--blue);
+      }
+
+      .dot.sign { background: var(--red); }
+
+      .range {
+        font: 650 11px/1.4 var(--mono);
+        text-align: right;
+      }
+
+      .tip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 15px 4px 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .complements {
+        margin-top: 24px;
+        overflow-x: auto;
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: rgba(255, 253, 248, .68);
+      }
+
+      .complements-title {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 14px;
+      }
+
+      .complements-title h2 {
+        margin: 0;
+        font-size: 18px;
+        letter-spacing: -.025em;
+      }
+
+      .complements-title p {
+        margin: 0;
+        color: var(--muted);
+        font: 650 10px/1.4 var(--mono);
+        text-align: right;
+      }
+
+      .complement-stack {
+        display: grid;
+        min-width: var(--complement-table-min-width);
+        gap: 10px;
+      }
+
+      .complement-row {
+        display: grid;
+        grid-template-columns: 170px minmax(0, 1fr);
+        gap: 14px;
+        align-items: stretch;
+      }
+
+      .complement-label {
+        display: flex;
+        min-height: 88px;
+        flex-direction: column;
+        justify-content: center;
+        padding: 13px 15px;
+        border-left: 4px solid var(--yellow);
+        border-radius: 8px;
+        background: rgba(233, 228, 217, .66);
+      }
+
+      .complement-label strong {
+        font-size: 14px;
+        letter-spacing: -.01em;
+      }
+
+      .complement-label code {
+        margin-top: 6px;
+        color: var(--muted);
+        font: 700 10px/1 var(--mono);
+      }
+
+      .complement-data {
+        display: grid;
+        grid-template-columns: var(--complement-columns);
+        gap: 14px;
+      }
+
+      .complement-row.current .complement-label { border-left-color: var(--ink); }
+      .complement-row.twos .complement-label { border-left-color: var(--blue); }
+
+      .complement-placeholder {
+        border-style: dashed;
+        background:
+          repeating-linear-gradient(
+            -45deg,
+            rgba(108, 117, 111, .025),
+            rgba(108, 117, 111, .025) 6px,
+            transparent 6px,
+            transparent 12px
+          );
+      }
+
+      .complement-decimal-cell {
+        align-items: stretch;
+        flex-direction: column;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .complement-decimal-label {
+        overflow: hidden;
+        color: var(--muted);
+        font: 700 9px/1 var(--mono);
+        letter-spacing: .08em;
+        text-overflow: ellipsis;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .complement-decimal-value {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        gap: 10px;
+      }
+
+      kbd {
+        padding: 3px 6px;
+        border: 1px solid var(--line);
+        border-bottom-width: 2px;
+        border-radius: 5px;
+        background: var(--white);
+        color: var(--ink);
+        font: 700 10px/1 var(--mono);
+      }
+
+      .toast {
+        position: fixed;
+        right: 22px;
+        bottom: 22px;
+        z-index: 5;
+        padding: 11px 15px;
+        border-radius: 10px;
+        background: var(--ink);
+        color: white;
+        font-size: 12px;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(10px);
+        transition: opacity .2s, transform .2s;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      @media (max-width: 860px) {
+        .settings { grid-template-columns: 1fr; }
+        .table-head,
+        .number-row { gap: 8px; }
+        .converter { padding: 16px; }
+        .complements { padding: 16px; }
+        .complement-row { grid-template-columns: 145px minmax(0, 1fr); gap: 8px; }
+        .complement-data { gap: 8px; }
+        .cell { padding: 10px; }
+        .step-tag { display: none; }
+        .shell { width: min(100% - 22px, 1180px); }
+        .project-credit { grid-template-columns: auto 1fr; }
+        .credit-context { grid-column: 2; align-items: flex-start; text-align: left; }
+      }
+
+      @media (max-width: 650px) {
+        .shell { padding-top: 24px; }
+        header { display: block; margin-bottom: 22px; }
+        .subtitle { margin: 13px 0 0 54px; text-align: left; }
+        .footer-line { align-items: flex-start; flex-direction: column; }
+        .complements-title { align-items: flex-start; flex-direction: column; gap: 5px; }
+        .complements-title p { text-align: left; }
+        .range { text-align: left; }
+        .head-note { display: none; }
+        .project-credit { padding-inline: 8px; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">01</div>
+          <div>
+            <p class="eyebrow">ICT · 2026 Summer</p>
+            <h1>Binary Number Systems Lab</h1>
+          </div>
+        </div>
+        <p class="subtitle">An interactive classroom project for exploring binary, hexadecimal, signed values, and complements.</p>
+      </header>
+
+      <main>
+        <section class="settings" aria-label="Converter settings">
+          <fieldset>
+            <legend>Word size</legend>
+            <div class="segments" id="width-controls">
+              <label><input type="radio" name="width" value="4"><span>4 bit</span></label>
+              <label><input type="radio" name="width" value="8" checked><span>8 bit</span></label>
+              <label><input type="radio" name="width" value="16"><span>16 bit</span></label>
+              <label><input type="radio" name="width" value="32"><span>32 bit</span></label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Decimal columns · toggle independently</legend>
+            <div class="segments" id="interpretation-controls">
+              <label><input type="checkbox" value="unsigned" checked><span>Positive integer</span></label>
+              <label><input type="checkbox" value="twos" checked><span>2's complement</span></label>
+              <label><input type="checkbox" value="signmag" checked><span>Sign &amp; value</span></label>
+            </div>
+          </fieldset>
+        </section>
+
+        <section class="converter" aria-label="Binary, hexadecimal and decimal converter">
+          <div class="table-head" id="table-head" aria-hidden="true"></div>
+
+          <div class="stack" id="number-stack"></div>
+
+          <div class="footer-line">
+            <div class="legend">
+              <span class="legend-item"><span class="dot"></span> set bit</span>
+              <span class="legend-item" id="sign-legend"><span class="dot sign"></span> sign bit</span>
+            </div>
+            <div class="range" id="range-label"></div>
+          </div>
+        </section>
+
+        <p class="tip"><kbd>↑</kbd><kbd>↓</kbd> step through patterns <span>·</span> Click a faded row to jump to it <span>·</span> Values wrap at the word-size boundary</p>
+
+        <section class="complements" aria-labelledby="complements-heading">
+          <div class="complements-title">
+            <h2 id="complements-heading">Complements</h2>
+            <p>Derived from the current main-row bit pattern</p>
+          </div>
+          <div class="complement-stack" id="complement-stack"></div>
+        </section>
+      </main>
+
+      <footer class="project-credit">
+        <div class="credit-mark" aria-hidden="true">FY</div>
+        <div class="credit-primary">
+          <span class="credit-label">Project credit</span>
+          <strong>Created by fyhung</strong>
+          <span>With help from ChatGPT 5.6 sol</span>
+        </div>
+        <div class="credit-context">
+          <strong>TWGHs Mrs. Fung Wong Fung Ting College</strong>
+          <span>Class: Information and Communication Technology · 2026 Summer</span>
+        </div>
+      </footer>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      (() => {
+        const stack = document.querySelector("#number-stack");
+        const complementStack = document.querySelector("#complement-stack");
+        const converter = document.querySelector(".converter");
+        const tableHead = document.querySelector("#table-head");
+        const rangeLabel = document.querySelector("#range-label");
+        const signLegend = document.querySelector("#sign-legend");
+        const toast = document.querySelector("#toast");
+        const modeOrder = ["unsigned", "twos", "signmag"];
+        const modeNames = {
+          unsigned: "Positive integer",
+          twos: "2's complement",
+          signmag: "Sign & value"
+        };
+        let width = 8;
+        let enabledModes = new Set(modeOrder);
+        let raw = 42n;
+        let toastTimer;
+
+        const pow2 = (n) => 1n << BigInt(n);
+        const mask = () => pow2(width) - 1n;
+        const normalize = (value) => {
+          const size = pow2(width);
+          return ((value % size) + size) % size;
+        };
+
+        const binary = (value) => value.toString(2).padStart(width, "0");
+        const hex = (value) => value.toString(16).toUpperCase().padStart(Math.ceil(width / 4), "0");
+        const visibleModes = () => modeOrder.filter((name) => enabledModes.has(name));
+        const signedColumnsVisible = () => enabledModes.has("twos") || enabledModes.has("signmag");
+
+        function interpretedValue(value, interpretation) {
+          if (interpretation === "unsigned") {
+            return { negative: false, magnitude: value, text: value.toString() };
+          }
+
+          const signMask = pow2(width - 1);
+          const negative = (value & signMask) !== 0n;
+
+          if (interpretation === "twos") {
+            const interpreted = negative ? value - pow2(width) : value;
+            return {
+              negative,
+              magnitude: interpreted < 0n ? -interpreted : interpreted,
+              text: interpreted.toString()
+            };
+          }
+
+          const magnitude = value & (signMask - 1n);
+          return {
+            negative,
+            magnitude,
+            text: negative ? (magnitude === 0n ? "−0" : "−" + magnitude) : magnitude.toString()
+          };
+        }
+
+        function maxMagnitude(interpretation) {
+          return interpretation === "unsigned" ? mask() : pow2(width - 1) - 1n;
+        }
+
+        function decimalRange(interpretation) {
+          if (interpretation === "unsigned") return "0 … " + mask();
+          if (interpretation === "twos") return "−" + pow2(width - 1) + " … " + (pow2(width - 1) - 1n);
+          return "±" + maxMagnitude(interpretation) + " · ±0";
+        }
+
+        function bitStrip(value, interactive) {
+          const wrap = document.createElement("div");
+          wrap.className = "bits";
+          const digits = binary(value);
+
+          for (let index = 0; index < width; index += 1) {
+            const place = width - index - 1;
+            const bit = document.createElement(interactive ? "button" : "span");
+            if (interactive) bit.type = "button";
+            bit.className = "bit" + (interactive ? "" : " static") + (digits[index] === "1" ? " on" : "");
+            if (index === 0 && signedColumnsVisible()) bit.classList.add("sign-bit");
+            if (index > 0 && (width - index) % 4 === 0) bit.classList.add("group-gap");
+            bit.textContent = digits[index];
+
+            if (interactive) {
+              bit.setAttribute("aria-label", "Toggle bit " + place + ", currently " + digits[index]);
+              bit.addEventListener("click", () => {
+                raw = raw ^ pow2(place);
+                render();
+              });
+            } else {
+              bit.setAttribute("aria-hidden", "true");
+            }
+
+            wrap.appendChild(bit);
+          }
+
+          return wrap;
+        }
+
+        function showToast(message) {
+          window.clearTimeout(toastTimer);
+          toast.textContent = message;
+          toast.classList.add("show");
+          toastTimer = window.setTimeout(() => toast.classList.remove("show"), 1800);
+        }
+
+        function parseHex(value) {
+          const cleaned = value.trim().replace(/^0x/i, "");
+          if (!/^[0-9a-f]+$/i.test(cleaned)) throw new Error("Use hexadecimal digits 0–9 and A–F.");
+          return BigInt("0x" + cleaned);
+        }
+
+        function parseDecimal(value, interpretation) {
+          const cleaned = value.trim().replace(/−/g, "-");
+          if (!/^[+-]?\d+$/.test(cleaned)) throw new Error("Enter a whole decimal number.");
+          const number = BigInt(cleaned);
+
+          if (interpretation === "unsigned") {
+            if (number < 0n || number > mask()) throw new Error("Decimal value is outside this word size.");
+            return number;
+          }
+
+          if (interpretation === "twos") {
+            const min = -pow2(width - 1);
+            const max = pow2(width - 1) - 1n;
+            if (number < min || number > max) throw new Error("Decimal value is outside the 2's complement range.");
+            return normalize(number);
+          }
+
+          const max = maxMagnitude(interpretation);
+          if (number < -max || number > max) throw new Error("Magnitude is too large for this word size.");
+          if (cleaned === "-0") return pow2(width - 1);
+          return number < 0n ? pow2(width - 1) | (-number) : number;
+        }
+
+        function staticValueCell(prefixText, valueText) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          const wrap = document.createElement("span");
+          wrap.className = "value-wrap";
+          if (prefixText) {
+            const prefix = document.createElement("span");
+            prefix.className = "prefix";
+            prefix.textContent = prefixText;
+            wrap.appendChild(prefix);
+          }
+          const value = document.createElement("span");
+          value.className = "shadow-value";
+          value.textContent = valueText;
+          wrap.appendChild(value);
+          cell.appendChild(wrap);
+          return cell;
+        }
+
+        function staticDecimalCell(value, interpretation) {
+          const interpreted = interpretedValue(value, interpretation);
+          const cell = document.createElement("div");
+          cell.className = "cell decimal-cell";
+          const sign = document.createElement("span");
+          sign.className = "sign-pill" + (interpreted.negative ? " negative" : "");
+          sign.textContent = interpreted.negative ? "−" : "+";
+          const magnitude = document.createElement("span");
+          magnitude.className = "shadow-value";
+          magnitude.textContent = interpreted.magnitude.toString();
+          cell.append(sign, magnitude);
+          return cell;
+        }
+
+        function shadowRow(value, delta, near) {
+          const row = document.createElement("div");
+          row.className = "number-row shadow-row" + (near ? " near" : "");
+          row.tabIndex = 0;
+          row.setAttribute("role", "button");
+          row.setAttribute("aria-label", "Set value to pattern " + binary(value));
+
+          const step = document.createElement("span");
+          step.className = "step-tag";
+          step.textContent = (delta > 0 ? "+" : "") + delta;
+
+          const binaryCell = document.createElement("div");
+          binaryCell.className = "cell binary-cell";
+          binaryCell.appendChild(bitStrip(value, false));
+
+          row.append(step, binaryCell, staticValueCell("0x", hex(value)));
+          visibleModes().forEach((interpretation) => {
+            row.appendChild(staticDecimalCell(value, interpretation));
+          });
+
+          function selectRow() {
+            raw = value;
+            render();
+          }
+
+          row.addEventListener("click", selectRow);
+          row.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              selectRow();
+            }
+          });
+          return row;
+        }
+
+        function editableDecimalCell(interpretation) {
+          const interpreted = interpretedValue(raw, interpretation);
+          const decCell = document.createElement("div");
+          decCell.className = "cell decimal-cell";
+
+          const sign = document.createElement("button");
+          sign.type = "button";
+          sign.className = "sign-pill" + (interpreted.negative ? " negative" : "");
+          sign.textContent = interpreted.negative ? "−" : "+";
+          sign.disabled = interpretation === "unsigned";
+          sign.setAttribute(
+            "aria-label",
+            interpretation === "unsigned" ? "Positive unsigned value" : "Toggle " + modeNames[interpretation] + " sign"
+          );
+
+          const input = document.createElement("input");
+          input.className = "value-input";
+          input.value = interpreted.magnitude.toString();
+          input.inputMode = "numeric";
+          input.autocomplete = "off";
+          input.spellcheck = false;
+          input.setAttribute("aria-label", "Edit " + modeNames[interpretation] + " decimal magnitude");
+          decCell.append(sign, input);
+
+          function commit() {
+            try {
+              const typed = input.value.trim();
+              const carriesSign = /^[+-]/.test(typed);
+              const composed = carriesSign ? typed : (interpreted.negative ? "-" : "") + typed;
+              raw = parseDecimal(composed, interpretation);
+              render();
+            } catch (error) {
+              showToast(error.message);
+              input.value = interpretedValue(raw, interpretation).magnitude.toString();
+            }
+          }
+
+          sign.addEventListener("click", () => {
+            if (interpretation === "signmag") {
+              raw = raw ^ pow2(width - 1);
+              render();
+              return;
+            }
+
+            if (interpretation === "twos") {
+              const current = interpretedValue(raw, interpretation);
+              if (!current.negative && current.magnitude === 0n) return;
+              if (current.negative && current.magnitude > maxMagnitude(interpretation)) {
+                showToast("The positive counterpart does not fit in this word size.");
+                return;
+              }
+              raw = normalize(current.negative ? current.magnitude : -current.magnitude);
+              render();
+            }
+          });
+
+          input.addEventListener("change", commit);
+          input.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") commit();
+          });
+
+          return decCell;
+        }
+
+        function activeRow() {
+          const row = document.createElement("div");
+          row.className = "number-row active-row";
+
+          const binaryCell = document.createElement("div");
+          binaryCell.className = "cell binary-cell";
+          binaryCell.appendChild(bitStrip(raw, true));
+
+          const hexCell = document.createElement("label");
+          hexCell.className = "cell";
+          hexCell.setAttribute("aria-label", "Hexadecimal value");
+          const hexWrap = document.createElement("span");
+          hexWrap.className = "value-wrap";
+          const prefix = document.createElement("span");
+          prefix.className = "prefix";
+          prefix.textContent = "0x";
+          const hexInput = document.createElement("input");
+          hexInput.className = "value-input";
+          hexInput.value = hex(raw);
+          hexInput.inputMode = "text";
+          hexInput.autocomplete = "off";
+          hexInput.spellcheck = false;
+          hexInput.setAttribute("aria-label", "Edit hexadecimal value");
+          hexWrap.append(prefix, hexInput);
+          hexCell.appendChild(hexWrap);
+
+          function commitHex() {
+            try {
+              const next = parseHex(hexInput.value);
+              if (next > mask()) throw new Error("Hex value needs more than " + width + " bits.");
+              raw = next;
+              render();
+            } catch (error) {
+              showToast(error.message);
+              hexInput.value = hex(raw);
+            }
+          }
+
+          hexInput.addEventListener("change", commitHex);
+          hexInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") commitHex();
+          });
+
+          row.append(binaryCell, hexCell);
+          visibleModes().forEach((interpretation) => {
+            row.appendChild(editableDecimalCell(interpretation));
+          });
+          return row;
+        }
+
+        function complementDecimalCell(value, interpretation) {
+          const interpreted = interpretedValue(value, interpretation);
+          const cell = document.createElement("div");
+          cell.className = "cell complement-decimal-cell";
+
+          const label = document.createElement("span");
+          label.className = "complement-decimal-label";
+          label.textContent = modeNames[interpretation] + " decimal";
+
+          const valueLine = document.createElement("div");
+          valueLine.className = "complement-decimal-value";
+          const sign = document.createElement("span");
+          sign.className = "sign-pill" + (interpreted.negative ? " negative" : "");
+          sign.textContent = interpreted.negative ? "−" : "+";
+          const magnitude = document.createElement("span");
+          magnitude.className = "shadow-value";
+          magnitude.textContent = interpreted.magnitude.toString();
+          valueLine.append(sign, magnitude);
+
+          cell.append(label, valueLine);
+          return cell;
+        }
+
+        function blankComplementCell(label) {
+          const cell = document.createElement("div");
+          cell.className = "cell complement-placeholder";
+          cell.setAttribute("aria-label", label + " intentionally hidden");
+          return cell;
+        }
+
+        function complementRow(kind, title, formula, value) {
+          const row = document.createElement("div");
+          row.className = "complement-row " + kind;
+
+          const label = document.createElement("div");
+          label.className = "complement-label";
+          const name = document.createElement("strong");
+          name.textContent = title;
+          const equation = document.createElement("code");
+          equation.textContent = formula;
+          label.append(name, equation);
+
+          const data = document.createElement("div");
+          data.className = "complement-data";
+          const columns = [
+            "minmax(" + binaryColumnMinimum() + "px, 2.2fr)",
+            "minmax(135px, .65fr)"
+          ];
+          visibleModes().forEach(() => columns.push("minmax(175px, .78fr)"));
+          data.style.setProperty("--complement-columns", columns.join(" "));
+
+          const binaryCell = document.createElement("div");
+          binaryCell.className = "cell binary-cell";
+          binaryCell.appendChild(bitStrip(value, false));
+          data.appendChild(binaryCell);
+
+          if (kind === "current") {
+            data.appendChild(staticValueCell("0x", hex(value)));
+            visibleModes().forEach((interpretation) => {
+              data.appendChild(complementDecimalCell(value, interpretation));
+            });
+          } else if (kind === "ones") {
+            data.appendChild(blankComplementCell("Hexadecimal"));
+            visibleModes().forEach((interpretation) => {
+              data.appendChild(blankComplementCell(modeNames[interpretation] + " decimal"));
+            });
+          } else {
+            data.appendChild(blankComplementCell("Hexadecimal"));
+            visibleModes().forEach((interpretation) => {
+              data.appendChild(complementDecimalCell(value, interpretation));
+            });
+          }
+
+          row.append(label, data);
+          return row;
+        }
+
+        function renderComplements() {
+          const ones = raw ^ mask();
+          const twos = normalize(ones + 1n);
+          const binaryMin = binaryColumnMinimum();
+          const dataWidth =
+            binaryMin + 135 + visibleModes().length * 175 + (visibleModes().length + 1) * 14;
+          complementStack.style.setProperty("--complement-table-min-width", 170 + 14 + dataWidth + "px");
+          complementStack.replaceChildren(
+            complementRow("current", "Current value", "x", raw),
+            complementRow("ones", "One's complement", "NOT x · invert every bit", ones),
+            complementRow("twos", "Two's complement", "NOT x + 1", twos)
+          );
+        }
+
+        function renderHeader() {
+          const binaryHead = document.createElement("div");
+          binaryHead.className = "head-label";
+          binaryHead.innerHTML = '<span>Binary</span><span class="head-note">MSB → LSB</span>';
+
+          const hexHead = document.createElement("div");
+          hexHead.textContent = "Hexadecimal";
+
+          tableHead.replaceChildren(binaryHead, hexHead);
+          visibleModes().forEach((interpretation) => {
+            const head = document.createElement("div");
+            head.className = "head-label";
+            const name = document.createElement("span");
+            name.textContent = modeNames[interpretation];
+            const note = document.createElement("span");
+            note.className = "head-note";
+            note.textContent = decimalRange(interpretation);
+            head.append(name, note);
+            tableHead.appendChild(head);
+          });
+        }
+
+        function binaryColumnMinimum() {
+          return width === 32 ? 680 : width === 16 ? 470 : width === 8 ? 330 : 240;
+        }
+
+        function updateGrid() {
+          const binaryMin = binaryColumnMinimum();
+          const modes = visibleModes();
+          const columns = ["minmax(" + binaryMin + "px, 2.2fr)", "minmax(135px, .65fr)"];
+          modes.forEach(() => columns.push("minmax(175px, .78fr)"));
+          const minimum = binaryMin + 135 + modes.length * 175 + (modes.length + 1) * 14;
+          converter.style.setProperty("--grid-columns", columns.join(" "));
+          converter.style.setProperty("--table-min-width", minimum + "px");
+        }
+
+        function render() {
+          raw = normalize(raw);
+          updateGrid();
+          renderHeader();
+          stack.replaceChildren(
+            shadowRow(normalize(raw + 2n), 2, false),
+            shadowRow(normalize(raw + 1n), 1, true),
+            activeRow(),
+            shadowRow(normalize(raw - 1n), -1, true),
+            shadowRow(normalize(raw - 2n), -2, false)
+          );
+          renderComplements();
+          const count = visibleModes().length;
+          rangeLabel.textContent =
+            width + "-bit · " + pow2(width) + " patterns · " +
+            (count === 0 ? "decimal columns hidden" : count + " decimal " + (count === 1 ? "view" : "views"));
+          signLegend.hidden = !signedColumnsVisible();
+        }
+
+        document.querySelector("#width-controls").addEventListener("change", (event) => {
+          width = Number(event.target.value);
+          raw = normalize(raw);
+          render();
+        });
+
+        document.querySelector("#interpretation-controls").addEventListener("change", (event) => {
+          if (event.target.checked) enabledModes.add(event.target.value);
+          else enabledModes.delete(event.target.value);
+          render();
+        });
+
+        document.addEventListener("keydown", (event) => {
+          if (event.target.matches("input")) return;
+          if (event.key === "ArrowUp") {
+            event.preventDefault();
+            raw = normalize(raw + 1n);
+            render();
+          }
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            raw = normalize(raw - 1n);
+            render();
+          }
+        });
+
+        render();
+      })();
+    </script>
+  </body>
+</html>

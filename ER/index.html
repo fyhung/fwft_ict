@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Interactive ER Diagram Studio</title>
+  <style>
+    :root{
+      --p950:#24103f;--p900:#321451;--p800:#47206b;--p700:#60308a;--p600:#7941a7;
+      --p300:#ccb4df;--p200:#decceb;--p100:#eee5f5;--p50:#f8f4fb;
+      --ink:#251d2b;--muted:#746b7b;--line:#e2d9e7;--paper:#fff;--danger:#a13d55;
+      --shadow:0 12px 32px rgba(49,20,81,.12);--radius:14px;
+    }
+    *{box-sizing:border-box}html,body{height:100%}body{margin:0;overflow:hidden;color:var(--ink);background:var(--p50);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+    button,input,select{font:inherit}button{color:inherit;cursor:pointer}
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid rgba(121,65,167,.22);outline-offset:1px}
+    .app{height:100%;display:grid;grid-template-rows:68px 1fr}
+    header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 20px;color:#fff;background:linear-gradient(115deg,var(--p950),var(--p800));border-bottom:1px solid rgba(255,255,255,.15)}
+    .brand{display:flex;align-items:center;gap:12px;min-width:305px}.brand-mark{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;color:var(--p900);background:#fff;font-size:12px;font-weight:900}.brand h1{margin:0;font-size:15px}.brand p{margin:2px 0 0;color:#d9c6e8;font-size:11px}
+    #projectName{width:min(340px,30vw);padding:8px 12px;text-align:center;color:#fff;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.2);border-radius:9px}
+    .head-actions{display:flex;align-items:center;gap:7px}.head-actions button{padding:8px 10px;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:9px}.head-actions button:hover{background:rgba(255,255,255,.16)}
+    #saveState{min-width:72px;text-align:right;color:#d9c6e8;font-size:11px}
+    main{--left-width:240px;--right-width:310px;min-height:0;display:grid;grid-template-columns:var(--left-width) 1fr var(--right-width);transition:grid-template-columns .22s ease}main.left-collapsed{--left-width:44px}main.right-collapsed{--right-width:44px}
+    .left,.inspector{position:relative;min-height:0;background:#fff}.left{display:flex;flex-direction:column;padding:16px 12px 12px;border-right:1px solid var(--line)}.inspector{overflow:auto;border-left:1px solid var(--line)}
+    .panel-collapse{position:absolute;z-index:8;display:grid;place-items:center;width:27px;height:27px;padding:0;color:var(--p800);background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 3px 10px rgba(49,20,81,.08)}.panel-collapse:hover{background:var(--p100)}#collapseLeftBtn{top:11px;right:8px}#collapseRightBtn{top:11px;left:8px}
+    .left.collapsed{padding:0}.left.collapsed>:not(.panel-collapse){display:none}.left.collapsed #collapseLeftBtn{right:8px}.inspector.collapsed{overflow:hidden}.inspector.collapsed #inspectorContent{display:none}.inspector:not(.collapsed) #inspectorContent{min-height:100%}
+    .side-title{display:flex;align-items:center;justify-content:space-between;padding:0 36px 10px 7px}.eyebrow{color:var(--muted);font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase}
+    .outline-list{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:4px}.outline-item{display:grid;grid-template-columns:26px 1fr;align-items:center;gap:8px;width:100%;padding:8px;text-align:left;background:transparent;border:0;border-radius:9px}.outline-item:hover{background:var(--p50)}.outline-item.active{color:var(--p900);background:var(--p100)}.outline-icon{display:grid;place-items:center;width:26px;height:26px;border-radius:7px;background:var(--p100);font-size:11px;font-weight:850}.outline-icon.diamond{transform:rotate(45deg);border-radius:4px}.outline-icon.diamond span{transform:rotate(-45deg)}
+    .divider{height:1px;margin:12px 7px;background:var(--line)}.empty{padding:20px 8px;color:var(--muted);font-size:12px;text-align:center}
+    .credits{margin-top:auto;padding:13px 7px 2px;color:var(--muted);border-top:1px solid var(--line);font-size:10.5px;line-height:1.5}.credits strong{display:block;margin-bottom:3px;color:var(--p900);font-size:11px}.credits span{display:block;margin-top:5px}
+    .canvas-shell{min-width:0;min-height:0;display:grid;grid-template-rows:54px 1fr;background:#f4eff7}.canvas-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;background:#fff;border-bottom:1px solid var(--line)}.tool-group{display:flex;align-items:center;gap:7px}
+    .btn{padding:8px 11px;font-weight:700;background:#fff;border:1px solid #d5cadc;border-radius:9px}.btn:hover{background:var(--p50)}.btn.primary{color:#fff;background:var(--p700);border-color:var(--p700)}.btn.primary:hover{background:var(--p900)}.btn.danger{color:var(--danger)}.btn.icon{width:34px;padding:8px 0}
+    .mode-toggle{display:flex;padding:3px;background:var(--p50);border:1px solid var(--line);border-radius:9px}.mode-toggle button{padding:6px 10px;color:var(--muted);font-size:12px;font-weight:750;background:transparent;border:0;border-radius:7px}.mode-toggle button.active{color:var(--p900);background:#fff;box-shadow:0 2px 8px rgba(49,20,81,.08)}
+    .zoom-control{display:flex;align-items:center;padding:3px;background:var(--p50);border:1px solid var(--line);border-radius:9px}.zoom-control button{display:grid;place-items:center;width:28px;height:27px;padding:0;color:var(--p800);font-size:17px;font-weight:800;background:transparent;border:0;border-radius:6px}.zoom-control button:hover{background:#fff}.zoom-control button:disabled{cursor:not-allowed;opacity:.35}.zoom-control output{width:48px;text-align:center;color:var(--p900);font-size:11px;font-weight:850}
+    #viewport{position:relative;min-width:0;min-height:0;overflow:auto;touch-action:none}.zoom-stage{position:relative;width:2200px;height:1500px}.canvas{position:relative;width:2200px;height:1500px;transform-origin:0 0;background-color:#fbf9fc;background-image:linear-gradient(rgba(96,48,138,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(96,48,138,.07) 1px,transparent 1px);background-size:24px 24px}
+    #connections{position:absolute;inset:0;width:2200px;height:1500px;overflow:visible;pointer-events:none}.relation-line{stroke:var(--p600);stroke-width:2.2;fill:none}.relation-hit{stroke:transparent;stroke-width:18;fill:none;pointer-events:stroke;cursor:pointer}.relation-label{font-size:13px;font-weight:900;fill:var(--p900);paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round}.participation-circle{fill:rgba(255,255,255,.7);stroke:none}.participation-label{font-size:11px;font-weight:900;fill:var(--p800)}
+    .entity-card{position:absolute;width:250px;overflow:hidden;background:#fff;border:1px solid var(--p300);border-radius:12px;box-shadow:var(--shadow);user-select:none}.entity-card.selected{border-color:var(--p700);box-shadow:0 0 0 3px rgba(121,65,167,.16),var(--shadow)}.entity-head{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:11px 13px;color:#fff;background:linear-gradient(120deg,var(--p900),var(--p700));cursor:grab}.entity-head:active{cursor:grabbing}.entity-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:850}.entity-count{padding:2px 7px;color:var(--p900);background:#fff;border-radius:999px;font-size:10px;font-weight:900}
+    .field-list{background:#fff}.field-row{display:grid;grid-template-columns:18px 1fr auto;align-items:center;gap:7px;padding:7px 11px;border-top:1px solid var(--line);font-size:12px}.field-key{color:var(--p700);font-size:11px;font-weight:900}.field-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.field-type{color:var(--muted);font:10px "SFMono-Regular",Consolas,monospace}.field-flags{margin-left:4px;color:var(--p600);font-size:9px;font-weight:900}
+    .entity-card.compact{width:220px}.entity-card.compact .entity-head{height:78px;justify-content:center;padding:10px 16px;text-align:center}.entity-card.compact .entity-name{width:100%;font-size:21px;line-height:1.15;letter-spacing:.01em}.entity-card.compact .field-list{display:none}.entity-card.compact .entity-count{display:none}
+    .relationship-node{position:absolute;width:112px;height:112px;display:grid;place-items:center;transform:translate(-50%,-50%);pointer-events:none}.diamond-shape{position:absolute;width:78px;height:78px;transform:rotate(45deg);background:#fff;border:2px solid var(--p600);border-radius:10px;box-shadow:0 9px 24px rgba(49,20,81,.12);pointer-events:auto;cursor:pointer}.relationship-node.selected .diamond-shape{background:var(--p100);border-color:var(--p900);box-shadow:0 0 0 4px rgba(121,65,167,.16),0 9px 24px rgba(49,20,81,.12)}.relationship-name{position:relative;z-index:1;width:90px;overflow:hidden;text-align:center;text-overflow:ellipsis;color:var(--p900);font-size:11px;font-weight:900;pointer-events:none}
+    .inspector-empty{display:grid;place-items:center;min-height:100%;padding:30px;text-align:center;color:var(--muted)}.inspector-empty .big{display:grid;place-items:center;width:54px;height:54px;margin:0 auto 14px;color:var(--p700);background:var(--p100);border-radius:16px;font-size:22px}
+    .inspect-head{position:sticky;top:0;z-index:4;padding:15px 16px 12px 48px;background:#fff;border-bottom:1px solid var(--line)}.inspect-head h2{margin:0;font-size:16px}.inspect-head p{margin:3px 0 0;color:var(--muted);font-size:11px}.inspect-body{padding:14px 15px}.label{display:block;margin:10px 0 5px;color:#554b5c;font-size:11px;font-weight:800;letter-spacing:.03em}.input,.select{width:100%;padding:8px 9px;background:#fff;border:1px solid #d5cadc;border-radius:8px}.check-row{display:flex;align-items:center;gap:8px}.check-row input{width:16px;height:16px;accent-color:var(--p700)}
+    .field-editor{margin-top:12px;border:1px solid var(--line);border-radius:10px;overflow:hidden}.field-edit-row{display:grid;grid-template-columns:1fr 78px auto;gap:5px;padding:7px;background:#fff;border-bottom:1px solid var(--line)}.field-edit-row:last-child{border-bottom:0}.field-edit-row input,.field-edit-row select{min-width:0;width:100%;padding:6px;background:#fff;border:1px solid var(--line);border-radius:6px;font-size:11px}.field-options{display:flex;gap:3px}.tiny{min-width:25px;height:27px;padding:0 5px;background:#fff;border:1px solid var(--line);border-radius:6px}.tiny:hover{background:var(--p100)}.tiny.danger{color:var(--danger)}.field-detail{grid-column:1/-1;display:flex;align-items:center;gap:12px;color:var(--muted);font-size:10px}.field-detail label{display:flex;align-items:center;gap:4px}.field-detail input{width:14px;height:14px;accent-color:var(--p700)}
+    .relationship-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.endpoint-card{padding:10px;background:var(--p50);border:1px solid var(--line);border-radius:10px}.endpoint-card strong{display:block;margin-bottom:6px;color:var(--p900);font-size:11px}.legend{margin-top:14px;padding:10px;color:var(--muted);background:var(--p50);border-radius:9px;font-size:11px}.legend b{color:var(--p900)}
+    dialog{width:min(470px,calc(100vw - 30px));padding:0;border:0;border-radius:16px;box-shadow:0 26px 80px rgba(36,16,63,.3)}dialog::backdrop{background:rgba(29,13,47,.5);backdrop-filter:blur(2px)}.dialog-head{padding:18px 20px 12px}.dialog-head h2{margin:0;font-size:18px}.dialog-head p{margin:4px 0 0;color:var(--muted);font-size:12px}.dialog-body{padding:8px 20px 20px}.dialog-foot{display:flex;justify-content:flex-end;gap:8px;padding:13px 20px;background:var(--p50);border-top:1px solid var(--line)}
+    #toasts{position:fixed;right:18px;bottom:18px;z-index:30;display:flex;flex-direction:column;gap:8px}.toast{max-width:390px;padding:11px 14px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}.toast.ok{color:var(--p900);background:#fbf8fd;border-color:var(--p200)}.toast.error{color:#812f43;background:#fff6f8;border-color:#efcbd4}.hidden{display:none!important}
+    @media(max-width:980px){main{grid-template-columns:190px 1fr}main.left-collapsed{grid-template-columns:44px 1fr}.inspector{position:fixed;right:0;top:68px;bottom:0;width:310px;z-index:10;box-shadow:-12px 0 35px rgba(49,20,81,.14);transform:translateX(100%);transition:.2s}.inspector.open{transform:none}.inspector.collapsed{width:44px;transform:none}.left{padding:12px 8px}.credits{display:none}#projectName,#saveState{display:none}}
+    @media(max-width:650px){.app{grid-template-rows:auto 1fr}header{flex-wrap:wrap;padding:10px 12px}.brand p{display:none}.head-actions{width:100%;overflow:auto}main{grid-template-columns:1fr}.left{display:none}.canvas-toolbar{flex-wrap:wrap}.inspector{top:111px}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand"><div class="brand-mark">ER</div><div><h1>Interactive ER Diagram Studio</h1><p>TWGHs Mrs. Fung Wong Fung Ting College</p></div></div>
+      <input id="projectName" value="School database model" aria-label="Diagram name">
+      <div class="head-actions"><span id="saveState">Saved locally</span><button id="newBtn">New</button><button id="importBtn">Import</button><button id="downloadBtn">Download</button><input id="fileInput" type="file" accept=".json,application/json" hidden></div>
+    </header>
+    <main>
+      <aside id="leftPanel" class="left">
+        <button id="collapseLeftBtn" class="panel-collapse" title="Collapse entity panel" aria-label="Collapse entity panel">‹</button>
+        <div class="side-title"><span class="eyebrow">Entities</span><span id="entityCount" class="count">0</span></div>
+        <div id="entityOutline" class="outline-list"></div>
+        <div class="divider"></div>
+        <div class="side-title"><span class="eyebrow">Relationships</span><span id="relationshipCount" class="count">0</span></div>
+        <div id="relationshipOutline" class="outline-list"></div>
+        <div class="credits"><strong>About this project</strong>Created by fyhung with the help of ChatGPT 5.6 sol.<span>TWGHs Mrs. Fung Wong Fung Ting College<br>Information and Communication Technology<br>Summer 2026</span></div>
+      </aside>
+
+      <section class="canvas-shell">
+        <div class="canvas-toolbar">
+          <div class="tool-group"><button id="addEntityBtn" class="btn primary">＋ Entity</button><button id="addRelationshipBtn" class="btn">◇ Relationship</button><button id="fitBtn" class="btn icon" title="Center diagram">⌖</button></div>
+          <div class="tool-group"><div class="zoom-control" aria-label="Canvas zoom"><button id="zoomOutBtn" title="Zoom out" aria-label="Zoom out">−</button><output id="zoomLevel">100%</output><button id="zoomInBtn" title="Zoom in" aria-label="Zoom in">＋</button></div><div class="mode-toggle" aria-label="Entity display mode"><button data-mode="compact">Names only</button><button class="active" data-mode="full">Show fields</button></div></div>
+        </div>
+        <div id="viewport"><div id="zoomStage" class="zoom-stage"><div id="canvas" class="canvas"><svg id="connections" viewBox="0 0 2200 1500" aria-hidden="true"></svg><div id="relationNodes"></div><div id="entities"></div></div></div></div>
+      </section>
+
+      <aside id="inspector" class="inspector"><button id="collapseRightBtn" class="panel-collapse" title="Collapse properties panel" aria-label="Collapse properties panel">›</button><div id="inspectorContent"><div class="inspector-empty"><div><div class="big">✦</div><strong>Select an item</strong><p>Choose an entity or relationship to edit its properties.</p></div></div></div></aside>
+    </main>
+  </div>
+
+  <dialog id="relationshipDialog">
+    <form method="dialog" id="relationshipForm">
+      <div class="dialog-head"><h2>Add relationship</h2><p>Connect two entities, then refine cardinality and participation.</p></div>
+      <div class="dialog-body">
+        <label class="label" for="relName">Relationship name</label><input id="relName" class="input" value="Relates to" required>
+        <div class="relationship-grid"><div><label class="label" for="relFrom">First entity</label><select id="relFrom" class="select"></select></div><div><label class="label" for="relTo">Second entity</label><select id="relTo" class="select"></select></div></div>
+      </div>
+      <div class="dialog-foot"><button class="btn" value="cancel">Cancel</button><button id="confirmRelationship" class="btn primary" value="default">Add relationship</button></div>
+    </form>
+  </dialog>
+  <div id="toasts" aria-live="polite"></div>
+
+  <script>
+  (()=>{"use strict";
+    const STORE="interactive-er-diagram-v1";
+    const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+    const uid=()=>globalThis.crypto?.randomUUID?.()||"id_"+Date.now().toString(36)+Math.random().toString(36).slice(2);
+    const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    let model,selection=null,saveTimer=null,drag=null;
+
+    function starter(){
+      const student=uid(),course=uid(),rel=uid();
+      return{format:"interactive-er-diagram",version:1,name:"School database model",mode:"full",zoom:1,panels:{left:true,right:true},
+        entities:[
+          {id:student,name:"Student",x:210,y:210,fields:[{id:uid(),name:"student_id",type:"INTEGER",primary:true,required:true,unique:true},{id:uid(),name:"student_name",type:"TEXT",primary:false,required:true,unique:false},{id:uid(),name:"class",type:"TEXT",primary:false,required:false,unique:false}]},
+          {id:course,name:"Course",x:720,y:370,fields:[{id:uid(),name:"course_id",type:"INTEGER",primary:true,required:true,unique:true},{id:uid(),name:"course_name",type:"TEXT",primary:false,required:true,unique:false},{id:uid(),name:"hours",type:"INTEGER",primary:false,required:false,unique:false}]}
+        ],
+        relationships:[{id:rel,name:"Enrols",from:student,to:course,fromCard:"M",toCard:"M",fromParticipation:"o",toParticipation:"o"}]
+      };
+    }
+    function toast(message,type=""){const n=document.createElement("div");n.className="toast "+type;n.textContent=message;$("#toasts").append(n);setTimeout(()=>n.remove(),3800)}
+    function save(){
+      clearTimeout(saveTimer);$("#saveState").textContent="Unsaved";
+      saveTimer=setTimeout(()=>{model.name=$("#projectName").value.trim()||"Untitled ER diagram";localStorage.setItem(STORE,JSON.stringify(model));$("#saveState").textContent="Saved locally"},300);
+    }
+    function entity(id){return model.entities.find(e=>e.id===id)}
+    function relation(id){return model.relationships.find(r=>r.id===id)}
+    function cardSize(e){return model.mode==="compact"?{w:220,h:78}:{w:250,h:45+e.fields.length*35}}
+    function center(e){const s=cardSize(e);return{x:e.x+s.w/2,y:e.y+s.h/2}}
+    function selected(type,id){return selection?.type===type&&selection.id===id}
+
+    function render(){
+      $("#projectName").value=model.name;renderPanels();renderZoom();renderEntities();renderRelationships();renderOutline();renderInspector();
+      $$("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===model.mode));
+    }
+    function renderPanels(){
+      model.panels=model.panels||{left:true,right:true};
+      $("main").classList.toggle("left-collapsed",!model.panels.left);$("main").classList.toggle("right-collapsed",!model.panels.right);
+      $("#leftPanel").classList.toggle("collapsed",!model.panels.left);$("#inspector").classList.toggle("collapsed",!model.panels.right);
+      $("#collapseLeftBtn").textContent=model.panels.left?"‹":"›";$("#collapseLeftBtn").title=model.panels.left?"Collapse entity panel":"Expand entity panel";
+      $("#collapseRightBtn").textContent=model.panels.right?"›":"‹";$("#collapseRightBtn").title=model.panels.right?"Collapse properties panel":"Expand properties panel";
+      $("#collapseLeftBtn").setAttribute("aria-expanded",String(model.panels.left));$("#collapseRightBtn").setAttribute("aria-expanded",String(model.panels.right));
+    }
+    function renderZoom(){
+      model.zoom=Math.max(.5,Math.min(1.8,Number(model.zoom)||1));
+      $("#canvas").style.transform=`scale(${model.zoom})`;$("#zoomStage").style.width=2200*model.zoom+"px";$("#zoomStage").style.height=1500*model.zoom+"px";
+      $("#zoomLevel").textContent=Math.round(model.zoom*100)+"%";$("#zoomOutBtn").disabled=model.zoom<=.5;$("#zoomInBtn").disabled=model.zoom>=1.8;
+    }
+    function renderEntities(){
+      $("#entities").innerHTML=model.entities.map(e=>`<article class="entity-card ${model.mode==="compact"?"compact":""} ${selected("entity",e.id)?"selected":""}" data-entity="${e.id}" style="left:${e.x}px;top:${e.y}px">
+        <div class="entity-head"><span class="entity-name">${esc(e.name)}</span><span class="entity-count">${e.fields.length} fields</span></div>
+        <div class="field-list">${e.fields.map(f=>`<div class="field-row"><span class="field-key">${f.primary?"PK":"·"}</span><span class="field-name">${esc(f.name)}${f.required?'<span class="field-flags">REQ</span>':""}</span><span class="field-type">${esc(f.type)}</span></div>`).join("")||'<div class="field-row"><span></span><span class="null">No fields</span><span></span></div>'}</div>
+      </article>`).join("");
+      $$(".entity-card").forEach(card=>{
+        card.onclick=e=>{if(!e.target.closest(".entity-head")||!drag)select("entity",card.dataset.entity)};
+        card.querySelector(".entity-head").onpointerdown=e=>startDrag(e,card.dataset.entity);
+      });
+    }
+    function relationGeometry(r){
+      const a=entity(r.from),b=entity(r.to);if(!a||!b)return null;
+      const ac=center(a),bc=center(b),mx=(ac.x+bc.x)/2,my=(ac.y+bc.y)/2,dx=bc.x-ac.x,dy=bc.y-ac.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;
+      return{ac,bc,mx,my,dx,dy,len,nx,ny};
+    }
+    function pointAlong(a,b,t,offset=0,g){return{x:a.x+(b.x-a.x)*t+g.nx*offset,y:a.y+(b.y-a.y)*t+g.ny*offset}}
+    function renderRelationships(){
+      const svg=[`<defs><marker id="selfArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7941a7"/></marker></defs>`],nodes=[];
+      model.relationships.forEach(r=>{
+        if(r.from===r.to){
+          const e=entity(r.from);if(!e)return;
+          const s=cardSize(e),sign=e.y>155?-1:1,edgeY=sign<0?e.y:e.y+s.h;
+          const start={x:e.x+s.w*.34,y:edgeY+sign*6},end={x:e.x+s.w*.66,y:edgeY+sign*6};
+          const mx=e.x+s.w/2,my=edgeY+sign*118;
+          const c1={x:e.x-48,y:edgeY+sign*62},c2={x:mx-72,y:my},c3={x:mx+72,y:my},c4={x:e.x+s.w+48,y:edgeY+sign*62};
+          const path=`M ${start.x} ${start.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${mx} ${my} C ${c3.x} ${c3.y}, ${c4.x} ${c4.y}, ${end.x} ${end.y}`;
+          const fromP={x:mx-56,y:my-sign*17},toP={x:mx+56,y:my-sign*17};
+          const fromCard={x:fromP.x,y:fromP.y+sign*22},toCard={x:toP.x,y:toP.y+sign*22};
+          svg.push(`<g data-relation-line="${r.id}"><path class="relation-line" d="${path}" marker-end="url(#selfArrow)"/><path class="relation-hit" data-hit="${r.id}" d="${path}"/>
+            <text class="relation-label" x="${fromCard.x}" y="${fromCard.y}" text-anchor="middle" dominant-baseline="middle">${r.fromCard}</text><circle class="participation-circle" cx="${fromP.x}" cy="${fromP.y}" r="9"/><text class="participation-label" x="${fromP.x}" y="${fromP.y}" text-anchor="middle" dominant-baseline="middle">${r.fromParticipation}</text>
+            <text class="relation-label" x="${toCard.x}" y="${toCard.y}" text-anchor="middle" dominant-baseline="middle">${r.toCard}</text><circle class="participation-circle" cx="${toP.x}" cy="${toP.y}" r="9"/><text class="participation-label" x="${toP.x}" y="${toP.y}" text-anchor="middle" dominant-baseline="middle">${r.toParticipation}</text></g>`);
+          nodes.push(`<div class="relationship-node ${selected("relationship",r.id)?"selected":""}" data-relationship="${r.id}" style="left:${mx}px;top:${my}px"><div class="diamond-shape"></div><div class="relationship-name">${esc(r.name)}</div></div>`);
+          return;
+        }
+        const g=relationGeometry(r);if(!g)return;
+        const leftP=pointAlong(g.ac,{x:g.mx,y:g.my},.72,0,g),left=pointAlong(g.ac,{x:g.mx,y:g.my},.72,-20,g);
+        const rightP=pointAlong({x:g.mx,y:g.my},g.bc,.28,0,g),right=pointAlong({x:g.mx,y:g.my},g.bc,.28,-20,g);
+        svg.push(`<g data-relation-line="${r.id}"><path class="relation-line" d="M ${g.ac.x} ${g.ac.y} L ${g.mx} ${g.my} L ${g.bc.x} ${g.bc.y}"/><path class="relation-hit" data-hit="${r.id}" d="M ${g.ac.x} ${g.ac.y} L ${g.mx} ${g.my} L ${g.bc.x} ${g.bc.y}"/>
+          <text class="relation-label" x="${left.x}" y="${left.y}" text-anchor="middle" dominant-baseline="middle">${r.fromCard}</text><circle class="participation-circle" cx="${leftP.x}" cy="${leftP.y}" r="9"/><text class="participation-label" x="${leftP.x}" y="${leftP.y}" text-anchor="middle" dominant-baseline="middle">${r.fromParticipation}</text>
+          <text class="relation-label" x="${right.x}" y="${right.y}" text-anchor="middle" dominant-baseline="middle">${r.toCard}</text><circle class="participation-circle" cx="${rightP.x}" cy="${rightP.y}" r="9"/><text class="participation-label" x="${rightP.x}" y="${rightP.y}" text-anchor="middle" dominant-baseline="middle">${r.toParticipation}</text></g>`);
+        nodes.push(`<div class="relationship-node ${selected("relationship",r.id)?"selected":""}" data-relationship="${r.id}" style="left:${g.mx}px;top:${g.my}px"><div class="diamond-shape"></div><div class="relationship-name">${esc(r.name)}</div></div>`);
+      });
+      $("#connections").innerHTML=svg.join("");$("#relationNodes").innerHTML=nodes.join("");
+      $$(".relationship-node .diamond-shape").forEach(n=>n.onclick=()=>select("relationship",n.parentElement.dataset.relationship));
+      $$("[data-hit]").forEach(n=>n.onclick=()=>select("relationship",n.dataset.hit));
+    }
+    function renderOutline(){
+      $("#entityCount").textContent=model.entities.length;$("#relationshipCount").textContent=model.relationships.length;
+      $("#entityOutline").innerHTML=model.entities.map(e=>`<button class="outline-item ${selected("entity",e.id)?"active":""}" data-e="${e.id}"><span class="outline-icon">▦</span><span>${esc(e.name)}</span></button>`).join("")||'<div class="empty">No entities yet</div>';
+      $("#relationshipOutline").innerHTML=model.relationships.map(r=>`<button class="outline-item ${selected("relationship",r.id)?"active":""}" data-r="${r.id}"><span class="outline-icon diamond"><span>◇</span></span><span>${esc(r.name)}</span></button>`).join("")||'<div class="empty">No relationships yet</div>';
+      $$("[data-e]").forEach(b=>b.onclick=()=>{select("entity",b.dataset.e);focusEntity(b.dataset.e)});
+      $$("[data-r]").forEach(b=>b.onclick=()=>select("relationship",b.dataset.r));
+    }
+    function select(type,id){selection={type,id};render();$("#inspector").classList.add("open")}
+    function focusEntity(id){const e=entity(id),v=$("#viewport"),z=model.zoom||1;if(!e)return;const s=cardSize(e);v.scrollTo({left:Math.max(0,(e.x+s.w/2)*z-v.clientWidth/2),top:Math.max(0,(e.y+s.h/2)*z-v.clientHeight/2),behavior:"smooth"})}
+    function startDrag(event,id){
+      if(event.button!==0)return;const e=entity(id);selection={type:"entity",id};drag={id,startX:event.clientX,startY:event.clientY,x:e.x,y:e.y};event.currentTarget.setPointerCapture(event.pointerId);
+      event.currentTarget.onpointermove=moveDrag;event.currentTarget.onpointerup=endDrag;renderOutline();renderInspector();
+    }
+    function moveDrag(event){if(!drag)return;const e=entity(drag.id),z=model.zoom||1;e.x=Math.max(10,Math.min(1920,drag.x+(event.clientX-drag.startX)/z));e.y=Math.max(10,Math.min(1350,drag.y+(event.clientY-drag.startY)/z));const card=document.querySelector(`[data-entity="${e.id}"]`);if(card){card.style.left=e.x+"px";card.style.top=e.y+"px"}renderRelationships()}
+    function endDrag(event){event.currentTarget.onpointermove=null;event.currentTarget.onpointerup=null;drag=null;save()}
+
+    function renderInspector(){
+      if(!selection){$("#inspectorContent").innerHTML='<div class="inspector-empty"><div><div class="big">✦</div><strong>Select an item</strong><p>Choose an entity or relationship to edit its properties.</p></div></div>';return}
+      if(selection.type==="entity"){
+        const e=entity(selection.id);if(!e){selection=null;return renderInspector()}
+        $("#inspectorContent").innerHTML=`<div class="inspect-head"><h2>Entity properties</h2><p>Define the entity and its fields.</p></div><div class="inspect-body">
+          <label class="label" for="entityName">Entity name</label><input id="entityName" class="input" value="${esc(e.name)}">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px"><span class="eyebrow">Fields</span><button id="addFieldBtn" class="btn">＋ Add</button></div>
+          <div class="field-editor">${e.fields.map(f=>fieldEditor(f)).join("")||'<div class="empty">No fields yet</div>'}</div>
+          <button id="deleteEntityBtn" class="btn danger" style="width:100%;margin-top:16px">Delete entity</button>
+        </div>`;
+        $("#entityName").oninput=ev=>{e.name=ev.target.value;renderEntities();renderRelationships();renderOutline();save()};
+        $("#addFieldBtn").onclick=()=>{e.fields.push({id:uid(),name:"new_field",type:"TEXT",primary:false,required:false,unique:false});render();save()};
+        $("#deleteEntityBtn").onclick=()=>deleteEntity(e.id);
+        $$(".field-edit-row").forEach(row=>bindFieldRow(e,row));
+      }else{
+        const r=relation(selection.id);if(!r){selection=null;return renderInspector()}
+        const a=entity(r.from),b=entity(r.to);
+        $("#inspectorContent").innerHTML=`<div class="inspect-head"><h2>Relationship properties</h2><p>Edit name, cardinality, and participation.</p></div><div class="inspect-body">
+          <label class="label" for="relationshipName">Relationship name</label><input id="relationshipName" class="input" value="${esc(r.name)}">
+          <label class="label">Connected entities</label><div class="relationship-grid"><select id="fromEntity" class="select">${entityOptions(r.from)}</select><select id="toEntity" class="select">${entityOptions(r.to)}</select></div>
+          <div class="relationship-grid" style="margin-top:13px">
+            <div class="endpoint-card"><strong>${esc(a?.name||"First end")}</strong><label class="label">Cardinality</label><select id="fromCard" class="select"><option ${r.fromCard==="1"?"selected":""}>1</option><option ${r.fromCard==="M"?"selected":""}>M</option></select><label class="label">Participation 參予</label><select id="fromPart" class="select"><option value="1" ${r.fromParticipation==="1"?"selected":""}>1 · Mandatory</option><option value="o" ${r.fromParticipation==="o"?"selected":""}>o · Optional</option></select></div>
+            <div class="endpoint-card"><strong>${esc(b?.name||"Second end")}</strong><label class="label">Cardinality</label><select id="toCard" class="select"><option ${r.toCard==="1"?"selected":""}>1</option><option ${r.toCard==="M"?"selected":""}>M</option></select><label class="label">Participation 參予</label><select id="toPart" class="select"><option value="1" ${r.toParticipation==="1"?"selected":""}>1 · Mandatory</option><option value="o" ${r.toParticipation==="o"?"selected":""}>o · Optional</option></select></div>
+          </div>
+          <div class="legend"><b>Cardinality:</b> 1 = one, M = many.<br><b>Participation 參予:</b> 1 = mandatory, o = optional.</div>
+          <button id="deleteRelationshipBtn" class="btn danger" style="width:100%;margin-top:16px">Delete relationship</button>
+        </div>`;
+        $("#relationshipName").oninput=e=>{r.name=e.target.value;renderRelationships();renderOutline();save()};
+        $("#fromEntity").onchange=e=>{r.from=e.target.value;render();save()};$("#toEntity").onchange=e=>{r.to=e.target.value;render();save()};
+        $("#fromCard").onchange=e=>{r.fromCard=e.target.value;renderRelationships();save()};$("#toCard").onchange=e=>{r.toCard=e.target.value;renderRelationships();save()};
+        $("#fromPart").onchange=e=>{r.fromParticipation=e.target.value;renderRelationships();save()};$("#toPart").onchange=e=>{r.toParticipation=e.target.value;renderRelationships();save()};
+        $("#deleteRelationshipBtn").onclick=()=>{if(confirm(`Delete relationship “${r.name}”?`)){model.relationships=model.relationships.filter(x=>x.id!==r.id);selection=null;render();save()}};
+      }
+    }
+    function fieldEditor(f){return`<div class="field-edit-row" data-field="${f.id}"><input data-prop="name" value="${esc(f.name)}" aria-label="Field name"><select data-prop="type">${["TEXT","INTEGER","REAL","BOOLEAN","DATE","DATETIME","BLOB"].map(t=>`<option ${t===f.type?"selected":""}>${t}</option>`).join("")}</select><div class="field-options"><button class="tiny" data-action="up" title="Move up">↑</button><button class="tiny" data-action="down" title="Move down">↓</button><button class="tiny danger" data-action="delete" title="Delete">×</button></div><div class="field-detail"><label><input data-prop="primary" type="checkbox" ${f.primary?"checked":""}> PK</label><label><input data-prop="required" type="checkbox" ${f.required?"checked":""}> Required</label><label><input data-prop="unique" type="checkbox" ${f.unique?"checked":""}> Unique</label></div></div>`}
+    function bindFieldRow(e,row){
+      const f=e.fields.find(x=>x.id===row.dataset.field);
+      row.querySelectorAll("[data-prop]").forEach(c=>c.onchange=c.oninput=()=>{f[c.dataset.prop]=c.type==="checkbox"?c.checked:c.value;renderEntities();renderRelationships();save()});
+      row.querySelectorAll("[data-action]").forEach(b=>b.onclick=()=>{const i=e.fields.indexOf(f),a=b.dataset.action;if(a==="delete"){if(!confirm(`Delete field “${f.name}”?`))return;e.fields.splice(i,1)}else if(a==="up"&&i>0)[e.fields[i-1],e.fields[i]]=[e.fields[i],e.fields[i-1]];else if(a==="down"&&i<e.fields.length-1)[e.fields[i+1],e.fields[i]]=[e.fields[i],e.fields[i+1]];render();save()});
+    }
+    function entityOptions(value){return model.entities.map(e=>`<option value="${e.id}" ${e.id===value?"selected":""}>${esc(e.name)}</option>`).join("")}
+    function deleteEntity(id){const e=entity(id),linked=model.relationships.filter(r=>r.from===id||r.to===id).length;if(!confirm(`Delete entity “${e.name}”${linked?` and ${linked} connected relationship${linked===1?"":"s"}`:""}?`))return;model.entities=model.entities.filter(x=>x.id!==id);model.relationships=model.relationships.filter(r=>r.from!==id&&r.to!==id);selection=null;render();save()}
+    function addEntity(){const v=$("#viewport"),z=model.zoom||1,id=uid(),index=model.entities.length;model.entities.push({id,name:"New Entity",x:Math.max(40,v.scrollLeft/z+120+(index%3)*35),y:Math.max(40,v.scrollTop/z+100+(index%4)*35),fields:[{id:uid(),name:"id",type:"INTEGER",primary:true,required:true,unique:true}]});selection={type:"entity",id};render();save();setTimeout(()=>{$("#entityName")?.select();focusEntity(id)},30)}
+    function openRelationship(){
+      if(model.entities.length<1)return toast("Create an entity first.","error");
+      const first=selection?.type==="entity"&&entity(selection.id)?selection.id:model.entities[0].id;
+      const second=model.entities.find(e=>e.id!==first)?.id||first;
+      $("#relName").value="Relates to";$("#relFrom").innerHTML=entityOptions(first);$("#relFrom").value=first;$("#relTo").innerHTML=entityOptions(second);$("#relTo").value=second;$("#relationshipDialog").showModal();setTimeout(()=>$("#relName").select(),40)
+    }
+    function addRelationship(){
+      const from=$("#relFrom").value,to=$("#relTo").value,name=$("#relName").value.trim();if(!name)return;
+      const id=uid();model.relationships.push({id,name,from,to,fromCard:"1",toCard:"M",fromParticipation:"o",toParticipation:"o"});selection={type:"relationship",id};$("#relationshipDialog").close();render();save();toast("Relationship added.","ok")
+    }
+    function setMode(mode){model.mode=mode;renderEntities();renderRelationships();$$("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));save()}
+    function setZoom(next){
+      const v=$("#viewport"),old=model.zoom||1,worldX=(v.scrollLeft+v.clientWidth/2)/old,worldY=(v.scrollTop+v.clientHeight/2)/old;
+      model.zoom=Math.round(Math.max(.5,Math.min(1.8,next))*10)/10;renderZoom();
+      v.scrollTo({left:Math.max(0,worldX*model.zoom-v.clientWidth/2),top:Math.max(0,worldY*model.zoom-v.clientHeight/2)});save();
+    }
+    function togglePanel(side){model.panels=model.panels||{left:true,right:true};model.panels[side]=!model.panels[side];renderPanels();save()}
+    function fitDiagram(){
+      if(!model.entities.length)return;const z=model.zoom||1,minX=Math.min(...model.entities.map(e=>e.x)),minY=Math.min(...model.entities.map(e=>e.y)),maxX=Math.max(...model.entities.map(e=>e.x+cardSize(e).w)),maxY=Math.max(...model.entities.map(e=>e.y+cardSize(e).h)),v=$("#viewport");v.scrollTo({left:Math.max(0,(minX+maxX)*z/2-v.clientWidth/2),top:Math.max(0,(minY+maxY)*z/2-v.clientHeight/2),behavior:"smooth"})
+    }
+    function download(){
+      model.name=$("#projectName").value.trim()||"Untitled ER diagram";const blob=new Blob([JSON.stringify({...model,exportedAt:new Date().toISOString()},null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=model.name.replace(/[^\w.-]+/g,"_")+"_ER.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast("ER diagram downloaded.","ok")
+    }
+    async function upload(file){
+      try{const data=JSON.parse(await file.text());if(data.format!=="interactive-er-diagram"||!Array.isArray(data.entities)||!Array.isArray(data.relationships))throw Error("This is not a supported ER diagram file.");if(!confirm(`Replace this diagram with “${data.name||file.name}”?`))return;model={...data,version:1,mode:data.mode==="compact"?"compact":"full",zoom:Number(data.zoom)||1,panels:data.panels||{left:true,right:true}};selection=null;render();save();fitDiagram();toast("ER diagram imported.","ok")}catch(e){toast("Import failed: "+e.message,"error")}$("#fileInput").value=""
+    }
+    function newDiagram(){if(!confirm("Start a new empty ER diagram? Download this work first if needed."))return;model={format:"interactive-er-diagram",version:1,name:"Untitled ER diagram",mode:"full",zoom:1,panels:{left:true,right:true},entities:[],relationships:[]};selection=null;render();save()}
+
+    $("#addEntityBtn").onclick=addEntity;$("#addRelationshipBtn").onclick=openRelationship;$("#fitBtn").onclick=fitDiagram;
+    $("#zoomOutBtn").onclick=()=>setZoom((model.zoom||1)-.1);$("#zoomInBtn").onclick=()=>setZoom((model.zoom||1)+.1);$("#zoomLevel").onclick=()=>setZoom(1);
+    $("#collapseLeftBtn").onclick=()=>togglePanel("left");$("#collapseRightBtn").onclick=()=>togglePanel("right");
+    $$("[data-mode]").forEach(b=>b.onclick=()=>setMode(b.dataset.mode));$("#relationshipForm").onsubmit=e=>{if(e.submitter?.value==="default"){e.preventDefault();addRelationship()}};
+    $("#projectName").oninput=save;$("#downloadBtn").onclick=download;$("#importBtn").onclick=()=>$("#fileInput").click();$("#fileInput").onchange=e=>e.target.files[0]&&upload(e.target.files[0]);$("#newBtn").onclick=newDiagram;
+    model=(()=>{try{const saved=JSON.parse(localStorage.getItem(STORE));return saved?.format==="interactive-er-diagram"?saved:starter()}catch{return starter()}})();model.panels=model.panels||{left:true,right:true};model.zoom=Number(model.zoom)||1;
+    render();setTimeout(fitDiagram,80);
+  })();
+  </script>
+</body>
+</html>
