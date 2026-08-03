@@ -8,7 +8,7 @@ A browser-based realtime maze chase game for one shared host screen and up to 30
 - Up to 30 players join anonymously, choose a name, and claim one of 64 unique colors.
 - Odd player totals are allowed.
 - Before each round, the host chooses how many players become Pac-Man. Every remaining player becomes a Ghost.
-- Roles are randomized, and all Pac-Man and Ghost players spawn in the same large maze arena.
+- Roles are randomized, and all Pac-Man and Ghost players spawn in the same large maze arena. Ghosts start on a line four tiles above the Pac-Man line, with 30 unique slots available to each role for uneven teams.
 - The host browser runs movement, pellets, power pellets, collisions, lives, scoring, and the round timer.
 - The host sees the whole maze and team dashboard. Each phone keeps its own character centered and moves the maze background.
 - Keyboard, swipe, and on-screen direction controls are included.

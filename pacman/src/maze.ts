@@ -34,28 +34,6 @@ function clearRect(walls: boolean[][], x: number, y: number, width: number, heig
   }
 }
 
-function nearestFloorTiles(
-  walls: boolean[][],
-  centerX: number,
-  centerY: number,
-  minY: number,
-  maxY: number,
-  count: number,
-) {
-  const candidates: Array<{ x: number; y: number; distance: number }> = [];
-  for (let y = minY; y <= maxY; y += 1) {
-    for (let x = 2; x < MAZE_WIDTH - 2; x += 1) {
-      if (!walls[y][x]) {
-        candidates.push({ x, y, distance: Math.abs(x - centerX) + Math.abs(y - centerY) * 1.25 });
-      }
-    }
-  }
-  return candidates
-    .sort((a, b) => a.distance - b.distance || Math.abs(a.x - centerX) - Math.abs(b.x - centerX))
-    .slice(0, count)
-    .map(({ x, y }) => ({ x, y }));
-}
-
 export function createMaze(): Maze {
   const walls = Array.from({ length: MAZE_HEIGHT }, (_, y) =>
     Array.from({ length: MAZE_WIDTH }, (_, x) => x === 0 || y === 0 || x === MAZE_WIDTH - 1 || y === MAZE_HEIGHT - 1),
@@ -73,13 +51,18 @@ export function createMaze(): Maze {
   ] as const;
   blocks.forEach(([x, y, width, height]) => fillRect(walls, x, y, width, height));
 
-  // A large shared central arena and a lower spawn apron keep 30-player starts clear.
+  // A large shared central arena and two clear starting lines prevent an
+  // opposing-role collision on the first simulation tick.
   clearRect(walls, 16, 12, 9, 6);
   clearRect(walls, 12, 14, 17, 3);
-  clearRect(walls, 13, 23, 15, 2);
+  clearRect(walls, 5, 18, 30, 7);
 
-  const pacmanSpawns = nearestFloorTiles(walls, 20, 24, 23, 27, 15);
-  const ghostSpawns = nearestFloorTiles(walls, 20, 15, 13, 17, 15);
+  // Every role gets 30 unique slots because the host may choose an uneven
+  // split, including 1 Pac-Man versus 29 Ghosts. Each Ghost slot is exactly
+  // four tiles above the corresponding Pac-Man slot in the same maze.
+  const spawnColumns = Array.from({ length: 30 }, (_, index) => index + 5);
+  const ghostSpawns = spawnColumns.map((x) => ({ x, y: 19 }));
+  const pacmanSpawns = spawnColumns.map((x) => ({ x, y: 23 }));
   const spawnKeys = new Set([...pacmanSpawns, ...ghostSpawns].map(({ x, y }) => tileKey(x, y)));
   const powerCandidates = [
     { x: 2, y: 2 },
