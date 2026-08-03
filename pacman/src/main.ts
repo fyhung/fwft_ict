@@ -192,7 +192,12 @@ async function hostApp(backend: Backend, code: string) {
     document.querySelector<HTMLButtonElement>("#randomize")?.addEventListener("click", () => void randomizeRoles(backend, code));
     document.querySelector<HTMLButtonElement>("#start")?.addEventListener("click", async () => {
       if (!roomState?.players) return;
-      engine = createInitialGame(roomState.players, Date.now(), roomState.config.roundDurationMs);
+      engine = createInitialGame(
+        roomState.players,
+        Date.now(),
+        roomState.config.roundDurationMs,
+        roomState.meta.roundId,
+      );
       resultPublished = false;
       await beginRound(backend, code, engine.snapshot);
       if (screen !== "game") renderHostGame(engine.snapshot);
@@ -298,7 +303,7 @@ async function hostApp(backend: Backend, code: string) {
         cancelAnimationFrame(frameId);
       }
       renderLobby(room);
-    } else if (room.authoritative) {
+    } else if (room.authoritative && room.authoritative.roundId === room.meta.roundId) {
       if (screen !== "game") renderHostGame(engine?.snapshot ?? room.authoritative);
       if (!engine) updateHostHud(room.authoritative);
     }
@@ -387,7 +392,13 @@ async function playerApp(backend: Backend, code: string) {
     if (overlay) {
       overlay.hidden = snapshot.status !== "results";
       const heading = overlay.querySelector("h2");
-      if (heading) heading.textContent = snapshot.winner === actor.role ? "Your team wins" : "Your team was caught";
+      if (heading) {
+        heading.textContent = snapshot.winner === actor.role
+          ? "Your team wins"
+          : `${snapshot.winner === "ghost" ? "Ghost" : "Pac-Man"} team wins`;
+      }
+      const reason = overlay.querySelector<HTMLElement>("#mobile-result-reason");
+      if (reason) reason.textContent = snapshot.resultReason ?? "Round complete";
     }
   }
 
@@ -397,7 +408,7 @@ async function playerApp(backend: Backend, code: string) {
     if (!actor) return;
     app.innerHTML = `<main class="player-game">
       <div class="mobile-hud"><div class="mobile-stat">You<strong id="my-score">0</strong></div><div class="mobile-stat">Team<strong id="team-score">0</strong></div><div class="mobile-stat">Time<strong id="mobile-time">5:00</strong></div><div class="mobile-stat">${actor.role === "pacman" ? "Lives" : "Kills"}<strong id="mobile-lives">0</strong></div></div>
-      <div class="game-stage"><canvas class="game-canvas" id="player-canvas" aria-label="Your centered maze view"></canvas><div class="overlay" id="mobile-result" hidden><div><div class="eyebrow">Round complete</div><h2></h2><p class="muted">Look at the host screen for the full scoreboard.</p></div></div></div>
+      <div class="game-stage"><canvas class="game-canvas" id="player-canvas" aria-label="Your centered maze view"></canvas><div class="overlay" id="mobile-result" hidden><div><div class="eyebrow">Round complete</div><h2></h2><p class="muted" id="mobile-result-reason"></p><p class="muted">Look at the host screen for the full scoreboard.</p></div></div></div>
       <div class="dpad" aria-label="Movement controls"><button data-direction="up" aria-label="Move up">▲</button><button data-direction="left" aria-label="Move left">◀</button><button data-direction="down" aria-label="Move down">▼</button><button data-direction="right" aria-label="Move right">▶</button></div>
     </main>`;
     document.querySelectorAll<HTMLButtonElement>("[data-direction]").forEach((button) =>
@@ -467,7 +478,11 @@ async function playerApp(backend: Backend, code: string) {
       registered = true;
       void registerPresence(backend, code);
     }
-    if (room.authoritative && (room.meta.status === "playing" || room.meta.status === "results")) {
+    if (
+      room.authoritative &&
+      room.authoritative.roundId === room.meta.roundId &&
+      (room.meta.status === "playing" || room.meta.status === "results")
+    ) {
       latestSnapshot = room.authoritative;
       if (screen !== "game") renderPlayerGame(room.authoritative);
       else updateMobileHud(room.authoritative);

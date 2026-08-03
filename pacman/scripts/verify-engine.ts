@@ -36,4 +36,17 @@ assert.equal(state.snapshot.pacmanLives, 15);
 stepGame(state, {}, 1 / 60, 1_017);
 assert.equal(state.snapshot.status, "playing");
 assert.equal(state.snapshot.pacmanLives, 15);
-console.log("Engine verification passed: paired spawn lines are four tiles apart and the first tick stays active.");
+const pacman = actors.find(({ role }) => role === "pacman")!;
+const ghost = actors.find(({ role }) => role === "ghost")!;
+ghost.x = pacman.x;
+ghost.y = pacman.y;
+stepGame(state, {}, 1 / 60, 2_999);
+assert.equal(state.snapshot.pacmanLives, 15);
+stepGame(state, {}, 1 / 60, 4_001);
+assert.equal(state.snapshot.pacmanLives, 14);
+
+const invalidTimerState = createInitialGame(oddPlayers, 1_000, 0);
+stepGame(invalidTimerState, {}, 1 / 60, 1_017);
+assert.equal(invalidTimerState.snapshot.status, "playing");
+assert.equal(invalidTimerState.snapshot.roundEndsAt, 301_000);
+console.log("Engine verification passed: separated starts, collision grace, round IDs, and timer fallback are active.");

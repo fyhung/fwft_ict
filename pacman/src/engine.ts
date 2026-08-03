@@ -7,6 +7,8 @@ const POWERED_PACMAN_SPEED = BASE_SPEED * 0.9;
 const GHOST_SPEED = BASE_SPEED * 0.75;
 const FRIGHTENED_GHOST_SPEED = BASE_SPEED * 0.5;
 const FRIGHTENED_MS = 6_000;
+const START_COLLISION_GRACE_MS = 3_000;
+const DEFAULT_ROUND_DURATION_MS = 5 * 60_000;
 const PLAYER_RADIUS = 0.31;
 
 const vectors: Record<Direction, { x: number; y: number }> = {
@@ -25,7 +27,8 @@ export interface EngineState {
 export function createInitialGame(
   players: Record<string, PlayerRecord>,
   now = Date.now(),
-  roundDurationMs = 5 * 60_000,
+  roundDurationMs = DEFAULT_ROUND_DURATION_MS,
+  roundId = 0,
 ): EngineState {
   const maze = createMaze();
   const actors: Record<string, Actor> = {};
@@ -60,11 +63,16 @@ export function createInitialGame(
   });
 
   const pacmanCount = Object.values(actors).filter((actor) => actor.role === "pacman").length;
+  const safeRoundDuration = Number.isFinite(roundDurationMs) && roundDurationMs >= 30_000
+    ? roundDurationMs
+    : DEFAULT_ROUND_DURATION_MS;
   return {
     maze,
     snapshot: {
+      roundId,
       tick: 0,
       hostTime: now,
+      roundStartedAt: now,
       status: "playing",
       actors,
       pellets: [...maze.pellets],
@@ -76,7 +84,7 @@ export function createInitialGame(
       ghostScore: 0,
       winner: null,
       resultReason: null,
-      roundEndsAt: now + roundDurationMs,
+      roundEndsAt: now + safeRoundDuration,
     },
   };
 }
@@ -201,30 +209,32 @@ export function stepGame(
   snapshot.pellets = [...pelletSet];
   snapshot.powerPellets = [...powerSet];
 
-  const pacmen = Object.values(snapshot.actors).filter((actor) => actor.role === "pacman" && actor.state !== "dead");
-  const ghosts = Object.values(snapshot.actors).filter((actor) => actor.role === "ghost" && actor.state !== "eaten");
-  for (const pacman of pacmen) {
-    if (pacman.state === "invulnerable") continue;
-    for (const ghost of ghosts) {
-      if ((pacman.x - ghost.x) ** 2 + (pacman.y - ghost.y) ** 2 > 0.58) continue;
-      if (ghost.state === "frightened") {
-        const award = [200, 400, 800, 1600][Math.min(snapshot.ghostChain, 3)];
-        snapshot.ghostChain += 1;
-        pacman.score += award;
-        pacman.ghostsEaten += 1;
-        snapshot.pacmanScore += award;
-        ghost.state = "eaten";
-        ghost.respawnAt = now + 1_500;
-        ghost.direction = "none";
-      } else if (ghost.state === "normal") {
-        ghost.score += 500;
-        ghost.kills += 1;
-        snapshot.ghostScore += 500;
-        snapshot.pacmanLives -= 1;
-        pacman.state = "dead";
-        pacman.respawnAt = now + 2_000;
-        pacman.direction = "none";
-        break;
+  if (now - snapshot.roundStartedAt >= START_COLLISION_GRACE_MS) {
+    const pacmen = Object.values(snapshot.actors).filter((actor) => actor.role === "pacman" && actor.state !== "dead");
+    const ghosts = Object.values(snapshot.actors).filter((actor) => actor.role === "ghost" && actor.state !== "eaten");
+    for (const pacman of pacmen) {
+      if (pacman.state === "invulnerable") continue;
+      for (const ghost of ghosts) {
+        if ((pacman.x - ghost.x) ** 2 + (pacman.y - ghost.y) ** 2 > 0.58) continue;
+        if (ghost.state === "frightened") {
+          const award = [200, 400, 800, 1600][Math.min(snapshot.ghostChain, 3)];
+          snapshot.ghostChain += 1;
+          pacman.score += award;
+          pacman.ghostsEaten += 1;
+          snapshot.pacmanScore += award;
+          ghost.state = "eaten";
+          ghost.respawnAt = now + 1_500;
+          ghost.direction = "none";
+        } else if (ghost.state === "normal") {
+          ghost.score += 500;
+          ghost.kills += 1;
+          snapshot.ghostScore += 500;
+          snapshot.pacmanLives -= 1;
+          pacman.state = "dead";
+          pacman.respawnAt = now + 2_000;
+          pacman.direction = "none";
+          break;
+        }
       }
     }
   }

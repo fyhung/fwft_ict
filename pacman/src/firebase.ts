@@ -215,15 +215,26 @@ export async function beginRound(backend: Backend, code: string, snapshot: GameS
   await update(ref(backend.db, `rooms/${code}`), {
     "meta/status": "playing",
     "meta/joinLocked": true,
+    inputs: null,
     authoritative: snapshot,
   });
 }
 
 export async function publishSnapshot(backend: Backend, code: string, snapshot: GameSnapshot) {
   if (snapshot.status === "results") {
-    await update(ref(backend.db, `rooms/${code}`), { authoritative: snapshot, "meta/status": "results" });
+    await runTransaction(
+      ref(backend.db, `rooms/${code}`),
+      (rawRoom) => {
+        const room = rawRoom as RoomData | null;
+        if (!room || room.meta.roundId !== snapshot.roundId || room.meta.status !== "playing") return undefined;
+        room.authoritative = structuredClone(snapshot);
+        room.meta.status = "results";
+        return room;
+      },
+      { applyLocally: false },
+    );
   } else {
-    await set(ref(backend.db, `rooms/${code}/authoritative`), snapshot);
+    await set(ref(backend.db, `rooms/${code}/authoritative`), structuredClone(snapshot));
   }
 }
 

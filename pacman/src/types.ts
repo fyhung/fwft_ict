@@ -62,8 +62,10 @@ export interface Actor {
 }
 
 export interface GameSnapshot {
+  roundId: number;
   tick: number;
   hostTime: number;
+  roundStartedAt: number;
   status: "playing" | "results";
   actors: Record<string, Actor>;
   pellets: string[];

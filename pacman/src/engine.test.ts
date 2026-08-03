@@ -27,6 +27,8 @@ describe("odd-sized teams", () => {
     expect(actors.filter(({ role }) => role === "pacman")).toHaveLength(2);
     expect(actors.filter(({ role }) => role === "ghost")).toHaveLength(3);
     expect(state.snapshot.pacmanLives).toBe(6);
+    expect(state.snapshot.status).toBe("playing");
+    expect(state.snapshot.roundEndsAt).toBe(61_000);
     actors.forEach((actor) => {
       expect(actor.x).toBeGreaterThanOrEqual(0);
       expect(actor.x).toBeLessThan(state.maze.width);
