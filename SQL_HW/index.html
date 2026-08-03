@@ -44,6 +44,15 @@
     min-height:40px;padding:9px 12px;transition:.18s transform,.18s border-color,.18s background}
   .iconbtn{width:42px;padding:0;font-size:18px}
   .iconbtn:hover,.action:hover{transform:translateY(-2px);border-color:var(--cyan);background:#12243a}
+  .authbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;padding:9px 12px;
+    border:1px solid #294b61;border-radius:13px;background:#091321cc;color:var(--muted);font-size:10px;box-shadow:0 8px 24px #0003}
+  .authinfo{display:grid;grid-template-columns:auto auto;align-items:baseline;gap:2px 9px;min-width:0}
+  .authinfo span{grid-row:1/3;width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 9px currentColor}
+  .authinfo strong{color:var(--ink);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .authinfo small{color:var(--muted);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .authbar[data-state="signed-in"] .authinfo span{background:var(--green)}
+  .authbar[data-state="error"] .authinfo span{background:var(--red)}
+  .authactions{display:flex;gap:7px;flex:none}.authactions .action{min-height:34px;padding:7px 10px;font-size:9px}
   .hud{position:sticky;top:8px;z-index:12;display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:14px;
     padding:12px 16px;background:#0a1424ee;border:1px solid #2a516b;border-radius:16px;box-shadow:var(--shadow);backdrop-filter:blur(16px)}
   .mission{min-width:0}.eyebrow{color:var(--cyan);font-size:10px;letter-spacing:.18em;text-transform:uppercase}
@@ -183,7 +192,7 @@
     .app{padding:10px 9px 24px}.brand small{display:none}.hud{gap:7px;padding:10px}.stat{padding-left:8px}.stat b{font-size:16px}
     .stat label{font-size:8px}.panelhead{padding:10px 12px}.tablebox{padding:9px}.summary{grid-template-columns:1fr 1fr}
     .modal{padding:20px 16px}.levelgrid{grid-template-columns:repeat(4,1fr)}.iconbtn{width:39px}.setnav{min-width:150px}.setnav b{max-width:118px}
-    .setscore{flex-wrap:wrap;gap:5px 9px}.setscore strong{font-size:24px}
+    .setscore{flex-wrap:wrap;gap:5px 9px}.setscore strong{font-size:24px}.authbar{align-items:stretch;flex-direction:column}.authactions .action{flex:1}
   }
   @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important}}
   body.reduce-motion *,body.reduce-motion *:before,body.reduce-motion *:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
@@ -200,6 +209,15 @@
       <button class="iconbtn" id="helpBtn" aria-label="How to play" title="How to play">?</button>
     </div>
   </header>
+
+  <section class="authbar" id="authBar" data-state="loading" aria-label="Cloud save account status">
+    <div class="authinfo"><span aria-hidden="true"></span><strong id="authName">CONNECTING TO FIREBASE</strong><small id="authEmail">Local backup remains available</small></div>
+    <div class="authactions">
+      <button class="action primary" id="loginBtn">SIGN IN WITH GOOGLE</button>
+      <button class="action primary" id="cloudSaveBtn" hidden>SAVE TO CLOUD</button>
+      <button class="action" id="logoutBtn" hidden>LOGOUT</button>
+    </div>
+  </section>
 
   <section class="hud" aria-label="Game status">
     <div class="mission"><span class="eyebrow" id="levelLabel">LOADING SETS</span><strong id="missionText">Connecting puzzle manifest…</strong></div>
@@ -266,7 +284,7 @@
 <div class="modalwrap" id="levelsModal" hidden>
   <section class="modal" role="dialog" aria-modal="true" aria-labelledby="levelsTitle">
     <span class="eyebrow">CAMPAIGN MAP</span><h2 id="levelsTitle">LEVEL SELECT</h2>
-    <p>Completed levels retain their best score on this device.</p>
+    <p>Best scores are kept locally and synchronized after Google sign-in.</p>
     <label class="playerfield"><span>PLAYER NAME</span><input id="playerName" type="text" maxlength="24" autocomplete="nickname" placeholder="Enter name"></label>
     <div class="setheading">SELECT PUZZLE SET</div>
     <div class="setpicker" id="setPicker" aria-label="Puzzle set selector"></div>
@@ -324,6 +342,16 @@ const el={score:$("#score"),time:$("#time"),best:$("#best"),deduct:$("#deduct"),
 const F=name=>({type:"field",name}), A=(fn,field)=>({type:"agg",fn,field});
 const G=(select=[],extra={})=>({select,distinct:false,where:[],groupBy:[],having:[],orderBy:[],limit:null,...extra});
 const storeKey="sqlCircuitProgressV2",legacyKey="sqlCircuitProgressV1";
+const SAVE_VERSION=1,FIREBASE_SDK_VERSION="12.17.0",CLOUD_COLLECTION="progress",guestOwnerKey="sqlCircuitGuestOwnerV1";
+const firebaseConfig={
+ apiKey:"AIzaSyBorU1zGErbGgKCFFf6U7PULJqk2kkUYzY",
+ authDomain:"fwft-ict.firebaseapp.com",
+ projectId:"fwft-ict",
+ storageBucket:"fwft-ict.firebasestorage.app",
+ messagingSenderId:"823970283860",
+ appId:"1:823970283860:web:e256332ae9ee416d4188c1",
+ measurementId:"G-K83XP2S5HS"
+};
 const fallbackManifest={version:2,defaultSet:"set_1",sets:[
  {id:"set_1",file:"set_1.json",title:"Core Circuit / 核心電路",description:"The original SQL campaign / 原創 SQL 學習旅程",levelCount:20},
  {id:"set_2",file:"set_2.json",title:"Neon Expansion / 霓虹擴展",description:"Racers, relics, drones, beasts, and traders / 賽車、遺物、無人機、怪獸及交易員",levelCount:20},
@@ -336,18 +364,60 @@ const fallbackManifest={version:2,defaultSet:"set_1",sets:[
  {id:"set_9",file:"set_9.json",title:"Smart Factory / 智慧工廠",description:"Machines, production lines, units, and components / 機器、生產線、產量及零件",levelCount:20},
  {id:"set_10",file:"set_10.json",title:"Global Café / 環球咖啡館",description:"Cafés, specialties, cities, orders, and menu items / 咖啡館、特色、城市、訂單及餐單項目",levelCount:20}
 ]};
-let saved,legacy;
-try{saved=JSON.parse(localStorage.getItem(storeKey))||{};legacy=JSON.parse(localStorage.getItem(legacyKey))||{}}catch(e){saved={};legacy={}}
-const progress={
- sound:saved.sound??legacy.sound??true,reduced:saved.reduced??legacy.reduced??false,
- playerName:saved.playerName??legacy.playerName??"",lastSet:saved.lastSet||"set_1",sets:saved.sets||{},
- seenHelp:saved.seenHelp??legacy.seenHelp??false
-};
+let auth=null,db=null,authUser=null,authApi=null,firestoreApi=null,cloudReady=false,cloudSaving=false,cloudSaveQueued=false,cloudSaveTimer=null;
+let gameInitialized=false,authSequence=0;
+function readStored(key){try{return JSON.parse(localStorage.getItem(key))||{}}catch(error){return{}}}
+function defaultProgress(){return{saveVersion:SAVE_VERSION,sound:true,reduced:false,playerName:"",lastSet:"set_1",sets:{},seenHelp:false,total:0,localUpdatedAt:0}}
+function migrateSave(raw={}){
+ const source=raw&&typeof raw.gameState==="object"?raw.gameState:raw;
+ const data=source&&typeof source==="object"?source:{};
+ const migrated={...defaultProgress(),...data,saveVersion:SAVE_VERSION};
+ migrated.sound=typeof data.sound==="boolean"?data.sound:true;
+ migrated.reduced=typeof data.reduced==="boolean"?data.reduced:false;
+ migrated.seenHelp=Boolean(data.seenHelp);
+ migrated.playerName=typeof data.playerName==="string"?data.playerName:"";
+ migrated.lastSet=typeof data.lastSet==="string"&&data.lastSet?data.lastSet:"set_1";
+ migrated.localUpdatedAt=Number(data.localUpdatedAt||raw.clientUpdatedAt||0)||0;
+ migrated.sets={};
+ const sourceSets=data.sets&&typeof data.sets==="object"?data.sets:{};
+ Object.entries(sourceSets).forEach(([id,set])=>{
+   if(!set||typeof set!=="object")return;
+   migrated.sets[id]={...set,unlocked:Math.max(1,Number(set.unlocked)||1),best:set.best&&typeof set.best==="object"?{...set.best}:{},
+     completed:set.completed&&typeof set.completed==="object"?{...set.completed}:{},last:Math.max(1,Number(set.last)||1)};
+ });
+ migrated.total=totalScore(migrated);
+ return migrated;
+}
+function migrateLegacyProgress(value){
+ const migrated=migrateSave(value),old=readStored(legacyKey);
+ if(!migrated.sets.set_1&&old.best&&Object.keys(old.best).length){
+   migrated.sound=typeof old.sound==="boolean"?old.sound:migrated.sound;migrated.reduced=typeof old.reduced==="boolean"?old.reduced:migrated.reduced;
+   migrated.seenHelp=old.seenHelp??migrated.seenHelp;
+   migrated.sets.set_1={unlocked:Math.max(1,Number(old.unlocked)||1),best:{...old.best},completed:{...(old.completed||{})},last:Math.max(1,Number(old.last)||1)};
+   migrated.total=totalScore(migrated);
+ }
+ return migrated;
+}
+function totalScore(value){return Object.values(value?.sets||{}).reduce((sum,set)=>sum+Object.values(set?.best||{}).reduce((part,n)=>part+Number(n||0),0),0)}
+function mergeProgress(localValue,cloudValue){
+ const local=migrateSave(localValue),cloud=migrateSave(cloudValue),cloudIsNewer=cloud.localUpdatedAt>=local.localUpdatedAt;
+ const recent=cloudIsNewer?cloud:local,older=cloudIsNewer?local:cloud,result=migrateSave(recent);
+ result.sets={};
+ new Set([...Object.keys(local.sets),...Object.keys(cloud.sets)]).forEach(id=>{
+   const a=local.sets[id]||{},b=cloud.sets[id]||{},newer=recent.sets[id]||{},fallback=older.sets[id]||{};
+   const best={};new Set([...Object.keys(a.best||{}),...Object.keys(b.best||{})]).forEach(level=>best[level]=Math.max(Number(a.best?.[level]||0),Number(b.best?.[level]||0)));
+   const completed={};new Set([...Object.keys(a.completed||{}),...Object.keys(b.completed||{})]).forEach(level=>completed[level]=Boolean(a.completed?.[level]||b.completed?.[level]));
+   result.sets[id]={...fallback,...newer,unlocked:Math.max(1,Number(a.unlocked)||1,Number(b.unlocked)||1),best,completed,last:Math.max(1,Number(newer.last||fallback.last)||1)};
+ });
+ result.localUpdatedAt=Math.max(local.localUpdatedAt,cloud.localUpdatedAt);result.total=totalScore(result);return result;
+}
+let progress=migrateLegacyProgress(readStored(storeKey));
 let manifest=fallbackManifest,setIndex=0,currentSet=null,datasets={},levels=[],levelIndex=0,tokens=[],parsed=null,lastValid=null,insertAt=0,history=[];
 let startTime=0,elapsed=0,insertions=0,undos=0,solved=false,timer=null,lastTimerPenalty=0,audioCtx=null;
 
 const setProgress=()=>progress.sets[currentSet?.id||progress.lastSet]||(progress.sets[currentSet?.id||progress.lastSet]={unlocked:1,best:{},completed:{},last:1});
-const save=()=>{if(currentSet){const sp=setProgress();sp.last=levelIndex+1;progress.lastSet=currentSet.id}localStorage.setItem(storeKey,JSON.stringify(progress))};
+const localKey=uid=>uid?`${storeKey}:${uid}`:storeKey;
+const save=({cloud=true}={})=>{if(currentSet){const sp=setProgress();sp.last=levelIndex+1;progress.lastSet=currentSet.id}progress.saveVersion=SAVE_VERSION;progress.total=totalScore(progress);progress.localUpdatedAt=Date.now();localStorage.setItem(localKey(authUser?.uid),JSON.stringify(progress));if(cloud)scheduleCloudSave()};
 const valueLabel=v=>Array.isArray(v)?"("+v.map(valueLabel).join(", ")+")":v===null?"NULL":typeof v==="string"?"'"+v+"'":String(v);
 const aggName=a=>a.fn.toLowerCase()+(a.field==="*"?"":"_"+a.field);
 const exprLabel=e=>e.type==="field"?e.name:e.fn+"("+e.field+")";
@@ -619,7 +689,7 @@ function restart(){startLevel(levelIndex)}
 function complete(){
   solved=true;clearInterval(timer);const final=currentScore(),id=levelIndex+1;
   const sp=setProgress();sp.best[id]=Math.max(sp.best[id]||0,final);sp.completed[id]=true;sp.unlocked=Math.max(sp.unlocked,Math.min(levels.length,id+1));
-  progress.total=Object.values(progress.sets).reduce((sum,set)=>sum+Object.values(set.best||{}).reduce((s,n)=>s+Number(n||0),0),0);save();
+  progress.total=totalScore(progress);save();void saveGame();
   beep("success");el.announce.textContent=`Puzzle complete. Final score ${final}.`;
   el.live.classList.add("matched");el.target.classList.add("matched");setTimeout(()=>{el.live.classList.remove("matched");el.target.classList.remove("matched")},850);
   const wave=document.createElement("div");wave.className="successwave";document.body.append(wave);setTimeout(()=>wave.remove(),900);
@@ -661,9 +731,106 @@ function validateSet(data,meta){
   if(meta.levelCount&&data.levels.length!==meta.levelCount)throw new Error(`${meta.file} should contain ${meta.levelCount} puzzles`);
   data.levels.forEach((level,i)=>{if(!level.goal||!data.datasets[level.table])throw new Error(`${meta.file}, puzzle ${i+1}, references missing data`)});
 }
-function migrateLegacy(){
-  if(progress.sets.set_1||!Object.keys(legacy.best||{}).length)return;
-  progress.sets.set_1={unlocked:Math.max(1,legacy.unlocked||1),best:legacy.best||{},completed:legacy.completed||{},last:legacy.last||1};
+function updateAuthUI(state,message=""){
+  const signedIn=Boolean(authUser),bar=$("#authBar"),login=$("#loginBtn"),cloudSave=$("#cloudSaveBtn"),logoutButton=$("#logoutBtn");
+  bar.dataset.state=state;login.hidden=signedIn;cloudSave.hidden=!signedIn;logoutButton.hidden=!signedIn;
+  login.disabled=state==="loading"||state==="unavailable";cloudSave.disabled=state==="loading"||state==="saving";logoutButton.disabled=state==="loading";
+  if(signedIn){
+    $("#authName").textContent=authUser.displayName||"GOOGLE ACCOUNT";
+    $("#authEmail").textContent=[authUser.email,message].filter(Boolean).join(" • ");
+  }else{
+    $("#authName").textContent=state==="loading"?"CONNECTING TO FIREBASE":state==="unavailable"?"CLOUD SAVE UNAVAILABLE":"LOCAL BACKUP MODE";
+    $("#authEmail").textContent=message||(state==="loading"?"Checking saved Google session":"Sign in with Google to synchronize progress");
+  }
+}
+function friendlyAuthError(error){
+  const code=error?.code||"";
+  if(code==="auth/popup-closed-by-user"||code==="auth/cancelled-popup-request")return"Sign-in was cancelled.";
+  if(code==="auth/popup-blocked")return"The browser blocked the Google sign-in window. Allow pop-ups and try again.";
+  if(code==="auth/unauthorized-domain")return"This website domain is not authorized in Firebase Authentication.";
+  if(code==="auth/network-request-failed")return"Firebase could not be reached. Local backup is still working.";
+  if(code==="permission-denied"||code==="firestore/permission-denied")return"Firestore denied access. Check and publish the security rules.";
+  return error?.message||"Firebase is temporarily unavailable. Local backup is still working.";
+}
+function createNewSave(user=authUser){
+  const gameState=migrateSave(progress);gameState.total=totalScore(gameState);
+  return{saveVersion:SAVE_VERSION,displayName:user?.displayName||"",email:user?.email||"",totalScore:gameState.total,lastSet:gameState.lastSet,
+    gameState,clientUpdatedAt:gameState.localUpdatedAt,updatedAt:firestoreApi.serverTimestamp()};
+}
+function userLocalFallback(user){
+  const userRaw=readStored(localKey(user.uid));
+  if(Object.keys(userRaw).length)return migrateSave(userRaw);
+  const owner=localStorage.getItem(guestOwnerKey);
+  if(!owner||owner===user.uid){if(!owner)localStorage.setItem(guestOwnerKey,user.uid);return migrateLegacyProgress(readStored(storeKey))}
+  return defaultProgress();
+}
+async function loadGame(user=authUser){
+  if(!user||!db)throw new Error("Firebase is not ready");
+  const localProgress=userLocalFallback(user);progress=localProgress;
+  const reference=firestoreApi.doc(db,CLOUD_COLLECTION,user.uid),snapshot=await firestoreApi.getDoc(reference);
+  if(snapshot.exists())progress=mergeProgress(localProgress,snapshot.data());
+  progress=migrateSave(progress);localStorage.setItem(localKey(user.uid),JSON.stringify(progress));
+  return snapshot.exists();
+}
+async function saveGame({notify=false}={}){
+  clearTimeout(cloudSaveTimer);cloudSaveTimer=null;save({cloud:false});
+  if(!authUser||!db||!cloudReady){if(notify)flashToast("Sign in with Google to save to the cloud");return false}
+  if(cloudSaving){cloudSaveQueued=true;return false}
+  cloudSaving=true;updateAuthUI("saving","Saving progress…");
+  try{
+    await firestoreApi.setDoc(firestoreApi.doc(db,CLOUD_COLLECTION,authUser.uid),createNewSave(authUser));
+    updateAuthUI("signed-in","Cloud save up to date");if(notify)flashToast("Progress saved to Firebase");return true;
+  }catch(error){updateAuthUI("error",friendlyAuthError(error));if(notify)flashToast(friendlyAuthError(error));return false}
+  finally{cloudSaving=false;if(cloudSaveQueued){cloudSaveQueued=false;void saveGame()}}
+}
+function scheduleCloudSave(){
+  if(!authUser||!cloudReady)return;clearTimeout(cloudSaveTimer);cloudSaveTimer=setTimeout(()=>void saveGame(),1200);
+}
+async function refreshGameFromProgress(){
+  applySettings();
+  if(!gameInitialized){gameInitialized=true;await initialize();return}
+  if(!manifest.sets.length)return;
+  const wanted=manifest.sets.findIndex(set=>set.id===progress.lastSet),fallback=manifest.sets.findIndex(set=>set.id===manifest.defaultSet);
+  try{await loadSet(wanted>=0?wanted:Math.max(0,fallback))}catch(error){showDataError(error)}
+}
+async function handleAuthState(user){
+  const sequence=++authSequence;cloudReady=false;clearTimeout(cloudSaveTimer);
+  if(!user){
+    authUser=null;progress=migrateLegacyProgress(readStored(storeKey));
+    await refreshGameFromProgress();if(sequence===authSequence)updateAuthUI("signed-out");return;
+  }
+  authUser=user;updateAuthUI("loading","Loading cloud progress…");
+  try{
+    await loadGame(user);if(sequence!==authSequence)return;
+    await refreshGameFromProgress();if(sequence!==authSequence)return;
+    cloudReady=true;updateAuthUI("signed-in","Cloud progress loaded");await saveGame();
+  }catch(error){
+    if(sequence!==authSequence)return;
+    progress=migrateSave(progress);await refreshGameFromProgress();updateAuthUI("error",friendlyAuthError(error));
+  }
+}
+async function loginWithGoogle(){
+  if(!auth||!authApi){flashToast("Firebase is unavailable; local backup is still active");return}
+  updateAuthUI("loading","Opening Google sign-in…");
+  try{await authApi.signInWithPopup(auth,new authApi.GoogleAuthProvider())}catch(error){updateAuthUI("error",friendlyAuthError(error));flashToast(friendlyAuthError(error))}
+}
+async function logout(){
+  if(!authUser||!authApi)return;
+  await saveGame();updateAuthUI("loading","Signing out…");
+  try{await authApi.signOut(auth)}catch(error){updateAuthUI("error",friendlyAuthError(error))}
+}
+async function initializeFirebase(){
+  updateAuthUI("loading");
+  try{
+    const base=`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}`;
+    const modules=Promise.all([import(`${base}/firebase-app.js`),import(`${base}/firebase-auth.js`),import(`${base}/firebase-firestore.js`)]);
+    const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("Firebase connection timed out")),8000));
+    const[appModule,authModule,firestoreModule]=await Promise.race([modules,timeout]);
+    authApi=authModule;firestoreApi=firestoreModule;
+    const firebaseApp=appModule.initializeApp(firebaseConfig);auth=authModule.getAuth(firebaseApp);db=firestoreModule.getFirestore(firebaseApp);
+    try{await authModule.setPersistence(auth,authModule.browserLocalPersistence)}catch(error){console.warn("Firebase persistence unavailable",error)}
+    authModule.onAuthStateChanged(auth,user=>void handleAuthState(user));
+  }catch(error){updateAuthUI("unavailable",friendlyAuthError(error));if(!gameInitialized){gameInitialized=true;await initialize()}}
 }
 async function loadSet(index,reopenMap=false){
   const meta=manifest.sets[index];if(!meta)return;
@@ -685,7 +852,6 @@ async function initialize(){
   try{
     manifest=await readJSON("sets.json");
     if(!manifest||!Array.isArray(manifest.sets)||!manifest.sets.length)throw new Error("sets.json does not list any puzzle sets");
-    migrateLegacy();
     const wanted=manifest.sets.findIndex(s=>s.id===progress.lastSet);
     await loadSet(wanted>=0?wanted:Math.max(0,manifest.sets.findIndex(s=>s.id===manifest.defaultSet)));
     $("#dataBanner").hidden=true;
@@ -713,11 +879,13 @@ $("#playerName").addEventListener("input",e=>{progress.playerName=e.target.value
 $("#replayBtn").addEventListener("click",restart);$("#nextBtn").addEventListener("click",()=>startLevel(Math.min(levels.length-1,levelIndex+1)));
 $("#levelGrid").addEventListener("click",e=>{const b=e.target.closest("[data-level]");if(b&&!b.disabled)startLevel(+b.dataset.level)});
 $("#setPicker").addEventListener("click",async e=>{const b=e.target.closest("[data-set]");if(!b||+b.dataset.set===setIndex)return;try{await loadSet(+b.dataset.set,true);save()}catch(error){showDataError(error)}});
+$("#loginBtn").addEventListener("click",loginWithGoogle);$("#cloudSaveBtn").addEventListener("click",()=>void saveGame({notify:true}));$("#logoutBtn").addEventListener("click",logout);
 $("#retryDataBtn").addEventListener("click",initialize);
 $$("[data-close]").forEach(b=>b.addEventListener("click",()=>$("#"+b.dataset.close).hidden=true));
 $$(".modalwrap").forEach(m=>m.addEventListener("click",e=>{if(e.target===m&&m.id!=="completeModal")m.hidden=true}));
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeAll();if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"){e.preventDefault();undo()}});
-initialize();
+window.addEventListener("pagehide",()=>save({cloud:false}));
+void initializeFirebase();
 })();
 </script>
 </body>
