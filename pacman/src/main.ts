@@ -324,12 +324,17 @@ async function playerApp(backend: Backend, code: string) {
   let playerFrame = 0;
   let inputSeq = 0;
   let lastDirection: Direction = "none";
+  let lastDirectionSentAt = 0;
 
   const send = (direction: Direction) => {
-    if (direction === lastDirection) return;
+    const now = Date.now();
+    if (direction === lastDirection && now - lastDirectionSentAt < 200) return;
     lastDirection = direction;
+    lastDirectionSentAt = now;
     inputSeq += 1;
-    void sendDirection(backend, code, direction, inputSeq);
+    void sendDirection(backend, code, direction, inputSeq).catch(() => {
+      lastDirectionSentAt = 0;
+    });
   };
 
   function renderJoin(room: RoomData, admissionMessage?: string) {

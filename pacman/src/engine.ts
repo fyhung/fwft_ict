@@ -10,6 +10,7 @@ const FRIGHTENED_MS = 6_000;
 const START_COLLISION_GRACE_MS = 3_000;
 const DEFAULT_ROUND_DURATION_MS = 5 * 60_000;
 const PLAYER_RADIUS = 0.31;
+const TURN_WINDOW = 0.16;
 
 const vectors: Record<Direction, { x: number; y: number }> = {
   up: { x: 0, y: -1 },
@@ -98,16 +99,38 @@ function canOccupy(maze: Maze, x: number, y: number): boolean {
   ].some(([sampleX, sampleY]) => isWall(maze, sampleX, sampleY));
 }
 
+function directionsAreOpposite(first: Direction, second: Direction): boolean {
+  return (
+    (first === "up" && second === "down") ||
+    (first === "down" && second === "up") ||
+    (first === "left" && second === "right") ||
+    (first === "right" && second === "left")
+  );
+}
+
 function tryDirection(actor: Actor, maze: Maze, direction: Direction): boolean {
   if (direction === "none") return false;
+  if (direction === actor.direction) return true;
+
+  // Reversing in a corridor is always safe: the actor just travels back over
+  // the space it has already crossed and does not need to reach a tile center.
+  if (directionsAreOpposite(actor.direction, direction)) {
+    actor.direction = direction;
+    return true;
+  }
+
   const vector = vectors[direction];
-  let x = actor.x;
-  let y = actor.y;
-  if (vector.x !== 0 && Math.abs(actor.y - Math.round(actor.y)) < 0.16) y = Math.round(actor.y);
-  if (vector.y !== 0 && Math.abs(actor.x - Math.round(actor.x)) < 0.16) x = Math.round(actor.x);
-  if (!canOccupy(maze, x + vector.x * 0.08, y + vector.y * 0.08)) return false;
-  actor.x = x;
-  actor.y = y;
+  const centerX = Math.round(actor.x);
+  const centerY = Math.round(actor.y);
+
+  // A 90-degree turn happens only while crossing a tile center. Keep an
+  // unavailable request buffered instead of steering into the nearby wall.
+  if (vector.x !== 0 && Math.abs(actor.y - centerY) >= TURN_WINDOW) return false;
+  if (vector.y !== 0 && Math.abs(actor.x - centerX) >= TURN_WINDOW) return false;
+  if (!canOccupy(maze, centerX + vector.x, centerY + vector.y)) return false;
+
+  actor.x = centerX;
+  actor.y = centerY;
   actor.direction = direction;
   return true;
 }
@@ -130,8 +153,17 @@ function moveActor(actor: Actor, maze: Maze, seconds: number, frightenedActive: 
     actor.x = nextX;
     actor.y = nextY;
   } else {
-    actor.x = Math.round(actor.x * 10) / 10;
-    actor.y = Math.round(actor.y * 10) / 10;
+    const centeredX = Math.round(actor.x);
+    const centeredY = Math.round(actor.y);
+    if (canOccupy(maze, centeredX, centeredY)) {
+      actor.x = centeredX;
+      actor.y = centeredY;
+    }
+    actor.direction = "none";
+    // Keep the requested direction buffered. A later input can immediately
+    // release the actor from the wall, and an early corner request remains
+    // active until the next legal intersection.
+    tryDirection(actor, maze, actor.wantedDirection);
   }
   if (Math.abs(actor.y - TUNNEL_ROW) < 0.6) {
     if (actor.x < -0.55) actor.x = MAZE_WIDTH - 0.45;

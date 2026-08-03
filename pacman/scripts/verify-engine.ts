@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createInitialGame, stepGame } from "../src/engine.ts";
 import { createMaze } from "../src/maze.ts";
-import type { PlayerRecord, Role } from "../src/types.ts";
+import type { Direction, InputState, PlayerRecord, Role } from "../src/types.ts";
 
 const maze = createMaze();
 assert.equal(maze.pacmanSpawns.length, 30);
@@ -49,4 +49,60 @@ const invalidTimerState = createInitialGame(oddPlayers, 1_000, 0);
 stepGame(invalidTimerState, {}, 1 / 60, 1_017);
 assert.equal(invalidTimerState.snapshot.status, "playing");
 assert.equal(invalidTimerState.snapshot.roundEndsAt, 301_000);
-console.log("Engine verification passed: separated starts, collision grace, round IDs, and timer fallback are active.");
+
+const wallTurnState = createInitialGame(oddPlayers, 1_000, 60_000);
+const wallTurnPacman = Object.values(wallTurnState.snapshot.actors).find(({ role }) => role === "pacman")!;
+wallTurnPacman.x = 39.2;
+wallTurnPacman.y = 23;
+wallTurnPacman.direction = "right";
+wallTurnPacman.wantedDirection = "down";
+stepGame(wallTurnState, {}, 1 / 60, 5_000);
+assert.equal(wallTurnPacman.x, 39);
+assert.equal(wallTurnPacman.direction, "down");
+stepGame(wallTurnState, {}, 1 / 60, 5_017);
+assert.ok(wallTurnPacman.y > 23);
+
+function input(direction: Direction, seq = 1): Record<string, InputState> {
+  return { solo: { seq, direction, clientTime: 1_000 } };
+}
+
+const soloPlayers = { solo: player(0, "pacman") };
+
+// Pressing toward a blocked side passage must not cancel forward movement.
+// Row 2 is open from x=10 through x=16, while the tiles below x=11..15 are
+// walls. A buffered Down command should carry through and turn at x=16.
+const bufferedTurnState = createInitialGame(soloPlayers, 1_000, 60_000);
+const bufferedActor = bufferedTurnState.snapshot.actors.solo;
+bufferedActor.x = 10.6;
+bufferedActor.y = 2;
+bufferedActor.direction = "right";
+for (let tick = 0; tick < 90; tick += 1) {
+  stepGame(bufferedTurnState, input("down"), 1 / 60, 5_000 + tick * (1_000 / 60));
+}
+assert.equal(bufferedActor.direction, "down");
+assert.equal(bufferedActor.x, 16);
+assert.ok(bufferedActor.y > 2);
+
+// A reversal is allowed immediately, without waiting for a tile center.
+const reverseState = createInitialGame(soloPlayers, 1_000, 60_000);
+const reverseActor = reverseState.snapshot.actors.solo;
+reverseActor.x = 10.4;
+reverseActor.y = 2;
+reverseActor.direction = "right";
+stepGame(reverseState, input("left"), 1 / 60, 5_000);
+assert.equal(reverseActor.direction, "left");
+assert.ok(reverseActor.x < 10.4);
+
+// Once stopped at a wall, a new valid direction must release the actor.
+const wallEscapeState = createInitialGame(soloPlayers, 1_000, 60_000);
+const wallEscapeActor = wallEscapeState.snapshot.actors.solo;
+wallEscapeActor.x = 39.2;
+wallEscapeActor.y = 23;
+wallEscapeActor.direction = "right";
+stepGame(wallEscapeState, input("right"), 1 / 60, 5_000);
+assert.equal(wallEscapeActor.direction, "none");
+stepGame(wallEscapeState, input("down", 2), 1 / 60, 5_017);
+assert.equal(wallEscapeActor.direction, "down");
+assert.ok(wallEscapeActor.y > 23);
+
+console.log("Engine verification passed: legal turns, buffered turns, reversals, wall recovery, collision grace, and timer fallback are active.");
