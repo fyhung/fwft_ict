@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#fbf9ff">
+  <meta name="description" content="Revision and enrichment notes presented as five browsable photo albums.">
+  <title>Revision + Enrichment Notes</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #f5f2fb;
+      --surface: #ffffff;
+      --text: #251a4c;
+      --muted: #746d89;
+      --accent: #7956cf;
+      --line: rgb(73 51 126 / 12%);
+      --topbar-height: 58px;
+      --shadow: 0 16px 40px rgb(65 45 114 / 13%);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--background);
+      scroll-behavior: auto;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 0%, rgb(220 208 255 / 55%), transparent 32rem),
+        linear-gradient(180deg, #fdfbff 0, var(--background) 32rem);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    img {
+      max-width: 100%;
+    }
+
+    .topbar {
+      position: sticky;
+      z-index: 20;
+      top: 0;
+      display: grid;
+      min-height: calc(var(--topbar-height) + env(safe-area-inset-top));
+      grid-template-columns: minmax(80px, 1fr) auto minmax(80px, 1fr);
+      align-items: end;
+      gap: 0.5rem;
+      padding: env(safe-area-inset-top) max(0.8rem, env(safe-area-inset-right)) 0 max(0.8rem, env(safe-area-inset-left));
+      background: rgb(253 251 255 / 86%);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(18px) saturate(150%);
+    }
+
+    .topbar > * {
+      min-height: var(--topbar-height);
+      display: flex;
+      align-items: center;
+    }
+
+    .back-link {
+      width: max-content;
+      color: var(--accent);
+      font-size: 0.94rem;
+      font-weight: 750;
+      text-decoration: none;
+    }
+
+    .back-link::before {
+      margin-right: 0.35rem;
+      content: "\2190";
+      font-size: 1.15rem;
+    }
+
+    .topbar-title {
+      overflow: hidden;
+      font-size: 0.98rem;
+      font-weight: 800;
+      text-align: center;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .topbar-spacer {
+      justify-self: end;
+    }
+
+    #app {
+      min-height: calc(100vh - var(--topbar-height));
+      padding-bottom: calc(3rem + env(safe-area-inset-bottom));
+    }
+
+    .album-home,
+    .album-view {
+      width: min(1120px, calc(100% - 1.25rem));
+      margin: 0 auto;
+    }
+
+    .hero {
+      padding: clamp(1rem, 3vw, 2rem) 0 clamp(1.5rem, 4vw, 2.5rem);
+    }
+
+    .hero-picture {
+      display: block;
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+      background: #eee8ff;
+      border: 1px solid var(--line);
+      border-radius: clamp(18px, 3vw, 30px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-picture img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .section-heading,
+    .album-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0 0 0.9rem;
+    }
+
+    .section-heading h1,
+    .album-heading h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 4vw, 2.2rem);
+      letter-spacing: -0.035em;
+    }
+
+    .section-heading p,
+    .album-heading p {
+      flex: 0 0 auto;
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .album-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .album-card {
+      position: relative;
+      display: block;
+      overflow: hidden;
+      aspect-ratio: 4 / 5;
+      color: white;
+      background: #dcd2f6;
+      border: 1px solid rgb(255 255 255 / 65%);
+      border-radius: 18px;
+      box-shadow: 0 10px 28px rgb(65 45 114 / 12%);
+      text-decoration: none;
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .album-card picture,
+    .album-card img {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .album-card img {
+      object-fit: cover;
+      transition: transform 350ms ease;
+    }
+
+    .album-card::after {
+      position: absolute;
+      inset: 40% 0 0;
+      content: "";
+      background: linear-gradient(transparent, rgb(25 12 59 / 82%));
+      pointer-events: none;
+    }
+
+    .album-card-copy {
+      position: absolute;
+      z-index: 1;
+      right: 1rem;
+      bottom: 0.9rem;
+      left: 1rem;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .album-card h2 {
+      margin: 0;
+      font-size: clamp(1.2rem, 4vw, 1.65rem);
+    }
+
+    .album-card p {
+      margin: 0.18rem 0 0;
+      color: rgb(255 255 255 / 78%);
+      font-size: 0.78rem;
+    }
+
+    .album-card-arrow {
+      font-size: 1.4rem;
+      font-weight: 800;
+    }
+
+    .album-card:hover,
+    .album-card:focus-visible {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 38px rgb(65 45 114 / 20%);
+      outline: 3px solid rgb(121 86 207 / 30%);
+      outline-offset: 2px;
+    }
+
+    .album-card:hover img,
+    .album-card:focus-visible img {
+      transform: scale(1.025);
+    }
+
+    .album-view {
+      padding-top: clamp(1rem, 3vw, 1.7rem);
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 3px;
+      overflow: hidden;
+      background: var(--line);
+      border-radius: 14px;
+    }
+
+    .photo-thumb {
+      position: relative;
+      display: block;
+      min-width: 0;
+      overflow: hidden;
+      aspect-ratio: 1;
+      background: #e9e3f4;
+    }
+
+    .photo-thumb picture,
+    .photo-thumb img {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .photo-thumb img {
+      object-fit: cover;
+      transition: transform 220ms ease, filter 220ms ease;
+    }
+
+    .photo-thumb:hover img,
+    .photo-thumb:focus-visible img {
+      transform: scale(1.035);
+      filter: brightness(0.9);
+    }
+
+    .photo-thumb:focus-visible {
+      z-index: 1;
+      outline: 3px solid var(--accent);
+      outline-offset: -3px;
+    }
+
+    .feed {
+      width: min(720px, 100%);
+      margin: 0 auto;
+      padding: clamp(0.75rem, 2.5vw, 1.5rem) 0 calc(2rem + env(safe-area-inset-bottom));
+    }
+
+    .feed-intro {
+      padding: 0 1rem 0.85rem;
+      color: var(--muted);
+      font-size: 0.86rem;
+      text-align: center;
+    }
+
+    .feed-photo {
+      overflow: hidden;
+      margin: 0 0 clamp(0.8rem, 3vw, 1.3rem);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 9px 30px rgb(65 45 114 / 9%);
+      scroll-margin-top: calc(var(--topbar-height) + 0.75rem);
+    }
+
+    .feed-photo picture,
+    .feed-photo img {
+      display: block;
+      width: 100%;
+    }
+
+    .feed-photo img {
+      height: auto;
+      background: #eeeaf7;
+    }
+
+    .feed-caption {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.85rem 1rem 0.95rem;
+    }
+
+    .feed-caption strong {
+      overflow-wrap: anywhere;
+      font-size: 0.88rem;
+    }
+
+    .feed-caption span {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .empty-state {
+      padding: 5rem 1rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (min-width: 600px) {
+      .album-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+      }
+    }
+
+    @media (min-width: 1180px) {
+      .album-grid,
+      .photo-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 599px) {
+      .album-home,
+      .album-view {
+        width: 100%;
+      }
+
+      .hero,
+      .section-heading,
+      .album-heading {
+        margin-right: 0.65rem;
+        margin-left: 0.65rem;
+      }
+
+      .hero-picture {
+        border-radius: 16px;
+      }
+
+      .album-grid {
+        padding: 0 0.65rem;
+      }
+
+      .photo-grid {
+        gap: 2px;
+        border-radius: 0;
+      }
+
+      .feed-photo {
+        border-right: 0;
+        border-left: 0;
+        border-radius: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .album-card,
+      .album-card img,
+      .photo-thumb img {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="back-link" id="back-link" href="../index.html">Projects</a>
+    <div class="topbar-title" id="topbar-title">Revision Notes</div>
+    <div class="topbar-spacer" aria-hidden="true"></div>
+  </header>
+
+  <main id="app" aria-live="polite"></main>
+
+  <noscript>
+    <p class="empty-state">Please enable JavaScript to browse the photo albums.</p>
+  </noscript>
+  <script src="gallery-data.js"></script>
+  <script src="gallery.js"></script>
+</body>
+</html>
