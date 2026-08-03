@@ -53,6 +53,7 @@ export function createInitialGame(
       spawnY: spawn.y,
       direction: "none",
       wantedDirection: "none",
+      lastInputSeq: 0,
       state: "normal",
       respawnAt: 0,
       invulnerableUntil: 0,
@@ -171,6 +172,25 @@ function moveActor(actor: Actor, maze: Maze, seconds: number, frightenedActive: 
   }
 }
 
+// Clients use the exact authoritative movement rules to predict only their
+// own actor between host snapshots. This intentionally excludes pellets,
+// collisions, scores, deaths, and respawns, which remain host-controlled.
+export function predictActorMovement(
+  actor: Actor,
+  maze: Maze,
+  wantedDirection: Direction,
+  seconds: number,
+  frightenedActive: boolean,
+) {
+  actor.wantedDirection = wantedDirection;
+  let remaining = Math.max(0, Math.min(0.1, seconds));
+  while (remaining > 0.000_001) {
+    const step = Math.min(1 / 60, remaining);
+    moveActor(actor, maze, step, frightenedActive);
+    remaining -= step;
+  }
+}
+
 function finish(snapshot: GameSnapshot, winner: "pacman" | "ghost", reason: string) {
   snapshot.status = "results";
   snapshot.winner = winner;
@@ -202,7 +222,10 @@ export function stepGame(
 
   Object.values(snapshot.actors).forEach((actor) => {
     const input = inputs[actor.uid];
-    if (input) actor.wantedDirection = input.direction;
+    if (input && input.seq > (actor.lastInputSeq ?? 0)) {
+      actor.wantedDirection = input.direction;
+      actor.lastInputSeq = input.seq;
+    }
     if ((actor.state === "dead" || actor.state === "eaten") && now >= actor.respawnAt) {
       actor.x = actor.spawnX;
       actor.y = actor.spawnY;

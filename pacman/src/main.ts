@@ -26,6 +26,12 @@ import {
 import { sampleSnapshot, updateInterpolation, type SnapshotInterpolation } from "./interpolation.ts";
 import { createMaze } from "./maze.ts";
 import { PALETTE, colorValue } from "./palette.ts";
+import {
+  advanceLocalPrediction,
+  applyLocalPrediction,
+  reconcileLocalPrediction,
+  type LocalPrediction,
+} from "./prediction.ts";
 import { renderGame, scoreboardRows } from "./render.ts";
 import type { Direction, GameSnapshot, InputState, PlayerRecord, RoomData } from "./types.ts";
 
@@ -328,12 +334,16 @@ async function playerApp(backend: Backend, code: string) {
   let registered = false;
   let latestSnapshot: GameSnapshot | null = null;
   let interpolation: SnapshotInterpolation | null = null;
+  let localPrediction: LocalPrediction | null = null;
+  let predictionFrameTime = performance.now();
   let playerFrame = 0;
   let inputSeq = 0;
   let lastDirection: Direction = "none";
+  let localWantedDirection: Direction = "none";
   let lastDirectionSentAt = 0;
 
   const send = (direction: Direction) => {
+    localWantedDirection = direction;
     const now = Date.now();
     if (direction === lastDirection && now - lastDirectionSentAt < 200) return;
     lastDirection = direction;
@@ -448,11 +458,27 @@ async function playerApp(backend: Backend, code: string) {
     updateMobileHud(snapshot);
     cancelAnimationFrame(playerFrame);
     const maze = createMaze();
+    predictionFrameTime = performance.now();
     const frame = () => {
       playerFrame = requestAnimationFrame(frame);
       if (!latestSnapshot || !interpolation) return;
+      const now = performance.now();
+      const elapsedSeconds = Math.min(0.05, Math.max(0, (now - predictionFrameTime) / 1_000));
+      predictionFrameTime = now;
+      if (localPrediction && latestSnapshot.status === "playing") {
+        advanceLocalPrediction(
+          localPrediction,
+          maze,
+          localWantedDirection,
+          elapsedSeconds,
+          latestSnapshot.hostTime < latestSnapshot.frightenedUntil,
+        );
+      }
       const playerCanvas = document.querySelector<HTMLCanvasElement>("#player-canvas");
-      if (playerCanvas) renderGame(playerCanvas, sampleSnapshot(interpolation, performance.now()), maze, backend.uid);
+      if (playerCanvas) {
+        const interpolated = sampleSnapshot(interpolation, now);
+        renderGame(playerCanvas, applyLocalPrediction(interpolated, localPrediction), maze, backend.uid);
+      }
     };
     playerFrame = requestAnimationFrame(frame);
   }
@@ -492,6 +518,10 @@ async function playerApp(backend: Backend, code: string) {
     stopGameUpdates();
     latestSnapshot = null;
     interpolation = null;
+    localPrediction = null;
+    localWantedDirection = "none";
+    lastDirection = "none";
+    lastDirectionSentAt = 0;
     if (stopLobbyRoom) return;
     stopLobbyRoom = watchRoom(backend, code, (room) => {
       roomState = room;
@@ -536,7 +566,23 @@ async function playerApp(backend: Backend, code: string) {
       }
       const isNewSimulationTick =
         !latestSnapshot || latestSnapshot.roundId !== snapshot.roundId || latestSnapshot.tick !== snapshot.tick;
-      if (isNewSimulationTick) interpolation = updateInterpolation(interpolation, snapshot, performance.now());
+      if (isNewSimulationTick) {
+        const receivedAt = performance.now();
+        const authoritativeActor = snapshot.actors[backend.uid];
+        inputSeq = Math.max(inputSeq, authoritativeActor.lastInputSeq ?? 0);
+        if (!localPrediction || localPrediction.roundId !== snapshot.roundId) {
+          localWantedDirection = authoritativeActor.wantedDirection;
+          predictionFrameTime = receivedAt;
+        }
+        interpolation = updateInterpolation(interpolation, snapshot, receivedAt);
+        localPrediction = reconcileLocalPrediction(
+          localPrediction,
+          snapshot,
+          backend.uid,
+          localWantedDirection,
+          inputSeq,
+        );
+      }
       latestSnapshot = snapshot;
       if (screen !== "game") renderPlayerGame(snapshot);
       else updateMobileHud(snapshot);

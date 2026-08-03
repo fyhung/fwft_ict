@@ -52,6 +52,7 @@ export interface Actor {
   spawnY: number;
   direction: Direction;
   wantedDirection: Direction;
+  lastInputSeq: number;
   state: ActorState;
   respawnAt: number;
   invulnerableUntil: number;
