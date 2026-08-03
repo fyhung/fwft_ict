@@ -1,5 +1,12 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAuth, signInAnonymously, type Auth } from "firebase/auth";
+import {
+  browserSessionPersistence,
+  getAuth,
+  initializeAuth,
+  inMemoryPersistence,
+  signInAnonymously,
+  type Auth,
+} from "firebase/auth";
 import {
   getDatabase,
   onChildAdded,
@@ -49,7 +56,20 @@ export async function connectBackend(): Promise<Backend> {
         projectId: env("VITE_FIREBASE_PROJECT_ID"),
         appId: env("VITE_FIREBASE_APP_ID"),
       });
-  const auth = getAuth(app);
+
+  // A player identity should belong to this tab, not every tab using the same
+  // browser profile. Avoiding the default IndexedDB-backed persistence also
+  // lets Chrome Guest/private windows join when durable storage is hidden.
+  let auth: Auth;
+  try {
+    auth = initializeAuth(app, {
+      persistence: [browserSessionPersistence, inMemoryPersistence],
+      popupRedirectResolver: undefined,
+    });
+  } catch (error) {
+    if ((error as { code?: string }).code !== "auth/already-initialized") throw error;
+    auth = getAuth(app);
+  }
   if (!auth.currentUser) await signInAnonymously(auth);
   if (!auth.currentUser) throw new Error("Anonymous sign-in did not return a user.");
   return { auth, db: getDatabase(app), uid: auth.currentUser.uid };

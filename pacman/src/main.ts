@@ -76,12 +76,15 @@ function playerCards(players: Record<string, PlayerRecord>) {
 }
 
 function setupScreen(message?: string) {
+  const configured = firebaseConfigured();
   app.innerHTML = `<main class="shell">${header("Setup required")}
     <section class="hero"><div class="hero-card">
-      <div class="eyebrow">One-time setup</div><h2>Connect Firebase</h2>
-      <p>Add the Firebase Web app values to <strong>.env</strong>, enable anonymous sign-in, and publish the included database rules. Then reload this page.</p>
+      <div class="eyebrow">${configured ? "Connection problem" : "One-time setup"}</div><h2>${configured ? "Unable to connect" : "Connect Firebase"}</h2>
+      <p>${configured ? "The Firebase settings are present, but this browser could not finish connecting. Reload to try again." : "Add the Firebase Web app values to <strong>.env</strong>, enable anonymous sign-in, and publish the included database rules. Then reload this page."}</p>
       ${message ? `<p class="error">${escapeHtml(message)}</p>` : ""}
+      ${configured ? `<button class="button yellow" id="retry-connection">Reload</button>` : ""}
     </div></section></main>`;
+  document.querySelector<HTMLButtonElement>("#retry-connection")?.addEventListener("click", () => window.location.reload());
 }
 
 async function landing(backend: Backend) {
