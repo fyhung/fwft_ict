@@ -227,11 +227,14 @@ async function hostApp(backend: Backend, code: string) {
     if (ghostList) ghostList.innerHTML = scoreList(snapshot, "ghost");
     const overlay = document.querySelector<HTMLElement>("#result-overlay");
     if (overlay) {
-      overlay.hidden = snapshot.status !== "results";
-      const title = overlay.querySelector<HTMLElement>("h2");
-      const reason = overlay.querySelector<HTMLElement>("p");
-      if (title) title.textContent = snapshot.winner === "pacman" ? "Pac-Man team wins" : "Ghost team wins";
-      if (reason) reason.textContent = snapshot.resultReason ?? "Round complete";
+      const roundComplete = snapshot.status === "results" && snapshot.winner !== null;
+      overlay.hidden = !roundComplete;
+      if (roundComplete) {
+        const title = overlay.querySelector<HTMLElement>("h2");
+        const reason = overlay.querySelector<HTMLElement>("p");
+        if (title) title.textContent = snapshot.winner === "pacman" ? "Pac-Man team wins" : "Ghost team wins";
+        if (reason) reason.textContent = snapshot.resultReason ?? "Round complete";
+      }
     }
   }
 
@@ -390,15 +393,18 @@ async function playerApp(backend: Backend, code: string) {
     if (lives) lives.textContent = actor.role === "pacman" ? String(snapshot.pacmanLives) : String(actor.kills);
     const overlay = document.querySelector<HTMLElement>("#mobile-result");
     if (overlay) {
-      overlay.hidden = snapshot.status !== "results";
-      const heading = overlay.querySelector("h2");
-      if (heading) {
-        heading.textContent = snapshot.winner === actor.role
-          ? "Your team wins"
-          : `${snapshot.winner === "ghost" ? "Ghost" : "Pac-Man"} team wins`;
+      const roundComplete = snapshot.status === "results" && snapshot.winner !== null;
+      overlay.hidden = !roundComplete;
+      if (roundComplete) {
+        const heading = overlay.querySelector("h2");
+        if (heading) {
+          heading.textContent = snapshot.winner === actor.role
+            ? "Your team wins"
+            : `${snapshot.winner === "ghost" ? "Ghost" : "Pac-Man"} team wins`;
+        }
+        const reason = overlay.querySelector<HTMLElement>("#mobile-result-reason");
+        if (reason) reason.textContent = snapshot.resultReason ?? "Round complete";
       }
-      const reason = overlay.querySelector<HTMLElement>("#mobile-result-reason");
-      if (reason) reason.textContent = snapshot.resultReason ?? "Round complete";
     }
   }
 
