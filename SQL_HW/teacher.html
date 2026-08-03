@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex,nofollow">
+<title>SQL Circuit — Teacher Dashboard</title>
+<style>
+  :root{--ink:#eefcff;--muted:#8aa8b8;--bg:#060b16;--panel:#0d1828;--line:#294b61;--cyan:#55e6ff;--green:#86f79a;--amber:#ffd166;--red:#ff6b7d;--purple:#b394ff;--font:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
+  *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--font)}
+  body{background:radial-gradient(circle at 12% -10%,#14324d,transparent 34%),radial-gradient(circle at 88% 0,#271744,transparent 30%),linear-gradient(#07101d,#050914)}
+  body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.16;background-image:linear-gradient(#64dbff12 1px,transparent 1px),linear-gradient(90deg,#64dbff12 1px,transparent 1px);background-size:32px 32px}
+  button,input{font:inherit}button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:3px}
+  .app{width:min(1450px,100%);margin:auto;padding:22px clamp(12px,2.5vw,34px) 40px;position:relative}
+  header{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:16px}
+  .brand{display:flex;align-items:center;gap:13px}.mark{width:43px;height:43px;border:1px solid #55e6ff80;border-radius:13px;display:grid;place-items:center;background:#10263a;box-shadow:0 0 22px #55e6ff25}.mark:after{content:"";width:17px;height:17px;border:3px solid var(--cyan);transform:rotate(45deg);box-shadow:0 0 9px var(--cyan)}
+  h1{margin:0;font-size:clamp(20px,2.5vw,30px);letter-spacing:.07em}h1 span{color:var(--cyan)}.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.15em;margin-top:5px}
+  .button{min-height:39px;border:1px solid var(--line);border-radius:10px;background:#0d1b2d;color:var(--ink);padding:8px 12px;cursor:pointer;transition:.18s}.button:hover{border-color:var(--cyan);transform:translateY(-1px)}.button.primary{border-color:#3dcfe8;background:#15384b;color:#c4f8ff}.button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .authbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#091522d9;box-shadow:0 12px 30px #0004}
+  .identity{display:grid;grid-template-columns:auto 1fr;gap:2px 9px;min-width:0}.identity i{grid-row:1/3;align-self:center;width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 9px currentColor}.identity strong,.identity small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.identity strong{font-size:12px}.identity small{color:var(--muted);font-size:9px}.authbar.ready i{background:var(--green)}.authbar.error i{background:var(--red)}.authactions{display:flex;gap:8px;flex:none}
+  .notice{margin-top:14px;padding:16px;border:1px solid #6b512a;border-radius:13px;background:#20170c;color:#ffe0aa;line-height:1.6;font-size:12px}.notice[hidden]{display:none}.notice strong{color:var(--amber)}.uid{display:block;margin:9px 0;padding:9px 11px;border-radius:8px;background:#080e17;color:var(--cyan);user-select:all;overflow-wrap:anywhere}
+  .dashboard[hidden]{display:none}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:15px 0}.card{padding:16px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,#0f1d2f,#091321);box-shadow:0 10px 26px #0003}.card small{display:block;color:var(--muted);font-size:9px;letter-spacing:.12em}.card strong{display:block;margin-top:7px;font-size:clamp(23px,3vw,34px);color:var(--cyan)}.card:nth-child(2) strong{color:var(--green)}.card:nth-child(3) strong{color:var(--amber)}.card:nth-child(4) strong{color:var(--purple);font-size:14px;margin-top:12px}
+  .panel{border:1px solid var(--line);border-radius:16px;background:#0a1422e8;overflow:hidden;box-shadow:0 14px 36px #0005}.panelhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #203b50}.panelhead h2{margin:0;font-size:13px;letter-spacing:.12em}.controls{display:flex;gap:8px}.search{width:min(320px,46vw);border:1px solid var(--line);border-radius:9px;background:#07101b;color:var(--ink);padding:8px 11px;outline:0}.search:focus{border-color:var(--cyan)}
+  .tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:930px;font-size:11px}th,td{padding:12px 13px;border-bottom:1px solid #1b3448;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#122238;color:#8feeff;font-size:9px;letter-spacing:.1em;text-transform:uppercase}tbody tr:hover{background:#10223880}.player strong{display:block;font-size:12px}.player small,.muted{color:var(--muted);font-size:9px}.score{font-size:18px;color:var(--cyan);font-weight:900}.sets summary{cursor:pointer;color:var(--cyan);white-space:nowrap}.setlist{display:grid;gap:5px;margin-top:8px;min-width:245px}.setrow{display:grid;grid-template-columns:1fr auto auto;gap:10px;padding:6px 8px;border:1px solid #223e52;border-radius:7px;background:#07111d}.setrow b{color:var(--green)}.empty{padding:38px;text-align:center;color:var(--muted)}
+  footer{margin-top:15px;text-align:center;color:var(--muted);font-size:9px;line-height:1.6}
+  @media(max-width:760px){header{align-items:flex-start;flex-direction:column}.authbar{align-items:stretch;flex-direction:column}.authactions .button{flex:1}.summary{grid-template-columns:1fr 1fr}.panelhead{align-items:stretch;flex-direction:column}.controls{width:100%}.search{width:100%;flex:1}}
+  @media(max-width:430px){.summary{grid-template-columns:1fr}.authactions{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand"><div class="mark" aria-hidden="true"></div><div><h1>SQL CIRCUIT <span>TEACHER</span></h1><small>STUDENT PROGRESS DASHBOARD // 學生進度儀表板</small></div></div>
+    <a class="button" href="index.html">← RETURN TO GAME</a>
+  </header>
+
+  <section class="authbar" id="authBar" aria-label="Teacher account status">
+    <div class="identity"><i aria-hidden="true"></i><strong id="authName">CONNECTING TO FIREBASE</strong><small id="authStatus">Checking Google session…</small></div>
+    <div class="authactions"><button class="button primary" id="loginBtn" disabled>SIGN IN WITH GOOGLE</button><button class="button" id="refreshBtn" hidden>REFRESH</button><button class="button" id="logoutBtn" hidden>LOGOUT</button></div>
+  </section>
+
+  <section class="notice" id="notice" hidden></section>
+
+  <main class="dashboard" id="dashboard" hidden>
+    <section class="summary" aria-label="Class summary">
+      <div class="card"><small>PLAYERS / 學生</small><strong id="playerCount">0</strong></div>
+      <div class="card"><small>COMPLETED PUZZLES / 完成題目</small><strong id="completedCount">0</strong></div>
+      <div class="card"><small>TOTAL BEST-SCORE POINTS / 總分</small><strong id="totalScore">0</strong></div>
+      <div class="card"><small>LATEST CLOUD UPDATE / 最近更新</small><strong id="latestUpdate">—</strong></div>
+    </section>
+
+    <section class="panel">
+      <div class="panelhead"><h2>ALL PLAYER PROGRESS / 全部學生進度</h2><div class="controls"><input class="search" id="search" type="search" placeholder="Search name or email…" aria-label="Search players"><button class="button" id="sortBtn">SORT: SCORE ↓</button></div></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Player</th><th>Best score</th><th>Completed</th><th>Last position</th><th>Updated</th><th>Set details</th></tr></thead>
+        <tbody id="playerRows"></tbody>
+      </table><div class="empty" id="empty" hidden>No matching player records.</div></div>
+    </section>
+  </main>
+
+  <footer>Read-only teacher view · Student saves remain protected by Firebase Authentication and Firestore Security Rules.</footer>
+</div>
+
+<script>
+(()=>{
+"use strict";
+const $=selector=>document.querySelector(selector);
+const FIREBASE_SDK_VERSION="12.17.0";
+const firebaseConfig={
+  apiKey:"AIzaSyBorU1zGErbGgKCFFf6U7PULJqk2kkUYzY",
+  authDomain:"fwft-ict.firebaseapp.com",
+  projectId:"fwft-ict",
+  storageBucket:"fwft-ict.firebasestorage.app",
+  messagingSenderId:"823970283860",
+  appId:"1:823970283860:web:e256332ae9ee416d4188c1",
+  measurementId:"G-K83XP2S5HS"
+};
+let auth=null,db=null,authApi=null,firestoreApi=null,currentUser=null,players=[],scoreDescending=true;
+
+function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]))}
+function setAuth(state,title,status){
+  $("#authBar").className=`authbar ${state}`;$("#authName").textContent=title;$("#authStatus").textContent=status;
+  const signedIn=Boolean(currentUser);$("#loginBtn").hidden=signedIn;$("#logoutBtn").hidden=!signedIn;$("#refreshBtn").hidden=!signedIn;
+  $("#loginBtn").disabled=state==="loading";$("#refreshBtn").disabled=state==="loading";
+}
+function showNotice(html){$("#notice").innerHTML=html;$("#notice").hidden=false;$("#dashboard").hidden=true}
+function hideNotice(){$("#notice").hidden=true}
+function timestampMs(value){try{return value?.toMillis?.()||Date.parse(value)||0}catch(error){return 0}}
+function dateText(ms){return ms?new Intl.DateTimeFormat(undefined,{dateStyle:"medium",timeStyle:"short"}).format(new Date(ms)):"—"}
+function normalisePlayer(snapshot){
+  const data=snapshot.data()||{},state=data.gameState||{},sets=state.sets&&typeof state.sets==="object"?state.sets:{};
+  const setRows=Object.entries(sets).map(([id,set])=>{const best=set?.best||{},completed=set?.completed||{};return{id,score:Object.values(best).reduce((sum,n)=>sum+Number(n||0),0),completed:Object.values(completed).filter(Boolean).length,last:Number(set?.last||1)}}).sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
+  const calculatedScore=setRows.reduce((sum,set)=>sum+set.score,0),completed=setRows.reduce((sum,set)=>sum+set.completed,0),updated=timestampMs(data.updatedAt)||Number(data.clientUpdatedAt||state.localUpdatedAt||0);
+  const lastSet=state.lastSet||data.lastSet||"set_1",lastLevel=Number(sets[lastSet]?.last||1);
+  return{uid:snapshot.id,name:data.displayName||state.playerName||"Unnamed player",email:data.email||"",score:Number(data.totalScore??calculatedScore)||calculatedScore,completed,lastSet,lastLevel,updated,setRows};
+}
+function render(){
+  const query=$("#search").value.trim().toLowerCase();
+  const visible=players.filter(player=>`${player.name} ${player.email} ${player.uid}`.toLowerCase().includes(query)).sort((a,b)=>scoreDescending?b.score-a.score||b.updated-a.updated:a.name.localeCompare(b.name));
+  $("#playerRows").innerHTML=visible.map(player=>`<tr>
+    <td class="player"><strong>${escapeHtml(player.name)}</strong><small>${escapeHtml(player.email||player.uid)}</small></td>
+    <td><span class="score">${player.score.toLocaleString()}</span></td>
+    <td>${player.completed.toLocaleString()} puzzles</td>
+    <td>${escapeHtml(player.lastSet.toUpperCase().replace("_"," "))} · Level ${player.lastLevel}</td>
+    <td>${escapeHtml(dateText(player.updated))}</td>
+    <td><details class="sets"><summary>${player.setRows.length} SETS</summary><div class="setlist">${player.setRows.length?player.setRows.map(set=>`<div class="setrow"><span>${escapeHtml(set.id.toUpperCase().replace("_"," "))}</span><b>${set.score.toLocaleString()} pts</b><small>${set.completed} done</small></div>`).join(""):"<span class=\"muted\">No set progress yet</span>"}</div></details></td>
+  </tr>`).join("");
+  $("#empty").hidden=visible.length>0;
+  $("#playerCount").textContent=players.length.toLocaleString();$("#completedCount").textContent=players.reduce((sum,p)=>sum+p.completed,0).toLocaleString();$("#totalScore").textContent=players.reduce((sum,p)=>sum+p.score,0).toLocaleString();
+  $("#latestUpdate").textContent=dateText(Math.max(0,...players.map(player=>player.updated)));$("#sortBtn").textContent=scoreDescending?"SORT: SCORE ↓":"SORT: NAME A–Z";
+}
+async function loadPlayers(){
+  if(!currentUser||!db)return;setAuth("loading",currentUser.displayName||"TEACHER",`${currentUser.email||""} • Loading player progress…`);hideNotice();
+  try{
+    const teacher=await firestoreApi.getDoc(firestoreApi.doc(db,"teachers",currentUser.uid));
+    if(!teacher.exists()){
+      showNotice(`<strong>TEACHER ACCESS NOT ENABLED</strong><br>Create a Firestore document at <b>teachers/${escapeHtml(currentUser.uid)}</b>. Use this Firebase UID as the document ID:<span class="uid">${escapeHtml(currentUser.uid)}</span>Add a field named <b>role</b> with the string value <b>teacher</b>, then refresh this page.`);
+      setAuth("error",currentUser.displayName||"GOOGLE ACCOUNT",`${currentUser.email||""} • Teacher record required`);return;
+    }
+    const snapshot=await firestoreApi.getDocs(firestoreApi.collection(db,"progress"));players=snapshot.docs.map(normalisePlayer);render();$("#dashboard").hidden=false;
+    setAuth("ready",currentUser.displayName||"TEACHER",`${currentUser.email||""} • ${players.length} player records loaded`);
+  }catch(error){
+    showNotice(`<strong>DASHBOARD ACCESS FAILED</strong><br>${escapeHtml(error.message||error)}<br>Publish the supplied Firestore rules, then confirm that <b>teachers/${escapeHtml(currentUser.uid)}</b> exists.`);
+    setAuth("error",currentUser.displayName||"GOOGLE ACCOUNT",`${currentUser.email||""} • Firestore access denied`);
+  }
+}
+async function login(){if(!authApi||!auth)return;setAuth("loading","GOOGLE SIGN-IN","Opening account selector…");try{await authApi.signInWithPopup(auth,new authApi.GoogleAuthProvider())}catch(error){setAuth("error","SIGN-IN FAILED",error.message||"Try again")}}
+async function logout(){if(authApi&&auth)await authApi.signOut(auth)}
+async function initialize(){
+  try{
+    const base=`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}`,modules=Promise.all([import(`${base}/firebase-app.js`),import(`${base}/firebase-auth.js`),import(`${base}/firebase-firestore.js`)]),timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("Firebase connection timed out")),8000));
+    const[appModule,authModule,firestoreModule]=await Promise.race([modules,timeout]);authApi=authModule;firestoreApi=firestoreModule;
+    const app=appModule.initializeApp(firebaseConfig);auth=authModule.getAuth(app);db=firestoreModule.getFirestore(app);await authModule.setPersistence(auth,authModule.browserLocalPersistence);
+    authModule.onAuthStateChanged(auth,user=>{currentUser=user;if(user)void loadPlayers();else{players=[];$("#dashboard").hidden=true;hideNotice();setAuth("","TEACHER SIGN-IN REQUIRED","Use the authorized Google teacher account");$("#loginBtn").disabled=false}});
+  }catch(error){setAuth("error","FIREBASE UNAVAILABLE",error.message||"Check the network connection");$("#loginBtn").disabled=true}
+}
+
+$("#loginBtn").addEventListener("click",login);$("#logoutBtn").addEventListener("click",logout);$("#refreshBtn").addEventListener("click",loadPlayers);
+$("#search").addEventListener("input",render);$("#sortBtn").addEventListener("click",()=>{scoreDescending=!scoreDescending;render()});
+void initialize();
+})();
+</script>
+</body>
+</html>

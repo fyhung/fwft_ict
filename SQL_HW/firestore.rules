@@ -2,9 +2,27 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owns(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isTeacher() {
+      return signedIn()
+        && get(/databases/$(database)/documents/teachers/$(request.auth.uid)).data.role == "teacher";
+    }
+
     match /progress/{uid} {
-      allow read, create, update, delete:
-        if request.auth != null && request.auth.uid == uid;
+      allow read: if owns(uid) || isTeacher();
+      allow create, update, delete: if owns(uid);
+    }
+
+    match /teachers/{uid} {
+      allow read: if owns(uid);
+      allow write: if false;
     }
   }
 }
