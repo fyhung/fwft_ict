@@ -13,7 +13,7 @@ import {
   type Database,
   type Unsubscribe,
 } from "firebase/database";
-import type { Admission, Direction, GameSnapshot, JoinRequest, PlayerRecord, RoomData } from "./types";
+import type { Admission, Direction, GameSnapshot, JoinRequest, PlayerRecord, RoomData } from "./types.ts";
 
 export const CLIENT_VERSION = "0.1.0";
 export const MAX_PLAYERS = 30;
@@ -118,10 +118,11 @@ export function processJoinRequests(backend: Backend, code: string, onError: (er
       (rawRoom) => {
         const room = rawRoom as RoomData | null;
         if (!room || room.meta.hostUid !== backend.uid) return undefined;
-        if (room.admissions?.[joiningUid]) {
+        if (room.admissions?.[joiningUid]?.status === "granted") {
           if (room.joinRequests) delete room.joinRequests[joiningUid];
           return room;
         }
+        if (room.admissions?.[joiningUid]?.status === "rejected") delete room.admissions[joiningUid];
         const request = room.joinRequests?.[joiningUid];
         if (!request) return room;
         const reject = (reason: string) => {
@@ -219,7 +220,11 @@ export async function beginRound(backend: Backend, code: string, snapshot: GameS
 }
 
 export async function publishSnapshot(backend: Backend, code: string, snapshot: GameSnapshot) {
-  await set(ref(backend.db, `rooms/${code}/authoritative`), snapshot);
+  if (snapshot.status === "results") {
+    await update(ref(backend.db, `rooms/${code}`), { authoritative: snapshot, "meta/status": "results" });
+  } else {
+    await set(ref(backend.db, `rooms/${code}/authoritative`), snapshot);
+  }
 }
 
 export function watchInputs(

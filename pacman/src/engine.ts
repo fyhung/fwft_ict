@@ -1,5 +1,5 @@
-import { createMaze, isWall, MAZE_WIDTH, tileKey, TUNNEL_ROW, type Maze } from "./maze";
-import type { Actor, Direction, GameSnapshot, InputState, PlayerRecord } from "./types";
+import { createMaze, isWall, MAZE_WIDTH, tileKey, TUNNEL_ROW, type Maze } from "./maze.ts";
+import type { Actor, Direction, GameSnapshot, InputState, PlayerRecord } from "./types.ts";
 
 const BASE_SPEED = 6.25;
 const PACMAN_SPEED = BASE_SPEED * 0.8;

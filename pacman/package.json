@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "vitest run",
+    "test": "node --experimental-strip-types scripts/verify-engine.ts",
+    "test:unit": "vitest run",
     "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -16,8 +18,8 @@
   },
   "devDependencies": {
     "@types/qrcode": "1.5.6",
-    "typescript": "7.0.2",
-    "vite": "8.2.0",
-    "vitest": "4.1.10"
+    "typescript": "5.9.3",
+    "vite": "7.3.6",
+    "vitest": "3.2.7"
   }
 }

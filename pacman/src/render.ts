@@ -1,6 +1,6 @@
-import { colorValue } from "./palette";
-import type { Maze } from "./maze";
-import type { Actor, GameSnapshot } from "./types";
+import { colorValue } from "./palette.ts";
+import type { Maze } from "./maze.ts";
+import type { Actor, GameSnapshot } from "./types.ts";
 
 function angleFor(actor: Actor): number {
   return { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2, none: 0 }[actor.direction];

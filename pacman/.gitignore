@@ -4,5 +4,6 @@ dist/
 .env.local
 .npm-cache/
 .firebase/
+work/
 firebase-debug.log
 *.log
