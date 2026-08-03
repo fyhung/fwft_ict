@@ -18,7 +18,7 @@ except ImportError as exc:
 
 
 ROOT = Path(__file__).resolve().parent
-GENERATED = ROOT / "_generated"
+GENERATED = ROOT / "generated"
 SUPPORTED = {".png", ".jpg", ".jpeg", ".webp", ".avif"}
 THUMB_SIZE = (640, 640)
 THUMB_LAYOUT = "top-v1"
@@ -101,7 +101,7 @@ def build_catalogue() -> dict[str, object]:
         (
             path
             for path in ROOT.iterdir()
-            if path.is_dir() and not path.name.startswith("_")
+            if path.is_dir() and path != GENERATED and not path.name.startswith("_")
         ),
         key=lambda path: natural_key(path.name),
     )

@@ -1,0 +1,103 @@
+export type Direction = "up" | "down" | "left" | "right" | "none";
+export type Role = "pacman" | "ghost";
+export type RoomStatus = "lobby" | "countdown" | "playing" | "paused" | "results" | "closed";
+export type ActorState = "normal" | "frightened" | "eaten" | "dead" | "invulnerable";
+
+export interface PlayerRecord {
+  seatId: string;
+  profile: {
+    name: string;
+    colorId: string;
+  };
+  presence: {
+    online: boolean;
+    lastSeenAt: number | object;
+  };
+  lobby: {
+    ready: boolean;
+    joinedAt: number | object;
+  };
+  assignment?: {
+    role: Role;
+    spawnId: string;
+  };
+}
+
+export interface JoinRequest {
+  name: string;
+  colorId: string;
+  requestedAt: number | object;
+}
+
+export interface Admission {
+  status: "granted" | "rejected";
+  reason: string | null;
+  seatId: string | null;
+}
+
+export interface InputState {
+  seq: number;
+  direction: Direction;
+  clientTime: number;
+}
+
+export interface Actor {
+  uid: string;
+  name: string;
+  colorId: string;
+  role: Role;
+  x: number;
+  y: number;
+  spawnX: number;
+  spawnY: number;
+  direction: Direction;
+  wantedDirection: Direction;
+  state: ActorState;
+  respawnAt: number;
+  invulnerableUntil: number;
+  score: number;
+  kills: number;
+  ghostsEaten: number;
+  pellets: number;
+}
+
+export interface GameSnapshot {
+  tick: number;
+  hostTime: number;
+  status: "playing" | "results";
+  actors: Record<string, Actor>;
+  pellets: string[];
+  powerPellets: string[];
+  frightenedUntil: number;
+  ghostChain: number;
+  pacmanLives: number;
+  pacmanScore: number;
+  ghostScore: number;
+  winner: Role | null;
+  resultReason: string | null;
+  roundEndsAt: number;
+}
+
+export interface RoomData {
+  meta: {
+    hostUid: string;
+    status: RoomStatus;
+    createdAt: number | object;
+    roundId: number;
+    joinLocked: boolean;
+    clientVersion: string;
+  };
+  config: {
+    maxPlayers: number;
+    pacmanCount: number;
+    roundDurationMs: number;
+    mapId: string;
+  };
+  players?: Record<string, PlayerRecord>;
+  joinRequests?: Record<string, JoinRequest>;
+  admissions?: Record<string, Admission>;
+  seats?: Record<string, string>;
+  colorClaims?: Record<string, string>;
+  inputs?: Record<string, InputState>;
+  authoritative?: GameSnapshot;
+}
