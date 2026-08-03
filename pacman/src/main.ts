@@ -17,10 +17,13 @@ import {
   submitJoinRequest,
   updatePacmanCount,
   watchAdmission,
+  watchAuthoritative,
   watchInputs,
   watchRoom,
+  watchRoomMeta,
   type Backend,
 } from "./firebase.ts";
+import { sampleSnapshot, updateInterpolation, type SnapshotInterpolation } from "./interpolation.ts";
 import { createMaze } from "./maze.ts";
 import { PALETTE, colorValue } from "./palette.ts";
 import { renderGame, scoreboardRows } from "./render.ts";
@@ -324,6 +327,7 @@ async function playerApp(backend: Backend, code: string) {
   let selectedColor = "c08";
   let registered = false;
   let latestSnapshot: GameSnapshot | null = null;
+  let interpolation: SnapshotInterpolation | null = null;
   let playerFrame = 0;
   let inputSeq = 0;
   let lastDirection: Direction = "none";
@@ -446,10 +450,9 @@ async function playerApp(backend: Backend, code: string) {
     const maze = createMaze();
     const frame = () => {
       playerFrame = requestAnimationFrame(frame);
-      if (!latestSnapshot) return;
+      if (!latestSnapshot || !interpolation) return;
       const playerCanvas = document.querySelector<HTMLCanvasElement>("#player-canvas");
-      if (playerCanvas) renderGame(playerCanvas, latestSnapshot, maze, backend.uid);
-      updateMobileHud(latestSnapshot);
+      if (playerCanvas) renderGame(playerCanvas, sampleSnapshot(interpolation, performance.now()), maze, backend.uid);
     };
     playerFrame = requestAnimationFrame(frame);
   }
@@ -471,40 +474,91 @@ async function playerApp(backend: Backend, code: string) {
   const stopAdmission = watchAdmission(backend, code, (admission) => {
     if (admission?.status === "rejected" && roomState) renderJoin(roomState, admission.reason ?? "Could not join.");
   });
-  const stopRoom = watchRoom(backend, code, (room) => {
-    roomState = room;
-    if (!room) {
-      setupScreen("Room not found. Check the code or scan the QR again.");
-      return;
-    }
-    const player = room.players?.[backend.uid];
-    if (!player) {
-      if (screen !== "join") renderJoin(room);
-      else {
-        const claims = room.colorClaims ?? {};
-        document.querySelectorAll<HTMLButtonElement>("[data-color]").forEach((button) => {
-          button.disabled = Boolean(button.dataset.color && claims[button.dataset.color]);
-        });
+  let stopLobbyRoom: (() => void) | null = null;
+  let stopGameSnapshots: (() => void) | null = null;
+  let activeRoundId = -1;
+
+  const stopLobbyUpdates = () => {
+    stopLobbyRoom?.();
+    stopLobbyRoom = null;
+  };
+  const stopGameUpdates = () => {
+    stopGameSnapshots?.();
+    stopGameSnapshots = null;
+    activeRoundId = -1;
+  };
+
+  const startLobbyUpdates = () => {
+    stopGameUpdates();
+    latestSnapshot = null;
+    interpolation = null;
+    if (stopLobbyRoom) return;
+    stopLobbyRoom = watchRoom(backend, code, (room) => {
+      roomState = room;
+      if (!room) {
+        setupScreen("Room not found. Check the code or scan the QR again.");
+        return;
       }
-      return;
-    }
-    if (!registered) {
-      registered = true;
-      void registerPresence(backend, code);
-    }
-    if (
-      room.authoritative &&
-      room.authoritative.roundId === room.meta.roundId &&
-      (room.meta.status === "playing" || room.meta.status === "results")
-    ) {
-      latestSnapshot = room.authoritative;
-      if (screen !== "game") renderPlayerGame(room.authoritative);
-      else updateMobileHud(room.authoritative);
-    } else if (room.meta.status === "lobby") {
+      if (room.meta.status !== "lobby") return;
+      const player = room.players?.[backend.uid];
+      if (!player) {
+        if (screen !== "join") renderJoin(room);
+        else {
+          const claims = room.colorClaims ?? {};
+          document.querySelectorAll<HTMLButtonElement>("[data-color]").forEach((button) => {
+            button.disabled = Boolean(button.dataset.color && claims[button.dataset.color]);
+          });
+        }
+        return;
+      }
+      if (!registered) {
+        registered = true;
+        void registerPresence(backend, code);
+      }
       renderPlayerLobby(room, player);
+    });
+  };
+
+  const startGameUpdates = (roundId: number) => {
+    stopLobbyUpdates();
+    if (stopGameSnapshots && activeRoundId === roundId) return;
+    stopGameUpdates();
+    activeRoundId = roundId;
+    stopGameSnapshots = watchAuthoritative(backend, code, (snapshot) => {
+      if (!snapshot || snapshot.roundId !== activeRoundId) return;
+      if (!snapshot.actors[backend.uid]) {
+        setupScreen("This game is already in progress and this browser is not one of its players.");
+        return;
+      }
+      if (!registered) {
+        registered = true;
+        void registerPresence(backend, code);
+      }
+      const isNewSimulationTick =
+        !latestSnapshot || latestSnapshot.roundId !== snapshot.roundId || latestSnapshot.tick !== snapshot.tick;
+      if (isNewSimulationTick) interpolation = updateInterpolation(interpolation, snapshot, performance.now());
+      latestSnapshot = snapshot;
+      if (screen !== "game") renderPlayerGame(snapshot);
+      else updateMobileHud(snapshot);
+    });
+  };
+
+  const stopMeta = watchRoomMeta(backend, code, (meta) => {
+    if (!meta) {
+      stopLobbyUpdates();
+      stopGameUpdates();
+      setupScreen("Room not found. Check the code or scan the QR again.");
+    } else if (meta.status === "lobby") {
+      startLobbyUpdates();
+    } else if (meta.status === "playing" || meta.status === "results") {
+      startGameUpdates(meta.roundId);
+    } else if (meta.status === "closed") {
+      stopLobbyUpdates();
+      stopGameUpdates();
+      setupScreen("This room has been closed by the host.");
     }
   });
-  cleanup.push(stopAdmission, stopRoom);
+  cleanup.push(stopAdmission, stopMeta, stopLobbyUpdates, stopGameUpdates);
 }
 
 async function boot() {

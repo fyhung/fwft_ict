@@ -112,6 +112,26 @@ export function watchRoom(backend: Backend, code: string, listener: (room: RoomD
   return onValue(ref(backend.db, `rooms/${code}`), (snapshot) => listener(snapshot.val() as RoomData | null));
 }
 
+export function watchRoomMeta(
+  backend: Backend,
+  code: string,
+  listener: (meta: RoomData["meta"] | null) => void,
+): Unsubscribe {
+  return onValue(ref(backend.db, `rooms/${code}/meta`), (snapshot) =>
+    listener(snapshot.val() as RoomData["meta"] | null),
+  );
+}
+
+export function watchAuthoritative(
+  backend: Backend,
+  code: string,
+  listener: (snapshot: GameSnapshot | null) => void,
+): Unsubscribe {
+  return onValue(ref(backend.db, `rooms/${code}/authoritative`), (snapshot) =>
+    listener(snapshot.val() as GameSnapshot | null),
+  );
+}
+
 export function watchAdmission(
   backend: Backend,
   code: string,

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createInitialGame, stepGame } from "../src/engine.ts";
+import { sampleSnapshot, updateInterpolation } from "../src/interpolation.ts";
 import { createMaze } from "../src/maze.ts";
 import type { Direction, InputState, PlayerRecord, Role } from "../src/types.ts";
 
@@ -105,4 +106,26 @@ stepGame(wallEscapeState, input("down", 2), 1 / 60, 5_017);
 assert.equal(wallEscapeActor.direction, "down");
 assert.ok(wallEscapeActor.y > 23);
 
-console.log("Engine verification passed: legal turns, buffered turns, reversals, wall recovery, collision grace, and timer fallback are active.");
+// Network snapshots arrive around 10 times per second, but visual positions
+// should move continuously between them at the browser's animation rate.
+const firstVisual = createInitialGame(soloPlayers, 1_000, 60_000).snapshot;
+firstVisual.actors.solo.x = 10;
+let visualInterpolation = updateInterpolation(null, firstVisual, 0);
+assert.equal(sampleSnapshot(visualInterpolation, 50).actors.solo.x, 10);
+
+const secondVisual = structuredClone(firstVisual);
+secondVisual.tick += 6;
+secondVisual.hostTime += 100;
+secondVisual.actors.solo.x = 11;
+visualInterpolation = updateInterpolation(visualInterpolation, secondVisual, 100);
+assert.equal(sampleSnapshot(visualInterpolation, 150).actors.solo.x, 10.5);
+assert.equal(sampleSnapshot(visualInterpolation, 200).actors.solo.x, 11);
+
+const teleportedVisual = structuredClone(secondVisual);
+teleportedVisual.tick += 6;
+teleportedVisual.hostTime += 100;
+teleportedVisual.actors.solo.x = 30;
+visualInterpolation = updateInterpolation(visualInterpolation, teleportedVisual, 200);
+assert.equal(sampleSnapshot(visualInterpolation, 210).actors.solo.x, 30);
+
+console.log("Engine verification passed: movement, collision grace, timer fallback, and smooth client interpolation are active.");
