@@ -1,123 +1,139 @@
+import { Client as ColyseusClient, type Room as ColyseusRoom } from "@colyseus/sdk";
 import QRCode from "qrcode";
 import "./styles.css";
-import { createInitialGame, stepGame, type EngineState } from "./engine.ts";
-import {
-  beginRound,
-  closeRoom,
-  connectBackend,
-  createRoom,
-  firebaseConfigured,
-  processJoinRequests,
-  publishSnapshot,
-  randomizeRoles,
-  registerPresence,
-  resetToLobby,
-  sendDirection,
-  setReady,
-  submitJoinRequest,
-  updatePacmanCount,
-  watchAdmission,
-  watchAuthoritative,
-  watchInputs,
-  watchRoom,
-  watchRoomMeta,
-  type Backend,
-} from "./firebase.ts";
 import { sampleSnapshot, updateInterpolation, type SnapshotInterpolation } from "./interpolation.ts";
 import { createMaze } from "./maze.ts";
+import { mergeNetworkSnapshot } from "./network.ts";
 import { PALETTE, colorValue } from "./palette.ts";
 import {
   advanceLocalPrediction,
   applyLocalPrediction,
-  reconcileLocalPrediction,
+  reconcileClientOwnedPrediction,
   type LocalPrediction,
 } from "./prediction.ts";
+import { ROOM_TYPE, SERVER_PORT, type LobbySnapshot, type ServerMessages } from "./protocol.ts";
 import { renderGame, scoreboardRows } from "./render.ts";
-import type { Direction, GameSnapshot, InputState, PlayerRecord, RoomData } from "./types.ts";
+import type { Direction, GameSnapshot, PlayerRecord } from "./types.ts";
 
-const app = document.querySelector<HTMLDivElement>("#app")!;
-if (!app) throw new Error("App root not found.");
+const appElement = document.querySelector<HTMLDivElement>("#app");
+if (!appElement) throw new Error("App root not found.");
+const app = appElement;
+
+type GameRoom = ColyseusRoom<any>;
 
 let cleanup: Array<() => void> = [];
-const clearSubscriptions = () => {
+function clearSubscriptions() {
   cleanup.forEach((unsubscribe) => unsubscribe());
   cleanup = [];
-};
-
-function escapeHtml(value: string) {
-  return value.replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]!);
 }
 
-function header(connection = "Firebase connected") {
-  return `
-    <header class="topbar">
-      <div class="brand"><span class="brand-mark" aria-hidden="true"></span><div><div class="eyebrow">Shared arena</div><h1>Maze Chase Party</h1></div></div>
-      <span class="status-pill online">${escapeHtml(connection)}</span>
-    </header>`;
+function escapeHtml(value: string) {
+  return value.replace(/[&<>'"]/g, (character) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
+  })[character]!);
+}
+
+function header(connection = "Local server connected") {
+  return `<header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span><div><div class="eyebrow">Shared arena</div><h1>Maze Chase Party</h1></div></div>
+    <span class="status-pill online">${escapeHtml(connection)}</span>
+  </header>`;
 }
 
 function formatTime(milliseconds: number) {
-  const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
+  const seconds = Math.max(0, Math.ceil(milliseconds / 1_000));
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
-function joinUrl(code: string) {
-  const url = new URL(window.location.href);
-  url.search = "";
+function serverEndpoint() {
+  const explicit = new URLSearchParams(window.location.search).get("server");
+  if (explicit) return explicit;
+  const port = import.meta.env.DEV ? String(SERVER_PORT) : window.location.port || String(SERVER_PORT);
+  return `${window.location.protocol}//${window.location.hostname}:${port}`;
+}
+
+async function joinUrl(code: string) {
+  const params = new URLSearchParams(window.location.search);
+  let publicBase = params.get("public") ?? window.location.origin;
+  const localHostname = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  if (!params.get("public") && localHostname) {
+    try {
+      const response = await fetch(`${serverEndpoint()}/api/health`, { cache: "no-store" });
+      const health = await response.json() as { port?: number; addresses?: string[] };
+      const address = health.addresses?.[0];
+      if (address) {
+        const webPort = import.meta.env.DEV ? window.location.port || "5173" : String(health.port ?? SERVER_PORT);
+        publicBase = `http://${address}:${webPort}`;
+      }
+    } catch {
+      // Keep window.location.origin as the fallback and show it below the QR.
+    }
+  }
+  const url = new URL(publicBase);
   url.searchParams.set("room", code);
   url.searchParams.set("join", "1");
+  if (params.get("server")) url.searchParams.set("server", params.get("server")!);
   return url.toString();
 }
 
+async function createHostRoom() {
+  const room = await new ColyseusClient(serverEndpoint()).create(ROOM_TYPE, { mode: "host" });
+  const url = new URL(window.location.href);
+  url.searchParams.set("host", room.roomId);
+  history.replaceState(null, "", url);
+  await hostApp(room);
+}
+
 function playerCards(players: Record<string, PlayerRecord>) {
-  const entries = Object.entries(players).sort(([, a], [, b]) => a.seatId.localeCompare(b.seatId));
+  const entries = Object.entries(players).sort(([, first], [, second]) => first.seatId.localeCompare(second.seatId));
   if (!entries.length) return `<p class="muted">Waiting for players to scan the QR code.</p>`;
-  return `<div class="player-grid">${entries
-    .map(([, player]) => {
-      const assignment = player.assignment?.role;
-      return `<article class="player-card">
-        <span class="swatch" style="background:${colorValue(player.profile.colorId)}"></span>
-        <div><div class="player-name">${escapeHtml(player.profile.name)}</div><div class="player-meta">${player.presence.online ? "Online" : "Reconnecting"} · ${player.lobby.ready ? "Ready" : "Not ready"}</div></div>
-        <span class="role ${assignment ?? ""}">${assignment ?? "—"}</span>
-      </article>`;
-    })
-    .join("")}</div>`;
+  return `<div class="player-grid">${entries.map(([, player]) => {
+    const assignment = player.assignment?.role;
+    return `<article class="player-card">
+      <span class="swatch" style="background:${colorValue(player.profile.colorId)}"></span>
+      <div><div class="player-name">${escapeHtml(player.profile.name)}</div><div class="player-meta">${player.presence.online ? "Online" : "Disconnected"} · ${player.lobby.ready ? "Ready" : "Not ready"}</div></div>
+      <span class="role ${assignment ?? ""}">${assignment ?? "—"}</span>
+    </article>`;
+  }).join("")}</div>`;
 }
 
-function setupScreen(message?: string) {
-  const configured = firebaseConfigured();
-  app.innerHTML = `<main class="shell">${header("Setup required")}
-    <section class="hero"><div class="hero-card">
-      <div class="eyebrow">${configured ? "Connection problem" : "One-time setup"}</div><h2>${configured ? "Unable to connect" : "Connect Firebase"}</h2>
-      <p>${configured ? "The Firebase settings are present, but this browser could not finish connecting. Reload to try again." : "Add the Firebase Web app values to <strong>.env</strong>, enable anonymous sign-in, and publish the included database rules. Then reload this page."}</p>
-      ${message ? `<p class="error">${escapeHtml(message)}</p>` : ""}
-      ${configured ? `<button class="button yellow" id="retry-connection">Reload</button>` : ""}
-    </div></section></main>`;
-  document.querySelector<HTMLButtonElement>("#retry-connection")?.addEventListener("click", () => window.location.reload());
-}
-
-async function landing(backend: Backend) {
+function messageScreen(title: string, message: string, retry = true) {
   clearSubscriptions();
-  app.innerHTML = `<main class="shell">${header()}
-    <section class="hero"><div class="hero-card">
-      <div class="eyebrow">Up to 30 players</div>
+  app.innerHTML = `<main class="shell">${header("Connection problem")}
+    <section class="hero"><div class="hero-card"><div class="eyebrow">Local game server</div><h2>${escapeHtml(title)}</h2>
+    <p>${escapeHtml(message)}</p>${retry ? `<button class="button yellow" id="retry">Reload</button>` : ""}</div></section></main>`;
+  document.querySelector<HTMLButtonElement>("#retry")?.addEventListener("click", () => window.location.reload());
+}
+
+function bindRoomFailure(room: GameRoom) {
+  room.onError((code, message) => messageScreen("Server error", message || `Connection error ${code}.`));
+  room.onLeave((code) => {
+    if (code !== 1000 && code !== 4000) messageScreen("Disconnected", "The game server connection was closed.");
+  });
+  room.onMessage<ServerMessages["closed"]>("closed", ({ message }) => messageScreen("Room closed", message, false));
+  room.onMessage<ServerMessages["error"]>("error", ({ message }) => {
+    const target = document.querySelector<HTMLElement>("#server-error");
+    if (target) target.textContent = message;
+    else console.error(message);
+  });
+}
+
+async function landing() {
+  clearSubscriptions();
+  app.innerHTML = `<main class="shell">${header("Ready to host on this computer")}
+    <section class="hero"><div class="hero-card"><div class="eyebrow">Up to 30 players</div>
       <h2>One maze.<br>Two teams.</h2>
-      <p>Put this screen on a projector. Players scan, choose a unique color, and enter the same shared arena. You decide how many become Pac-Man; everyone else becomes a Ghost.</p>
+      <p>This computer runs the authoritative game server. Put this screen on a projector, then let players scan the room QR code.</p>
       <button class="button yellow" id="create-room">Create game room</button>
       <p class="error" id="landing-error" role="alert"></p>
     </div></section></main>`;
   document.querySelector<HTMLButtonElement>("#create-room")?.addEventListener("click", async (event) => {
     const button = event.currentTarget as HTMLButtonElement;
-    const error = document.querySelector<HTMLParagraphElement>("#landing-error");
+    const error = document.querySelector<HTMLElement>("#landing-error");
     button.disabled = true;
     button.textContent = "Creating room…";
     try {
-      const code = await createRoom(backend);
-      const url = new URL(window.location.href);
-      url.search = "";
-      url.searchParams.set("host", code);
-      history.replaceState(null, "", url);
-      await hostApp(backend, code);
+      await createHostRoom();
     } catch (reason) {
       if (error) error.textContent = reason instanceof Error ? reason.message : String(reason);
       button.disabled = false;
@@ -126,361 +142,278 @@ async function landing(backend: Backend) {
   });
 }
 
-async function hostApp(backend: Backend, code: string) {
+async function hostApp(room: GameRoom) {
   clearSubscriptions();
-  let roomState: RoomData | null = null;
+  bindRoomFailure(room);
+  let latestLobby: LobbySnapshot | null = null;
+  let latestSnapshot: GameSnapshot | null = null;
+  let interpolation: SnapshotInterpolation | null = null;
   let screen: "none" | "lobby" | "game" = "none";
-  let engine: EngineState | null = null;
-  let inputs: Record<string, InputState> = {};
   let frameId = 0;
-  let loopStarted = false;
-  let lastFrame = performance.now();
-  let accumulator = 0;
-  let lastPublish = 0;
-  let publishing = false;
-  let resultPublished = false;
-  const qrData = await QRCode.toDataURL(joinUrl(code), { width: 420, margin: 1, errorCorrectionLevel: "M" });
+  const maze = createMaze();
+  const playerJoinUrl = await joinUrl(room.roomId);
+  const qrData = await QRCode.toDataURL(playerJoinUrl, { width: 420, margin: 1, errorCorrectionLevel: "M" });
 
-  const stopRequests = processJoinRequests(backend, code, (error) => console.error(error));
-  const stopInputs = watchInputs(backend, code, (nextInputs) => {
-    inputs = nextInputs;
-  });
-  cleanup.push(stopRequests, stopInputs, () => cancelAnimationFrame(frameId));
-
-  function renderLobby(room: RoomData) {
-    screen = "lobby";
-    const players = room.players ?? {};
-    const count = Object.keys(players).length;
-    const maxPacmen = Math.max(1, count - 1);
-    const pacmanCount = Math.max(1, Math.min(maxPacmen, room.config.pacmanCount));
-    const allReady = count >= 2 && Object.values(players).every((player) => player.presence.online && player.lobby.ready);
-    const assigned = count >= 2 && Object.values(players).every((player) => player.assignment);
-    const assignedPacmen = Object.values(players).filter((player) => player.assignment?.role === "pacman").length;
-    const canStart = allReady && assigned && assignedPacmen === pacmanCount;
-    app.innerHTML = `<main class="shell">${header()}
-      <section class="lobby-grid">
-        <aside class="panel">
-          <div class="eyebrow">Room code</div><div class="room-code">${code}</div>
-          <img class="qr" src="${qrData}" alt="QR code to join room ${code}">
-          <div class="actions">
-            <button class="button secondary" id="copy-link">Copy join link</button>
-            <button class="button danger" id="close-room">Close room</button>
-          </div>
-          <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
-          <div class="field">
-            <label>Number of Pac-Man players</label>
-            <div class="counter">
-              <span class="muted">${count ? `${count - pacmanCount} Ghost${count - pacmanCount === 1 ? "" : "s"}` : "Waiting for players"}</span>
-              <button id="pac-minus" aria-label="Fewer Pac-Man">−</button>
-              <input id="pac-count" type="number" min="1" max="${maxPacmen}" value="${pacmanCount}" ${count < 2 ? "disabled" : ""}>
-              <button id="pac-plus" aria-label="More Pac-Man">+</button>
-            </div>
-          </div>
-          <p class="muted">Odd totals are supported. The chosen number becomes Pac-Man; every remaining player becomes a Ghost. All players enter this one shared maze.</p>
-          <div class="actions">
-            <button class="button secondary" id="randomize" ${count < 2 ? "disabled" : ""}>Randomize roles</button>
-            <button class="button yellow" id="start" ${canStart ? "" : "disabled"}>Start game</button>
-          </div>
-          <p class="muted">${count < 2 ? "At least two players are required." : !allReady ? "Waiting for every player to be ready." : !assigned || assignedPacmen !== pacmanCount ? "Randomize roles after choosing the Pac-Man count." : "Ready to start."}</p>
-        </aside>
-        <section class="panel"><div class="topbar" style="margin-bottom:14px"><div><div class="eyebrow">Players</div><h2>${count} / ${room.config.maxPlayers}</h2></div><span class="status-pill">Pac-Man ${assignedPacmen} · Ghost ${count - assignedPacmen}</span></div>${playerCards(players)}</section>
-      </section></main>`;
-
-    document.querySelector<HTMLButtonElement>("#copy-link")?.addEventListener("click", async (event) => {
-      await navigator.clipboard.writeText(joinUrl(code));
-      (event.currentTarget as HTMLButtonElement).textContent = "Copied";
-    });
-    document.querySelector<HTMLButtonElement>("#close-room")?.addEventListener("click", async () => {
-      await closeRoom(backend, code);
-      history.replaceState(null, "", window.location.pathname);
-      await landing(backend);
-    });
-    const setPacCount = async (next: number) => updatePacmanCount(backend, code, Math.max(1, Math.min(maxPacmen, next)));
-    document.querySelector<HTMLButtonElement>("#pac-minus")?.addEventListener("click", () => void setPacCount(pacmanCount - 1));
-    document.querySelector<HTMLButtonElement>("#pac-plus")?.addEventListener("click", () => void setPacCount(pacmanCount + 1));
-    document.querySelector<HTMLInputElement>("#pac-count")?.addEventListener("change", (event) =>
-      void setPacCount(Number((event.currentTarget as HTMLInputElement).value)),
-    );
-    document.querySelector<HTMLButtonElement>("#randomize")?.addEventListener("click", () => void randomizeRoles(backend, code));
-    document.querySelector<HTMLButtonElement>("#start")?.addEventListener("click", async () => {
-      if (!roomState?.players) return;
-      engine = createInitialGame(
-        roomState.players,
-        Date.now(),
-        roomState.config.roundDurationMs,
-        roomState.meta.roundId,
-      );
-      resultPublished = false;
-      await beginRound(backend, code, engine.snapshot);
-      if (screen !== "game") renderHostGame(engine.snapshot);
-      startLoop();
-    });
+  function stopFrame() {
+    cancelAnimationFrame(frameId);
+    frameId = 0;
   }
 
   function scoreList(snapshot: GameSnapshot, role: "pacman" | "ghost") {
-    return scoreboardRows(snapshot, role)
-      .slice(0, 15)
-      .map((actor) => `<div class="score-row"><span class="swatch" style="height:10px;background:${colorValue(actor.colorId)}"></span><span>${escapeHtml(actor.name)}</span><strong>${actor.score.toLocaleString()}</strong></div>`)
-      .join("");
+    return scoreboardRows(snapshot, role).slice(0, 15).map((actor) =>
+      `<div class="score-row"><span class="swatch" style="height:10px;background:${colorValue(actor.colorId)}"></span><span>${escapeHtml(actor.name)}</span><strong>${actor.score.toLocaleString()}</strong></div>`,
+    ).join("");
   }
 
   function updateHostHud(snapshot: GameSnapshot) {
-    const pac = document.querySelector<HTMLElement>("#pac-score");
-    const ghost = document.querySelector<HTMLElement>("#ghost-score");
-    const timer = document.querySelector<HTMLElement>("#game-time");
-    const lives = document.querySelector<HTMLElement>("#game-lives");
+    const values: Record<string, string> = {
+      "pac-score": snapshot.pacmanScore.toLocaleString(),
+      "ghost-score": snapshot.ghostScore.toLocaleString(),
+      "game-time": formatTime(snapshot.roundEndsAt - snapshot.hostTime),
+      "game-lives": String(snapshot.pacmanLives),
+    };
+    Object.entries(values).forEach(([id, value]) => {
+      const element = document.querySelector<HTMLElement>(`#${id}`);
+      if (element) element.textContent = value;
+    });
     const pacList = document.querySelector<HTMLElement>("#pac-list");
     const ghostList = document.querySelector<HTMLElement>("#ghost-list");
-    if (pac) pac.textContent = snapshot.pacmanScore.toLocaleString();
-    if (ghost) ghost.textContent = snapshot.ghostScore.toLocaleString();
-    if (timer) timer.textContent = formatTime(snapshot.roundEndsAt - snapshot.hostTime);
-    if (lives) lives.textContent = String(snapshot.pacmanLives);
     if (pacList) pacList.innerHTML = scoreList(snapshot, "pacman");
     if (ghostList) ghostList.innerHTML = scoreList(snapshot, "ghost");
     const overlay = document.querySelector<HTMLElement>("#result-overlay");
-    if (overlay) {
-      const roundComplete = snapshot.status === "results" && snapshot.winner !== null;
-      overlay.hidden = !roundComplete;
-      if (roundComplete) {
-        const title = overlay.querySelector<HTMLElement>("h2");
-        const reason = overlay.querySelector<HTMLElement>("p");
-        if (title) title.textContent = snapshot.winner === "pacman" ? "Pac-Man team wins" : "Ghost team wins";
-        if (reason) reason.textContent = snapshot.resultReason ?? "Round complete";
-      }
+    if (!overlay) return;
+    const complete = snapshot.status === "results" && snapshot.winner !== null;
+    overlay.hidden = !complete;
+    if (complete) {
+      const title = overlay.querySelector("h2");
+      const reason = overlay.querySelector("p");
+      if (title) title.textContent = snapshot.winner === "pacman" ? "Pac-Man team wins" : "Ghost team wins";
+      if (reason) reason.textContent = snapshot.resultReason ?? "Round complete";
     }
+  }
+
+  function renderLobby(lobby: LobbySnapshot) {
+    stopFrame();
+    screen = "lobby";
+    const players = lobby.players;
+    const count = Object.keys(players).length;
+    const maxPacmen = Math.max(1, count - 1);
+    const pacmanCount = Math.max(1, Math.min(maxPacmen, lobby.pacmanCount));
+    const allReady = count >= 2 && Object.values(players).every((player) => player.presence.online && player.lobby.ready);
+    const assignedPacmen = Object.values(players).filter((player) => player.assignment?.role === "pacman").length;
+    const assigned = count >= 2 && Object.values(players).every((player) => player.assignment);
+    const canStart = allReady && assigned && assignedPacmen === pacmanCount;
+    app.innerHTML = `<main class="shell">${header()}
+      <section class="lobby-grid"><aside class="panel">
+        <div class="eyebrow">Room code</div><div class="room-code">${lobby.code}</div>
+        <img class="qr" src="${qrData}" alt="QR code to join room ${lobby.code}">
+        <p class="muted" style="overflow-wrap:anywhere">${escapeHtml(playerJoinUrl)}</p>
+        <div class="actions"><button class="button secondary" id="copy-link">Copy join link</button><button class="button danger" id="close-room">Close room</button></div>
+        <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
+        <div class="field"><label>Number of Pac-Man players</label><div class="counter">
+          <span class="muted">${count ? `${count - pacmanCount} Ghost${count - pacmanCount === 1 ? "" : "s"}` : "Waiting for players"}</span>
+          <button id="pac-minus" aria-label="Fewer Pac-Man">−</button>
+          <input id="pac-count" type="number" min="1" max="${maxPacmen}" value="${pacmanCount}" ${count < 2 ? "disabled" : ""}>
+          <button id="pac-plus" aria-label="More Pac-Man">+</button>
+        </div></div>
+        <p class="muted">The chosen number becomes Pac-Man; every remaining player becomes a Ghost.</p>
+        <div class="actions"><button class="button secondary" id="randomize" ${count < 2 ? "disabled" : ""}>Randomize roles</button><button class="button yellow" id="start" ${canStart ? "" : "disabled"}>Start game</button></div>
+        <p class="muted">${count < 2 ? "At least two players are required." : !allReady ? "Waiting for every player to be ready." : !assigned || assignedPacmen !== pacmanCount ? "Randomize roles after choosing the Pac-Man count." : "Ready to start."}</p>
+        <p class="error" id="server-error"></p>
+      </aside><section class="panel"><div class="topbar" style="margin-bottom:14px"><div><div class="eyebrow">Players</div><h2>${count} / ${lobby.maxPlayers}</h2></div><span class="status-pill">Pac-Man ${assignedPacmen} · Ghost ${count - assignedPacmen}</span></div>${playerCards(players)}</section></section>
+    </main>`;
+    document.querySelector<HTMLButtonElement>("#copy-link")?.addEventListener("click", async (event) => {
+      await navigator.clipboard.writeText(playerJoinUrl);
+      (event.currentTarget as HTMLButtonElement).textContent = "Copied";
+    });
+    document.querySelector<HTMLButtonElement>("#close-room")?.addEventListener("click", () => room.send("close"));
+    const setCount = (value: number) => room.send("pacmanCount", Math.max(1, Math.min(maxPacmen, value)));
+    document.querySelector<HTMLButtonElement>("#pac-minus")?.addEventListener("click", () => setCount(pacmanCount - 1));
+    document.querySelector<HTMLButtonElement>("#pac-plus")?.addEventListener("click", () => setCount(pacmanCount + 1));
+    document.querySelector<HTMLInputElement>("#pac-count")?.addEventListener("change", (event) => setCount(Number((event.currentTarget as HTMLInputElement).value)));
+    document.querySelector<HTMLButtonElement>("#randomize")?.addEventListener("click", () => room.send("randomize"));
+    document.querySelector<HTMLButtonElement>("#start")?.addEventListener("click", () => room.send("start"));
   }
 
   function renderHostGame(snapshot: GameSnapshot) {
     screen = "game";
     app.innerHTML = `<main class="shell">${header()}
-      <section class="game-layout">
-        <div class="panel game-stage"><canvas class="game-canvas" id="game-canvas" aria-label="Shared maze arena"></canvas>
-          <div class="overlay" id="result-overlay" ${snapshot.status === "results" ? "" : "hidden"}><div><div class="eyebrow">Round complete</div><h2></h2><p class="muted"></p><div class="actions" style="justify-content:center"><button class="button yellow" id="replay">Play again</button><button class="button secondary" id="reroll">Randomize & play again</button></div></div></div>
-        </div>
-        <aside class="game-hud">
-          <div class="panel score-pair"><div class="score"><span>Pac-Man</span><strong id="pac-score">0</strong></div><div class="score"><span>Ghosts</span><strong id="ghost-score">0</strong></div></div>
-          <div class="panel score-pair"><div class="score"><span>Time</span><strong id="game-time">5:00</strong></div><div class="score"><span>Lives</span><strong id="game-lives">0</strong></div></div>
-          <div class="panel"><h3>Pac-Man team</h3><div class="score-list" id="pac-list"></div></div>
-          <div class="panel"><h3>Ghost team</h3><div class="score-list" id="ghost-list"></div></div>
-        </aside>
-      </section></main>`;
-    document.querySelector<HTMLButtonElement>("#replay")?.addEventListener("click", () => void resetToLobby(backend, code, true));
-    document.querySelector<HTMLButtonElement>("#reroll")?.addEventListener("click", () => void resetToLobby(backend, code, false));
+      <section class="game-layout"><div class="panel game-stage"><canvas class="game-canvas" id="game-canvas" aria-label="Shared maze arena"></canvas>
+        <div class="overlay" id="result-overlay" hidden><div><div class="eyebrow">Round complete</div><h2></h2><p class="muted"></p><div class="actions" style="justify-content:center"><button class="button yellow" id="replay">Play again</button><button class="button secondary" id="reroll">Randomize & play again</button></div></div></div>
+      </div><aside class="game-hud">
+        <div class="panel score-pair"><div class="score"><span>Pac-Man</span><strong id="pac-score">0</strong></div><div class="score"><span>Ghosts</span><strong id="ghost-score">0</strong></div></div>
+        <div class="panel score-pair"><div class="score"><span>Time</span><strong id="game-time">5:00</strong></div><div class="score"><span>Lives</span><strong id="game-lives">0</strong></div></div>
+        <div class="panel"><h3>Pac-Man team</h3><div class="score-list" id="pac-list"></div></div><div class="panel"><h3>Ghost team</h3><div class="score-list" id="ghost-list"></div></div>
+      </aside></section></main>`;
+    document.querySelector<HTMLButtonElement>("#replay")?.addEventListener("click", () => room.send("reset", { keepTeams: true }));
+    document.querySelector<HTMLButtonElement>("#reroll")?.addEventListener("click", () => room.send("reset", { keepTeams: false }));
     updateHostHud(snapshot);
-  }
-
-  function startLoop() {
-    if (loopStarted) return;
-    loopStarted = true;
-    lastFrame = performance.now();
-    const frame = (time: number) => {
+    const frame = () => {
       frameId = requestAnimationFrame(frame);
-      if (!engine) return;
-      const elapsed = Math.min(0.1, (time - lastFrame) / 1000);
-      lastFrame = time;
-      accumulator += elapsed;
-      while (accumulator >= 1 / 60 && engine.snapshot.status === "playing") {
-        stepGame(engine, inputs, 1 / 60, Date.now());
-        accumulator -= 1 / 60;
-      }
+      if (!interpolation || !latestSnapshot) return;
       const canvas = document.querySelector<HTMLCanvasElement>("#game-canvas");
-      if (canvas) renderGame(canvas, engine.snapshot, engine.maze);
-      updateHostHud(engine.snapshot);
-      if (engine.snapshot.status === "playing" && time - lastPublish >= 100 && !publishing) {
-        lastPublish = time;
-        publishing = true;
-        void publishSnapshot(backend, code, engine.snapshot).finally(() => {
-          publishing = false;
-        });
-      }
-      if (engine.snapshot.status === "results" && !resultPublished) {
-        resultPublished = true;
-        void publishSnapshot(backend, code, engine.snapshot);
-      }
+      if (canvas) renderGame(canvas, sampleSnapshot(interpolation, performance.now()), maze);
     };
     frameId = requestAnimationFrame(frame);
   }
 
-  const stopRoom = watchRoom(backend, code, (room) => {
-    roomState = room;
-    if (!room) {
-      setupScreen("Room not found.");
-      return;
-    }
-    if (room.meta.hostUid !== backend.uid) {
-      setupScreen("This browser is not the host for this room.");
-      return;
-    }
-    if (room.meta.status === "lobby") {
-      if (screen === "game") {
-        engine = null;
-        loopStarted = false;
-        cancelAnimationFrame(frameId);
-      }
-      renderLobby(room);
-    } else if (room.authoritative && room.authoritative.roundId === room.meta.roundId) {
-      if (screen !== "game") renderHostGame(engine?.snapshot ?? room.authoritative);
-      if (!engine) updateHostHud(room.authoritative);
+  room.onMessage<ServerMessages["lobby"]>("lobby", (lobby) => {
+    latestLobby = lobby;
+    if (lobby.status === "lobby") {
+      latestSnapshot = null;
+      interpolation = null;
+      renderLobby(lobby);
     }
   });
-  cleanup.push(stopRoom);
+  room.onMessage<ServerMessages["snapshot"]>("snapshot", (update) => {
+    const snapshot = mergeNetworkSnapshot(latestSnapshot, update);
+    const receivedAt = performance.now();
+    interpolation = updateInterpolation(interpolation, snapshot, receivedAt);
+    latestSnapshot = snapshot;
+    if (screen !== "game") renderHostGame(snapshot);
+    else updateHostHud(snapshot);
+  });
+  cleanup.push(() => stopFrame(), () => void room.leave());
+  room.send("sync");
+  if (latestLobby) renderLobby(latestLobby);
 }
 
-async function playerApp(backend: Backend, code: string) {
+async function playerApp(code: string) {
   clearSubscriptions();
-  let roomState: RoomData | null = null;
-  let screen = "none";
+  let room: GameRoom;
+  try {
+    room = await new ColyseusClient(serverEndpoint()).joinById(code, { mode: "player" });
+  } catch (reason) {
+    messageScreen("Room not found", reason instanceof Error ? reason.message : "Check the room code and Wi-Fi connection.");
+    return;
+  }
+  bindRoomFailure(room);
+  const uid = room.sessionId;
+  let lobbyState: LobbySnapshot | null = null;
   let selectedColor = "c08";
-  let registered = false;
+  let joinError = "";
+  let screen = "none";
   let latestSnapshot: GameSnapshot | null = null;
   let interpolation: SnapshotInterpolation | null = null;
   let localPrediction: LocalPrediction | null = null;
-  let predictionFrameTime = performance.now();
-  let playerFrame = 0;
+  let localWantedDirection: Direction = "none";
   let inputSeq = 0;
   let lastDirection: Direction = "none";
-  let localWantedDirection: Direction = "none";
-  let lastDirectionSentAt = 0;
+  let lastSentAt = 0;
+  let predictionFrameTime = performance.now();
+  let frameId = 0;
+  let pingId = 0;
+  let pingTimer = 0;
+  let positionTimer = 0;
+  const maze = createMaze();
 
-  const send = (direction: Direction) => {
+  const sendDirection = (direction: Direction) => {
     localWantedDirection = direction;
     const now = Date.now();
-    if (direction === lastDirection && now - lastDirectionSentAt < 200) return;
+    if (direction === lastDirection && now - lastSentAt < 120) return;
     lastDirection = direction;
-    lastDirectionSentAt = now;
+    lastSentAt = now;
     inputSeq += 1;
-    void sendDirection(backend, code, direction, inputSeq).catch(() => {
-      lastDirectionSentAt = 0;
-    });
+    room.send("direction", { seq: inputSeq, direction, clientTime: now });
   };
 
-  function renderJoin(room: RoomData, admissionMessage?: string) {
+  function renderJoin(lobby: LobbySnapshot) {
     screen = "join";
-    const claims = room.colorClaims ?? {};
-    const count = Object.keys(room.players ?? {}).length;
+    const claims = new Set(Object.values(lobby.players).map((player) => player.profile.colorId));
     app.innerHTML = `<main class="shell">${header()}
       <section class="join-layout"><form class="panel join-card" id="join-form">
-        <div class="eyebrow">Room ${code} · ${count}/${room.config.maxPlayers}</div><h2>Choose your player</h2>
+        <div class="eyebrow">Room ${escapeHtml(lobby.code)} · ${Object.keys(lobby.players).length}/${lobby.maxPlayers}</div><h2>Choose your player</h2>
         <div class="field"><label for="player-name">Display name</label><input id="player-name" maxlength="16" required autocomplete="nickname" placeholder="Your name"></div>
-        <div class="field"><label>Unique player color</label><div class="palette">${PALETTE.map((color) => `<button type="button" class="color-button ${selectedColor === color.id ? "selected" : ""}" data-color="${color.id}" style="background:${color.hex}" aria-label="${color.label}" ${claims[color.id] ? "disabled" : ""}></button>`).join("")}</div></div>
-        ${admissionMessage ? `<p class="error" role="alert">${escapeHtml(admissionMessage)}</p>` : ""}
-        <button class="button yellow" type="submit" ${room.meta.joinLocked || count >= room.config.maxPlayers ? "disabled" : ""}>${count >= room.config.maxPlayers ? "Room full" : room.meta.joinLocked ? "Game in progress" : "Join room"}</button>
+        <div class="field"><label>Unique player color</label><div class="palette">${PALETTE.map((color) => `<button type="button" class="color-button ${selectedColor === color.id ? "selected" : ""}" data-color="${color.id}" style="background:${color.hex}" aria-label="${color.label}" ${claims.has(color.id) ? "disabled" : ""}></button>`).join("")}</div></div>
+        ${joinError ? `<p class="error" role="alert">${escapeHtml(joinError)}</p>` : ""}
+        <button class="button yellow" type="submit">Join room</button>
       </form></section></main>`;
-    document.querySelectorAll<HTMLButtonElement>("[data-color]").forEach((button) =>
-      button.addEventListener("click", () => {
-        selectedColor = button.dataset.color ?? selectedColor;
-        document.querySelectorAll(".color-button").forEach((item) => item.classList.remove("selected"));
-        button.classList.add("selected");
-      }),
-    );
-    document.querySelector<HTMLFormElement>("#join-form")?.addEventListener("submit", async (event) => {
+    document.querySelectorAll<HTMLButtonElement>("[data-color]").forEach((button) => button.addEventListener("click", () => {
+      selectedColor = button.dataset.color ?? selectedColor;
+      document.querySelectorAll(".color-button").forEach((item) => item.classList.remove("selected"));
+      button.classList.add("selected");
+    }));
+    document.querySelector<HTMLFormElement>("#join-form")?.addEventListener("submit", (event) => {
       event.preventDefault();
       const name = document.querySelector<HTMLInputElement>("#player-name")?.value.trim() ?? "";
-      const submit = (event.currentTarget as HTMLFormElement).querySelector<HTMLButtonElement>("button[type=submit]");
-      if (submit) {
-        submit.disabled = true;
-        submit.textContent = "Requesting seat…";
-      }
-      try {
-        await submitJoinRequest(backend, code, { name, colorId: selectedColor });
-      } catch (reason) {
-        renderJoin(room, reason instanceof Error ? reason.message : String(reason));
-      }
+      room.send("join", { name, colorId: selectedColor });
+      const button = (event.currentTarget as HTMLFormElement).querySelector<HTMLButtonElement>("button[type=submit]");
+      if (button) { button.disabled = true; button.textContent = "Joining…"; }
     });
   }
 
-  function renderPlayerLobby(room: RoomData, player: PlayerRecord) {
+  function renderPlayerLobby(lobby: LobbySnapshot, player: PlayerRecord) {
     screen = "lobby";
-    const count = Object.keys(room.players ?? {}).length;
     app.innerHTML = `<main class="shell">${header()}
-      <section class="join-layout"><div class="panel join-card">
-        <div class="eyebrow">Room ${code} · ${count} players</div><h2>${player.assignment ? `You are ${player.assignment.role === "pacman" ? "Pac-Man" : "a Ghost"}` : "Waiting for roles"}</h2>
-        <div class="player-card" style="margin:18px 0"><span class="swatch" style="background:${colorValue(player.profile.colorId)}"></span><div><div class="player-name">${escapeHtml(player.profile.name)}</div><div class="player-meta">All players will spawn in the same maze</div></div><span class="role ${player.assignment?.role ?? ""}">${player.assignment?.role ?? "—"}</span></div>
+      <section class="join-layout"><div class="panel join-card"><div class="eyebrow">Room ${escapeHtml(lobby.code)} · ${Object.keys(lobby.players).length} players</div>
+        <h2>${player.assignment ? `You are ${player.assignment.role === "pacman" ? "Pac-Man" : "a Ghost"}` : "Waiting for roles"}</h2>
+        <div class="player-card" style="margin:18px 0"><span class="swatch" style="background:${colorValue(player.profile.colorId)}"></span><div><div class="player-name">${escapeHtml(player.profile.name)}</div><div class="player-meta">All players enter the same maze</div></div><span class="role ${player.assignment?.role ?? ""}">${player.assignment?.role ?? "—"}</span></div>
         <button class="button ${player.lobby.ready ? "secondary" : "yellow"}" id="ready">${player.lobby.ready ? "Not ready" : "Ready"}</button>
         <p class="muted">The host chooses how many players are Pac-Man. Everyone else becomes a Ghost.</p>
       </div></section></main>`;
-    document.querySelector<HTMLButtonElement>("#ready")?.addEventListener("click", () => void setReady(backend, code, !player.lobby.ready));
+    document.querySelector<HTMLButtonElement>("#ready")?.addEventListener("click", () => room.send("ready", !player.lobby.ready));
   }
 
   function updateMobileHud(snapshot: GameSnapshot) {
-    const actor = snapshot.actors[backend.uid];
+    const actor = snapshot.actors[uid];
     if (!actor) return;
-    const score = document.querySelector<HTMLElement>("#my-score");
-    const team = document.querySelector<HTMLElement>("#team-score");
-    const time = document.querySelector<HTMLElement>("#mobile-time");
-    const lives = document.querySelector<HTMLElement>("#mobile-lives");
-    if (score) score.textContent = actor.score.toLocaleString();
-    if (team) team.textContent = (actor.role === "pacman" ? snapshot.pacmanScore : snapshot.ghostScore).toLocaleString();
-    if (time) time.textContent = formatTime(snapshot.roundEndsAt - snapshot.hostTime);
-    if (lives) lives.textContent = actor.role === "pacman" ? String(snapshot.pacmanLives) : String(actor.kills);
+    const values: Record<string, string> = {
+      "my-score": actor.score.toLocaleString(),
+      "team-score": (actor.role === "pacman" ? snapshot.pacmanScore : snapshot.ghostScore).toLocaleString(),
+      "mobile-time": formatTime(snapshot.roundEndsAt - snapshot.hostTime),
+      "mobile-lives": actor.role === "pacman" ? String(snapshot.pacmanLives) : String(actor.kills),
+    };
+    Object.entries(values).forEach(([id, value]) => {
+      const element = document.querySelector<HTMLElement>(`#${id}`);
+      if (element) element.textContent = value;
+    });
     const overlay = document.querySelector<HTMLElement>("#mobile-result");
-    if (overlay) {
-      const roundComplete = snapshot.status === "results" && snapshot.winner !== null;
-      overlay.hidden = !roundComplete;
-      if (roundComplete) {
-        const heading = overlay.querySelector("h2");
-        if (heading) {
-          heading.textContent = snapshot.winner === actor.role
-            ? "Your team wins"
-            : `${snapshot.winner === "ghost" ? "Ghost" : "Pac-Man"} team wins`;
-        }
-        const reason = overlay.querySelector<HTMLElement>("#mobile-result-reason");
-        if (reason) reason.textContent = snapshot.resultReason ?? "Round complete";
-      }
+    if (!overlay) return;
+    const complete = snapshot.status === "results" && snapshot.winner !== null;
+    overlay.hidden = !complete;
+    if (complete) {
+      const heading = overlay.querySelector("h2");
+      if (heading) heading.textContent = snapshot.winner === actor.role ? "Your team wins" : `${snapshot.winner === "ghost" ? "Ghost" : "Pac-Man"} team wins`;
+      const reason = overlay.querySelector<HTMLElement>("#mobile-result-reason");
+      if (reason) reason.textContent = snapshot.resultReason ?? "Round complete";
     }
   }
 
   function renderPlayerGame(snapshot: GameSnapshot) {
     screen = "game";
-    const actor = snapshot.actors[backend.uid];
+    const actor = snapshot.actors[uid];
     if (!actor) return;
     app.innerHTML = `<main class="player-game">
-      <div class="mobile-hud"><div class="mobile-stat">You<strong id="my-score">0</strong></div><div class="mobile-stat">Team<strong id="team-score">0</strong></div><div class="mobile-stat">Time<strong id="mobile-time">5:00</strong></div><div class="mobile-stat">${actor.role === "pacman" ? "Lives" : "Kills"}<strong id="mobile-lives">0</strong></div></div>
+      <div class="mobile-hud"><div class="mobile-stat">You<strong id="my-score">0</strong></div><div class="mobile-stat">Team<strong id="team-score">0</strong></div><div class="mobile-stat">Time<strong id="mobile-time">5:00</strong></div><div class="mobile-stat">${actor.role === "pacman" ? "Lives" : "Kills"}<strong id="mobile-lives">0</strong></div><div class="mobile-stat">Ping<strong id="network-ping">—</strong></div></div>
       <div class="game-stage"><canvas class="game-canvas" id="player-canvas" aria-label="Your centered maze view"></canvas><div class="overlay" id="mobile-result" hidden><div><div class="eyebrow">Round complete</div><h2></h2><p class="muted" id="mobile-result-reason"></p><p class="muted">Look at the host screen for the full scoreboard.</p></div></div></div>
       <div class="dpad" aria-label="Movement controls"><button data-direction="up" aria-label="Move up">▲</button><button data-direction="left" aria-label="Move left">◀</button><button data-direction="down" aria-label="Move down">▼</button><button data-direction="right" aria-label="Move right">▶</button></div>
     </main>`;
-    document.querySelectorAll<HTMLButtonElement>("[data-direction]").forEach((button) =>
-      button.addEventListener("pointerdown", () => send(button.dataset.direction as Direction)),
-    );
+    document.querySelectorAll<HTMLButtonElement>("[data-direction]").forEach((button) => button.addEventListener("pointerdown", () => sendDirection(button.dataset.direction as Direction)));
     const canvas = document.querySelector<HTMLCanvasElement>("#player-canvas");
     let startX = 0;
     let startY = 0;
-    canvas?.addEventListener("pointerdown", (event) => {
-      startX = event.clientX;
-      startY = event.clientY;
-    });
+    canvas?.addEventListener("pointerdown", (event) => { startX = event.clientX; startY = event.clientY; });
     canvas?.addEventListener("pointerup", (event) => {
       const dx = event.clientX - startX;
       const dy = event.clientY - startY;
-      if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
-      send(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : dy > 0 ? "down" : "up");
+      if (Math.max(Math.abs(dx), Math.abs(dy)) >= 20) sendDirection(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : dy > 0 ? "down" : "up");
     });
     updateMobileHud(snapshot);
-    cancelAnimationFrame(playerFrame);
-    const maze = createMaze();
+    cancelAnimationFrame(frameId);
     predictionFrameTime = performance.now();
     const frame = () => {
-      playerFrame = requestAnimationFrame(frame);
+      frameId = requestAnimationFrame(frame);
       if (!latestSnapshot || !interpolation) return;
       const now = performance.now();
-      const elapsedSeconds = Math.min(0.05, Math.max(0, (now - predictionFrameTime) / 1_000));
+      const seconds = Math.min(0.05, Math.max(0, (now - predictionFrameTime) / 1_000));
       predictionFrameTime = now;
       if (localPrediction && latestSnapshot.status === "playing") {
-        advanceLocalPrediction(
-          localPrediction,
-          maze,
-          localWantedDirection,
-          elapsedSeconds,
-          latestSnapshot.hostTime < latestSnapshot.frightenedUntil,
-        );
+        advanceLocalPrediction(localPrediction, maze, localWantedDirection, seconds, latestSnapshot.hostTime < latestSnapshot.frightenedUntil);
       }
-      const playerCanvas = document.querySelector<HTMLCanvasElement>("#player-canvas");
-      if (playerCanvas) {
-        const interpolated = sampleSnapshot(interpolation, now);
-        renderGame(playerCanvas, applyLocalPrediction(interpolated, localPrediction), maze, backend.uid);
-      }
+      const target = document.querySelector<HTMLCanvasElement>("#player-canvas");
+      if (target) renderGame(target, applyLocalPrediction(sampleSnapshot(interpolation, now), localPrediction), maze, uid);
     };
-    playerFrame = requestAnimationFrame(frame);
+    frameId = requestAnimationFrame(frame);
   }
 
   const keyDirections: Record<string, Direction> = {
@@ -489,140 +422,98 @@ async function playerApp(backend: Backend, code: string) {
   };
   const onKeyDown = (event: KeyboardEvent) => {
     const direction = keyDirections[event.key];
-    if (direction && screen === "game") {
-      event.preventDefault();
-      send(direction);
-    }
+    if (direction && screen === "game") { event.preventDefault(); sendDirection(direction); }
   };
   window.addEventListener("keydown", onKeyDown);
-  cleanup.push(() => window.removeEventListener("keydown", onKeyDown), () => cancelAnimationFrame(playerFrame));
 
-  const stopAdmission = watchAdmission(backend, code, (admission) => {
-    if (admission?.status === "rejected" && roomState) renderJoin(roomState, admission.reason ?? "Could not join.");
+  room.onMessage<ServerMessages["joinResult"]>("joinResult", (result) => {
+    if (!result.ok) {
+      joinError = result.reason ?? "Could not join the room.";
+      if (lobbyState) renderJoin(lobbyState);
+    }
   });
-  let stopLobbyRoom: (() => void) | null = null;
-  let stopGameSnapshots: (() => void) | null = null;
-  let activeRoundId = -1;
-
-  const stopLobbyUpdates = () => {
-    stopLobbyRoom?.();
-    stopLobbyRoom = null;
-  };
-  const stopGameUpdates = () => {
-    stopGameSnapshots?.();
-    stopGameSnapshots = null;
-    activeRoundId = -1;
-  };
-
-  const startLobbyUpdates = () => {
-    stopGameUpdates();
+  room.onMessage<ServerMessages["lobby"]>("lobby", (lobby) => {
+    lobbyState = lobby;
+    if (lobby.status !== "lobby") return;
     latestSnapshot = null;
     interpolation = null;
     localPrediction = null;
     localWantedDirection = "none";
     lastDirection = "none";
-    lastDirectionSentAt = 0;
-    if (stopLobbyRoom) return;
-    stopLobbyRoom = watchRoom(backend, code, (room) => {
-      roomState = room;
-      if (!room) {
-        setupScreen("Room not found. Check the code or scan the QR again.");
-        return;
-      }
-      if (room.meta.status !== "lobby") return;
-      const player = room.players?.[backend.uid];
-      if (!player) {
-        if (screen !== "join") renderJoin(room);
-        else {
-          const claims = room.colorClaims ?? {};
-          document.querySelectorAll<HTMLButtonElement>("[data-color]").forEach((button) => {
-            button.disabled = Boolean(button.dataset.color && claims[button.dataset.color]);
-          });
-        }
-        return;
-      }
-      if (!registered) {
-        registered = true;
-        void registerPresence(backend, code);
-      }
-      renderPlayerLobby(room, player);
-    });
-  };
-
-  const startGameUpdates = (roundId: number) => {
-    stopLobbyUpdates();
-    if (stopGameSnapshots && activeRoundId === roundId) return;
-    stopGameUpdates();
-    activeRoundId = roundId;
-    stopGameSnapshots = watchAuthoritative(backend, code, (snapshot) => {
-      if (!snapshot || snapshot.roundId !== activeRoundId) return;
-      if (!snapshot.actors[backend.uid]) {
-        setupScreen("This game is already in progress and this browser is not one of its players.");
-        return;
-      }
-      if (!registered) {
-        registered = true;
-        void registerPresence(backend, code);
-      }
-      const isNewSimulationTick =
-        !latestSnapshot || latestSnapshot.roundId !== snapshot.roundId || latestSnapshot.tick !== snapshot.tick;
-      if (isNewSimulationTick) {
-        const receivedAt = performance.now();
-        const authoritativeActor = snapshot.actors[backend.uid];
-        inputSeq = Math.max(inputSeq, authoritativeActor.lastInputSeq ?? 0);
-        if (!localPrediction || localPrediction.roundId !== snapshot.roundId) {
-          localWantedDirection = authoritativeActor.wantedDirection;
-          predictionFrameTime = receivedAt;
-        }
-        interpolation = updateInterpolation(interpolation, snapshot, receivedAt);
-        localPrediction = reconcileLocalPrediction(
-          localPrediction,
-          snapshot,
-          backend.uid,
-          localWantedDirection,
-          inputSeq,
-        );
-      }
-      latestSnapshot = snapshot;
-      if (screen !== "game") renderPlayerGame(snapshot);
-      else updateMobileHud(snapshot);
-    });
-  };
-
-  const stopMeta = watchRoomMeta(backend, code, (meta) => {
-    if (!meta) {
-      stopLobbyUpdates();
-      stopGameUpdates();
-      setupScreen("Room not found. Check the code or scan the QR again.");
-    } else if (meta.status === "lobby") {
-      startLobbyUpdates();
-    } else if (meta.status === "playing" || meta.status === "results") {
-      startGameUpdates(meta.roundId);
-    } else if (meta.status === "closed") {
-      stopLobbyUpdates();
-      stopGameUpdates();
-      setupScreen("This room has been closed by the host.");
-    }
+    lastSentAt = 0;
+    cancelAnimationFrame(frameId);
+    const player = lobby.players[uid];
+    if (player) renderPlayerLobby(lobby, player);
+    else renderJoin(lobby);
   });
-  cleanup.push(stopAdmission, stopMeta, stopLobbyUpdates, stopGameUpdates);
+  room.onMessage<ServerMessages["snapshot"]>("snapshot", (update) => {
+    const snapshot = mergeNetworkSnapshot(latestSnapshot, update);
+    const authoritative = snapshot.actors[uid];
+    if (!authoritative) return;
+    const receivedAt = performance.now();
+    inputSeq = Math.max(inputSeq, authoritative.lastInputSeq ?? 0);
+    if (!localPrediction || localPrediction.roundId !== snapshot.roundId) {
+      localWantedDirection = authoritative.wantedDirection;
+      predictionFrameTime = receivedAt;
+    }
+    interpolation = updateInterpolation(interpolation, snapshot, receivedAt);
+    localPrediction = reconcileClientOwnedPrediction(localPrediction, snapshot, uid, localWantedDirection);
+    latestSnapshot = snapshot;
+    if (screen !== "game") renderPlayerGame(snapshot);
+    else updateMobileHud(snapshot);
+  });
+  room.onMessage<ServerMessages["pong"]>("pong", (message) => {
+    const latency = Math.max(0, Math.round(performance.now() - message.clientTime));
+    const display = document.querySelector<HTMLElement>("#network-ping");
+    if (display) display.textContent = `${latency} ms`;
+  });
+  room.onMessage<ServerMessages["correction"]>("correction", ({ roundId, actor }) => {
+    if (actor.uid !== uid) return;
+    localPrediction = {
+      roundId,
+      actor: { ...actor, wantedDirection: localWantedDirection },
+    };
+    predictionFrameTime = performance.now();
+  });
+  const sendPing = () => room.send("ping", { id: ++pingId, clientTime: performance.now() });
+  sendPing();
+  pingTimer = window.setInterval(sendPing, 2_000);
+  const sendPosition = () => {
+    if (!localPrediction || latestSnapshot?.status !== "playing") return;
+    const actor = localPrediction.actor;
+    room.send("position", {
+      seq: inputSeq,
+      x: actor.x,
+      y: actor.y,
+      direction: actor.direction,
+      wantedDirection: localWantedDirection,
+      clientTime: performance.now(),
+    });
+  };
+  positionTimer = window.setInterval(sendPosition, 1_000 / 30);
+  cleanup.push(
+    () => window.removeEventListener("keydown", onKeyDown),
+    () => cancelAnimationFrame(frameId),
+    () => clearInterval(pingTimer),
+    () => clearInterval(positionTimer),
+    () => void room.leave(),
+  );
+  room.send("sync");
 }
 
 async function boot() {
-  if (!firebaseConfigured()) {
-    setupScreen();
-    return;
+  const params = new URLSearchParams(window.location.search);
+  const room = params.get("room")?.toUpperCase();
+  if (room && params.get("join") === "1") await playerApp(room);
+  else if (params.get("host") === "1") {
+    app.innerHTML = `<main class="shell">${header("Starting local game server")}<section class="hero"><div class="hero-card"><div class="eyebrow">Desktop host</div><h2>Creating game room…</h2></div></section></main>`;
+    try {
+      await createHostRoom();
+    } catch (reason) {
+      messageScreen("Could not create room", reason instanceof Error ? reason.message : String(reason));
+    }
   }
-  try {
-    const backend = await connectBackend();
-    const params = new URLSearchParams(window.location.search);
-    const room = params.get("room")?.toUpperCase();
-    const host = params.get("host")?.toUpperCase();
-    if (room && params.get("join") === "1") await playerApp(backend, room);
-    else if (host) await hostApp(backend, host);
-    else await landing(backend);
-  } catch (reason) {
-    setupScreen(reason instanceof Error ? reason.message : String(reason));
-  }
+  else await landing();
 }
 
 void boot();

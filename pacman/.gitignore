@@ -1,9 +1,12 @@
 node_modules/
 dist/
+dist-server/
+release/
 .env
 .env.local
 .npm-cache/
 .firebase/
+.devmode.json
 work/
 firebase-debug.log
 *.log

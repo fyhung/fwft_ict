@@ -1,0 +1,40 @@
+name: Build Maze Chase Windows host
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: pacman
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: pacman/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify and package Windows host
+        run: npm run package:windows
+
+      - name: Upload installer and portable application
+        uses: actions/upload-artifact@v4
+        with:
+          name: MazeChaseHost-Windows
+          path: pacman/release/*.exe
+          if-no-files-found: error
+          retention-days: 30

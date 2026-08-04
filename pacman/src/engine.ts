@@ -91,7 +91,7 @@ export function createInitialGame(
   };
 }
 
-function canOccupy(maze: Maze, x: number, y: number): boolean {
+export function canActorOccupy(maze: Maze, x: number, y: number): boolean {
   return ![
     [x - PLAYER_RADIUS, y - PLAYER_RADIUS],
     [x + PLAYER_RADIUS, y - PLAYER_RADIUS],
@@ -128,7 +128,7 @@ function tryDirection(actor: Actor, maze: Maze, direction: Direction): boolean {
   // unavailable request buffered instead of steering into the nearby wall.
   if (vector.x !== 0 && Math.abs(actor.y - centerY) >= TURN_WINDOW) return false;
   if (vector.y !== 0 && Math.abs(actor.x - centerX) >= TURN_WINDOW) return false;
-  if (!canOccupy(maze, centerX + vector.x, centerY + vector.y)) return false;
+  if (!canActorOccupy(maze, centerX + vector.x, centerY + vector.y)) return false;
 
   actor.x = centerX;
   actor.y = centerY;
@@ -150,13 +150,13 @@ function moveActor(actor: Actor, maze: Maze, seconds: number, frightenedActive: 
   const distance = actorSpeed(actor, frightenedActive) * seconds;
   const nextX = actor.x + vector.x * distance;
   const nextY = actor.y + vector.y * distance;
-  if (canOccupy(maze, nextX, nextY)) {
+  if (canActorOccupy(maze, nextX, nextY)) {
     actor.x = nextX;
     actor.y = nextY;
   } else {
     const centeredX = Math.round(actor.x);
     const centeredY = Math.round(actor.y);
-    if (canOccupy(maze, centeredX, centeredY)) {
+    if (canActorOccupy(maze, centeredX, centeredY)) {
       actor.x = centeredX;
       actor.y = centeredY;
     }
@@ -206,6 +206,7 @@ export function stepGame(
   inputs: Record<string, InputState>,
   seconds: number,
   now = Date.now(),
+  simulateMovement = true,
 ): GameSnapshot {
   const { snapshot, maze } = state;
   if (snapshot.status !== "playing") return snapshot;
@@ -233,7 +234,7 @@ export function stepGame(
       actor.invulnerableUntil = actor.role === "pacman" ? now + 2_000 : 0;
     }
     if (actor.state === "invulnerable" && now >= actor.invulnerableUntil) actor.state = "normal";
-    moveActor(actor, maze, seconds, frightenedActive);
+    if (simulateMovement) moveActor(actor, maze, seconds, frightenedActive);
   });
 
   const pelletSet = new Set(snapshot.pellets);

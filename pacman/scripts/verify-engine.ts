@@ -2,7 +2,13 @@ import assert from "node:assert/strict";
 import { createInitialGame, predictActorMovement, stepGame } from "../src/engine.ts";
 import { sampleSnapshot, updateInterpolation } from "../src/interpolation.ts";
 import { createMaze } from "../src/maze.ts";
-import { advanceLocalPrediction, applyLocalPrediction, reconcileLocalPrediction } from "../src/prediction.ts";
+import { createNetworkSnapshot, mergeNetworkSnapshot } from "../src/network.ts";
+import {
+  advanceLocalPrediction,
+  applyLocalPrediction,
+  reconcileClientOwnedPrediction,
+  reconcileLocalPrediction,
+} from "../src/prediction.ts";
 import type { Direction, InputState, PlayerRecord, Role } from "../src/types.ts";
 
 const maze = createMaze();
@@ -77,6 +83,15 @@ const inputAckActor = inputAckState.snapshot.actors.solo;
 stepGame(inputAckState, input("right", 7), 1 / 60, 5_000);
 assert.equal(inputAckActor.lastInputSeq, 7);
 assert.equal(inputAckActor.wantedDirection, "right");
+
+// In client-owned movement mode, the server advances rules and acknowledges
+// input without independently moving the actor a second time.
+const clientOwnedState = createInitialGame(soloPlayers, 1_000, 60_000);
+const clientOwnedActor = clientOwnedState.snapshot.actors.solo;
+const clientOwnedStartX = clientOwnedActor.x;
+stepGame(clientOwnedState, input("right", 3), 1 / 60, 5_000, false);
+assert.equal(clientOwnedActor.x, clientOwnedStartX);
+assert.equal(clientOwnedActor.lastInputSeq, 3);
 
 // With identical inputs, client prediction and the authoritative fixed-step
 // simulation must follow the same route exactly.
@@ -167,9 +182,84 @@ delayedConfirmation.hostTime += 100;
 delayedConfirmation.actors.solo.x = 10.3;
 delayedConfirmation.actors.solo.lastInputSeq = 0;
 localPrediction = reconcileLocalPrediction(localPrediction, delayedConfirmation, "solo", "right", 1)!;
-assert.ok(localPrediction.actor.x < positionBeforeCorrection);
-assert.ok(localPrediction.actor.x > 10.45);
+assert.equal(localPrediction.actor.x, positionBeforeCorrection);
 assert.equal(applyLocalPrediction(delayedConfirmation, localPrediction).actors.solo.x, localPrediction.actor.x);
+
+// Even an unacknowledged input is bounded: a multi-tile disagreement is an
+// invalid local reality and must be corrected immediately.
+const heavilyDelayedConfirmation = structuredClone(delayedConfirmation);
+heavilyDelayedConfirmation.actors.solo.x = 6;
+const boundedDelayedPrediction = reconcileLocalPrediction(localPrediction, heavilyDelayedConfirmation, "solo", "right", 1)!;
+assert.equal(boundedDelayedPrediction.actor.x, heavilyDelayedConfirmation.actors.solo.x);
+
+// After acknowledgement, positions on the same corridor converge gradually.
+const acknowledgedConfirmation = structuredClone(delayedConfirmation);
+acknowledgedConfirmation.actors.solo.lastInputSeq = 1;
+localPrediction = reconcileLocalPrediction(localPrediction, acknowledgedConfirmation, "solo", "right", 1)!;
+assert.ok(localPrediction.actor.x < positionBeforeCorrection);
+assert.ok(localPrediction.actor.x > acknowledgedConfirmation.actors.solo.x);
+
+// Receiving an acknowledgement before the server reaches an intersection
+// must not snap a locally predicted turn back to the previous corridor.
+const acceptedTurnSnapshot = structuredClone(predictionSnapshot);
+acceptedTurnSnapshot.actors.solo.x = 15.7;
+acceptedTurnSnapshot.actors.solo.y = 2;
+acceptedTurnSnapshot.actors.solo.direction = "right";
+acceptedTurnSnapshot.actors.solo.wantedDirection = "down";
+acceptedTurnSnapshot.actors.solo.lastInputSeq = 2;
+const predictedTurn = {
+  roundId: acceptedTurnSnapshot.roundId,
+  actor: {
+    ...acceptedTurnSnapshot.actors.solo,
+    x: 16,
+    y: 2.4,
+    direction: "down" as const,
+    wantedDirection: "down" as const,
+  },
+};
+const preservedTurn = reconcileLocalPrediction(predictedTurn, acceptedTurnSnapshot, "solo", "down", 2)!;
+assert.equal(preservedTurn.actor.x, 16);
+assert.equal(preservedTurn.actor.y, 2.4);
+assert.equal(preservedTurn.actor.direction, "down");
+
+// Even an accepted direction cannot preserve an incorrect prediction beyond
+// the leash; this prevents a later multi-tile rollback.
+const runawayTurn = {
+  ...predictedTurn,
+  actor: { ...predictedTurn.actor, y: 4 },
+};
+const boundedTurn = reconcileLocalPrediction(runawayTurn, acceptedTurnSnapshot, "solo", "down", 2)!;
+assert.equal(boundedTurn.actor.x, acceptedTurnSnapshot.actors.solo.x);
+assert.equal(boundedTurn.actor.y, acceptedTurnSnapshot.actors.solo.y);
+
+// Routine snapshots update scores and state but never pull back a valid pose
+// owned by the client. Explicit correction messages handle invalid movement.
+const clientOwnedPrediction = reconcileClientOwnedPrediction(
+  predictedTurn,
+  acceptedTurnSnapshot,
+  "solo",
+  "down",
+)!;
+assert.equal(clientOwnedPrediction.actor.x, predictedTurn.actor.x);
+assert.equal(clientOwnedPrediction.actor.y, predictedTurn.actor.y);
+const clientOwnedDeath = structuredClone(acceptedTurnSnapshot);
+clientOwnedDeath.actors.solo.state = "dead";
+clientOwnedDeath.actors.solo.x = 12;
+const resetDeadPrediction = reconcileClientOwnedPrediction(predictedTurn, clientOwnedDeath, "solo", "down")!;
+assert.equal(resetDeadPrediction.actor.x, 12);
+assert.equal(resetDeadPrediction.actor.state, "dead");
+
+// Pellet locations are sent once; routine snapshots carry only removals.
+const fullNetworkSnapshot = createNetworkSnapshot(predictionSnapshot, null);
+const mergedFullSnapshot = mergeNetworkSnapshot(null, fullNetworkSnapshot);
+assert.deepEqual(mergedFullSnapshot.pellets, predictionSnapshot.pellets);
+const pelletUpdateSnapshot = structuredClone(predictionSnapshot);
+const removedPellet = pelletUpdateSnapshot.pellets.shift()!;
+const pelletDelta = createNetworkSnapshot(pelletUpdateSnapshot, predictionSnapshot);
+assert.equal(pelletDelta.pellets, undefined);
+assert.deepEqual(pelletDelta.removedPellets, [removedPellet]);
+const mergedPelletDelta = mergeNetworkSnapshot(mergedFullSnapshot, pelletDelta);
+assert.deepEqual(mergedPelletDelta.pellets, pelletUpdateSnapshot.pellets);
 
 const respawnConfirmation = structuredClone(delayedConfirmation);
 respawnConfirmation.actors.solo.x = 30;

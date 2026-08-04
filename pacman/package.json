@@ -1,25 +1,72 @@
 {
   "name": "maze-chase-party",
+  "productName": "Maze Chase Host",
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "test": "node --experimental-strip-types scripts/verify-engine.ts",
+    "dev": "concurrently -k -n SERVER,WEB -c cyan,magenta \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:web": "vite --host 0.0.0.0",
+    "dev:server": "tsx watch server/index.ts --dev",
+    "start": "node dist-server/server.js",
+    "start:desktop": "electron .",
+    "build": "npm run typecheck && npm run build:web && npm run build:server",
+    "build:web": "vite build",
+    "build:server": "esbuild server/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist-server/server.js",
+    "package:portable": "npm run build && electron-builder --win portable",
+    "package:installer": "npm run build && electron-builder --win nsis",
+    "package:windows": "npm run build && electron-builder --win portable nsis",
+    "test": "npm run test:engine && npm run test:server",
+    "test:engine": "node --experimental-strip-types scripts/verify-engine.ts",
+    "test:server": "npm run build:server && node scripts/verify-server.mjs",
     "test:unit": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "npm run typecheck:client && npm run typecheck:server",
+    "typecheck:client": "tsc --noEmit",
+    "typecheck:server": "tsc --noEmit -p tsconfig.server.json",
     "preview": "vite preview"
   },
   "dependencies": {
-    "firebase": "12.17.0",
+    "@colyseus/schema": "^4.0.30",
+    "@colyseus/sdk": "^0.17.43",
+    "@colyseus/core": "^0.17.46",
+    "@colyseus/ws-transport": "^0.17.13",
+    "express": "^5.1.0",
     "qrcode": "1.5.4"
   },
   "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.10.0",
     "@types/qrcode": "1.5.6",
+    "concurrently": "^9.2.1",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.25.11",
+    "tsx": "^4.20.6",
     "typescript": "5.9.3",
     "vite": "7.3.6",
     "vitest": "3.2.7"
+  },
+  "build": {
+    "appId": "hk.fwft.ict.mazechasehost",
+    "productName": "Maze Chase Host",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-server/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": ["portable", "nsis"],
+      "artifactName": "MazeChaseHost-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

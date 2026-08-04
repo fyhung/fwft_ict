@@ -1,8 +1,8 @@
 import type { Actor, GameSnapshot } from "./types.ts";
 
 const DEFAULT_BLEND_MS = 100;
-const MIN_BLEND_MS = 70;
-const MAX_BLEND_MS = 160;
+const MIN_BLEND_MS = 35;
+const MAX_BLEND_MS = 100;
 const TELEPORT_DISTANCE = 3;
 
 interface ActorPosition {
