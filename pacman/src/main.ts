@@ -1,6 +1,7 @@
 import { Client as ColyseusClient, type Room as ColyseusRoom } from "@colyseus/sdk";
 import QRCode from "qrcode";
 import "./styles.css";
+import { COSMETICS, cosmeticLabel } from "./cosmetics.ts";
 import { sampleSnapshot, updateInterpolation, type SnapshotInterpolation } from "./interpolation.ts";
 import { createMaze } from "./maze.ts";
 import { mergeNetworkSnapshot } from "./network.ts";
@@ -12,7 +13,8 @@ import {
   type LocalPrediction,
 } from "./prediction.ts";
 import { ROOM_TYPE, SERVER_PORT, type LobbySnapshot, type ServerMessages } from "./protocol.ts";
-import { renderGame, scoreboardRows } from "./render.ts";
+import { renderCharacterPreview, renderGame, scoreboardRows } from "./render.ts";
+import { mvpDetail, winningMvp } from "./stats.ts";
 import type { Direction, GameSnapshot, PlayerRecord } from "./types.ts";
 
 const appElement = document.querySelector<HTMLDivElement>("#app");
@@ -90,8 +92,8 @@ function playerCards(players: Record<string, PlayerRecord>) {
   return `<div class="player-grid">${entries.map(([, player]) => {
     const assignment = player.assignment?.role;
     return `<article class="player-card">
-      <span class="swatch" style="background:${colorValue(player.profile.colorId)}"></span>
-      <div><div class="player-name">${escapeHtml(player.profile.name)}</div><div class="player-meta">${player.presence.online ? "Online" : "Disconnected"} · ${player.lobby.ready ? "Ready" : "Not ready"}</div></div>
+      <canvas class="appearance-thumb" data-player-seat="${escapeHtml(player.seatId)}" aria-label="${escapeHtml(player.profile.name)} appearance"></canvas>
+      <div><div class="player-name">${escapeHtml(player.profile.name)}</div><div class="player-meta">${player.presence.online ? "Online" : "Disconnected"} · ${player.lobby.ready ? "Ready" : "Not ready"} · ${escapeHtml(cosmeticLabel(player.profile.cosmeticId))}</div></div>
       <span class="role ${assignment ?? ""}">${assignment ?? "—"}</span>
     </article>`;
   }).join("")}</div>`;
@@ -171,6 +173,7 @@ async function hostApp(room: GameRoom) {
       "ghost-score": snapshot.ghostScore.toLocaleString(),
       "game-time": formatTime(snapshot.roundEndsAt - snapshot.hostTime),
       "game-lives": String(snapshot.pacmanLives),
+      "game-dots": String(snapshot.pellets.length + snapshot.powerPellets.length),
     };
     Object.entries(values).forEach(([id, value]) => {
       const element = document.querySelector<HTMLElement>(`#${id}`);
@@ -180,15 +183,22 @@ async function hostApp(room: GameRoom) {
     const ghostList = document.querySelector<HTMLElement>("#ghost-list");
     if (pacList) pacList.innerHTML = scoreList(snapshot, "pacman");
     if (ghostList) ghostList.innerHTML = scoreList(snapshot, "ghost");
-    const overlay = document.querySelector<HTMLElement>("#result-overlay");
+    const overlay = document.querySelector<HTMLElement>("#result-panel");
     if (!overlay) return;
     const complete = snapshot.status === "results" && snapshot.winner !== null;
     overlay.hidden = !complete;
     if (complete) {
       const title = overlay.querySelector("h2");
-      const reason = overlay.querySelector("p");
+      const reason = overlay.querySelector<HTMLElement>("#result-reason");
+      const mvp = winningMvp(snapshot);
       if (title) title.textContent = snapshot.winner === "pacman" ? "Pac-Man team wins" : "Ghost team wins";
       if (reason) reason.textContent = snapshot.resultReason ?? "Round complete";
+      const mvpName = overlay.querySelector<HTMLElement>("#result-mvp-name");
+      const mvpStats = overlay.querySelector<HTMLElement>("#result-mvp-stats");
+      const mvpPreview = overlay.querySelector<HTMLCanvasElement>("#result-mvp-preview");
+      if (mvpName) mvpName.textContent = mvp?.name ?? "—";
+      if (mvpStats) mvpStats.textContent = mvpDetail(snapshot);
+      if (mvpPreview && mvp) renderCharacterPreview(mvpPreview, mvp.colorId, mvp.cosmeticId, mvp.role, 76);
     }
   }
 
@@ -199,6 +209,8 @@ async function hostApp(room: GameRoom) {
     const count = Object.keys(players).length;
     const maxPacmen = Math.max(1, count - 1);
     const pacmanCount = Math.max(1, Math.min(maxPacmen, lobby.pacmanCount));
+    const livesPerPacman = lobby.livesPerPacman;
+    const timeMinutes = Math.round(lobby.roundDurationMs / 60_000);
     const allReady = count >= 2 && Object.values(players).every((player) => player.presence.online && player.lobby.ready);
     const assignedPacmen = Object.values(players).filter((player) => player.assignment?.role === "pacman").length;
     const assigned = count >= 2 && Object.values(players).every((player) => player.assignment);
@@ -217,11 +229,19 @@ async function hostApp(room: GameRoom) {
           <button id="pac-plus" aria-label="More Pac-Man">+</button>
         </div></div>
         <p class="muted">The chosen number becomes Pac-Man; every remaining player becomes a Ghost.</p>
+        <div class="round-settings">
+          <div class="setting-card"><label>Lives per Pac-Man</label><div class="mini-counter"><button id="lives-minus" aria-label="Fewer lives">−</button><strong>${livesPerPacman}</strong><button id="lives-plus" aria-label="More lives">+</button></div><small>${pacmanCount * livesPerPacman} team lives</small></div>
+          <div class="setting-card"><label>Time limit</label><div class="mini-counter"><button id="time-minus" aria-label="Shorter game">−</button><strong>${timeMinutes}</strong><button id="time-plus" aria-label="Longer game">+</button></div><small>minutes</small></div>
+        </div>
         <div class="actions"><button class="button secondary" id="randomize" ${count < 2 ? "disabled" : ""}>Randomize roles</button><button class="button yellow" id="start" ${canStart ? "" : "disabled"}>Start game</button></div>
         <p class="muted">${count < 2 ? "At least two players are required." : !allReady ? "Waiting for every player to be ready." : !assigned || assignedPacmen !== pacmanCount ? "Randomize roles after choosing the Pac-Man count." : "Ready to start."}</p>
         <p class="error" id="server-error"></p>
       </aside><section class="panel"><div class="topbar" style="margin-bottom:14px"><div><div class="eyebrow">Players</div><h2>${count} / ${lobby.maxPlayers}</h2></div><span class="status-pill">Pac-Man ${assignedPacmen} · Ghost ${count - assignedPacmen}</span></div>${playerCards(players)}</section></section>
     </main>`;
+    document.querySelectorAll<HTMLCanvasElement>("[data-player-seat]").forEach((canvas) => {
+      const player = Object.values(players).find(({ seatId }) => seatId === canvas.dataset.playerSeat);
+      if (player) renderCharacterPreview(canvas, player.profile.colorId, player.profile.cosmeticId, player.assignment?.role ?? "pacman", 64);
+    });
     document.querySelector<HTMLButtonElement>("#copy-link")?.addEventListener("click", async (event) => {
       await navigator.clipboard.writeText(playerJoinUrl);
       (event.currentTarget as HTMLButtonElement).textContent = "Copied";
@@ -231,6 +251,14 @@ async function hostApp(room: GameRoom) {
     document.querySelector<HTMLButtonElement>("#pac-minus")?.addEventListener("click", () => setCount(pacmanCount - 1));
     document.querySelector<HTMLButtonElement>("#pac-plus")?.addEventListener("click", () => setCount(pacmanCount + 1));
     document.querySelector<HTMLInputElement>("#pac-count")?.addEventListener("change", (event) => setCount(Number((event.currentTarget as HTMLInputElement).value)));
+    const setSettings = (lives: number, minutes: number) => room.send("settings", {
+      livesPerPacman: Math.max(1, Math.min(9, lives)),
+      roundDurationMs: Math.max(1, Math.min(15, minutes)) * 60_000,
+    });
+    document.querySelector<HTMLButtonElement>("#lives-minus")?.addEventListener("click", () => setSettings(livesPerPacman - 1, timeMinutes));
+    document.querySelector<HTMLButtonElement>("#lives-plus")?.addEventListener("click", () => setSettings(livesPerPacman + 1, timeMinutes));
+    document.querySelector<HTMLButtonElement>("#time-minus")?.addEventListener("click", () => setSettings(livesPerPacman, timeMinutes - 1));
+    document.querySelector<HTMLButtonElement>("#time-plus")?.addEventListener("click", () => setSettings(livesPerPacman, timeMinutes + 1));
     document.querySelector<HTMLButtonElement>("#randomize")?.addEventListener("click", () => room.send("randomize"));
     document.querySelector<HTMLButtonElement>("#start")?.addEventListener("click", () => room.send("start"));
   }
@@ -239,10 +267,10 @@ async function hostApp(room: GameRoom) {
     screen = "game";
     app.innerHTML = `<main class="shell">${header()}
       <section class="game-layout"><div class="panel game-stage"><canvas class="game-canvas" id="game-canvas" aria-label="Shared maze arena"></canvas>
-        <div class="overlay" id="result-overlay" hidden><div><div class="eyebrow">Round complete</div><h2></h2><p class="muted"></p><div class="actions" style="justify-content:center"><button class="button yellow" id="replay">Play again</button><button class="button secondary" id="reroll">Randomize & play again</button></div></div></div>
       </div><aside class="game-hud">
+        <div class="panel host-result" id="result-panel" hidden><div class="eyebrow">Round complete</div><h2></h2><p class="muted" id="result-reason"></p><div class="mvp-card"><div class="mvp-crown">★ Winning team MVP</div><div class="mvp-player"><canvas class="mvp-appearance" id="result-mvp-preview" aria-label="MVP appearance"></canvas><div><strong id="result-mvp-name">—</strong><small id="result-mvp-stats"></small></div></div></div><div class="result-actions"><button class="button yellow" id="replay">Play again</button><button class="button secondary" id="reroll">Randomize teams</button></div></div>
         <div class="panel score-pair"><div class="score"><span>Pac-Man</span><strong id="pac-score">0</strong></div><div class="score"><span>Ghosts</span><strong id="ghost-score">0</strong></div></div>
-        <div class="panel score-pair"><div class="score"><span>Time</span><strong id="game-time">5:00</strong></div><div class="score"><span>Lives</span><strong id="game-lives">0</strong></div></div>
+        <div class="panel score-triple"><div class="score"><span>Time</span><strong id="game-time">5:00</strong></div><div class="score"><span>Team lives</span><strong id="game-lives">0</strong></div><div class="score"><span>Dots left</span><strong id="game-dots">0</strong></div></div>
         <div class="panel"><h3>Pac-Man team</h3><div class="score-list" id="pac-list"></div></div><div class="panel"><h3>Ghost team</h3><div class="score-list" id="ghost-list"></div></div>
       </aside></section></main>`;
     document.querySelector<HTMLButtonElement>("#replay")?.addEventListener("click", () => room.send("reset", { keepTeams: true }));
@@ -292,6 +320,8 @@ async function playerApp(code: string) {
   let lobbyState: LobbySnapshot | null = null;
   let selectedColor = "c08";
   let joinError = "";
+  let styleError = "";
+  let reselectingColor = false;
   let screen = "none";
   let latestSnapshot: GameSnapshot | null = null;
   let interpolation: SnapshotInterpolation | null = null;
@@ -344,13 +374,58 @@ async function playerApp(code: string) {
 
   function renderPlayerLobby(lobby: LobbySnapshot, player: PlayerRecord) {
     screen = "lobby";
+    if (reselectingColor) {
+      const claims = new Set(Object.entries(lobby.players).filter(([playerUid]) => playerUid !== uid).map(([, other]) => other.profile.colorId));
+      const previewCosmetic = player.profile.cosmeticId;
+      app.innerHTML = `<main class="shell">${header()}
+        <section class="join-layout"><div class="panel join-card customization-card"><div class="eyebrow">Room ${escapeHtml(lobby.code)}</div><h2>Reselect your color</h2>
+          <div class="character-preview"><canvas id="character-preview" aria-label="Character preview"></canvas><strong>${escapeHtml(player.profile.name)}</strong></div>
+          <div class="field"><label>Unique player color</label><div class="palette">${PALETTE.map((color) => `<button type="button" class="color-button ${selectedColor === color.id ? "selected" : ""}" data-reselect-color="${color.id}" style="background:${color.hex}" aria-label="${color.label}" ${claims.has(color.id) ? "disabled" : ""}></button>`).join("")}</div></div>
+          ${styleError ? `<p class="error" role="alert">${escapeHtml(styleError)}</p>` : ""}
+          <div class="actions"><button class="button secondary" id="cancel-color">Back to cosmetics</button><button class="button yellow" id="save-color">Save color</button></div>
+        </div></section></main>`;
+      const preview = document.querySelector<HTMLCanvasElement>("#character-preview");
+      if (preview) renderCharacterPreview(preview, selectedColor, previewCosmetic, player.assignment?.role ?? "pacman");
+      document.querySelectorAll<HTMLButtonElement>("[data-reselect-color]").forEach((button) => button.addEventListener("click", () => {
+        selectedColor = button.dataset.reselectColor ?? selectedColor;
+        document.querySelectorAll(".color-button").forEach((item) => item.classList.remove("selected"));
+        button.classList.add("selected");
+        if (preview) renderCharacterPreview(preview, selectedColor, previewCosmetic, player.assignment?.role ?? "pacman");
+      }));
+      document.querySelector<HTMLButtonElement>("#cancel-color")?.addEventListener("click", () => {
+        selectedColor = player.profile.colorId;
+        reselectingColor = false;
+        styleError = "";
+        renderPlayerLobby(lobby, player);
+      });
+      document.querySelector<HTMLButtonElement>("#save-color")?.addEventListener("click", (event) => {
+        room.send("style", { colorId: selectedColor });
+        (event.currentTarget as HTMLButtonElement).disabled = true;
+      });
+      return;
+    }
+    const cosmeticId = player.profile.cosmeticId;
+    const previewCosmetic = cosmeticId;
     app.innerHTML = `<main class="shell">${header()}
-      <section class="join-layout"><div class="panel join-card"><div class="eyebrow">Room ${escapeHtml(lobby.code)} · ${Object.keys(lobby.players).length} players</div>
+      <section class="join-layout"><div class="panel join-card customization-card"><div class="eyebrow">Room ${escapeHtml(lobby.code)} · ${Object.keys(lobby.players).length} players</div>
         <h2>${player.assignment ? `You are ${player.assignment.role === "pacman" ? "Pac-Man" : "a Ghost"}` : "Waiting for roles"}</h2>
-        <div class="player-card" style="margin:18px 0"><span class="swatch" style="background:${colorValue(player.profile.colorId)}"></span><div><div class="player-name">${escapeHtml(player.profile.name)}</div><div class="player-meta">All players enter the same maze</div></div><span class="role ${player.assignment?.role ?? ""}">${player.assignment?.role ?? "—"}</span></div>
-        <button class="button ${player.lobby.ready ? "secondary" : "yellow"}" id="ready">${player.lobby.ready ? "Not ready" : "Ready"}</button>
-        <p class="muted">The host chooses how many players are Pac-Man. Everyone else becomes a Ghost.</p>
+        <div class="character-preview"><canvas id="character-preview" aria-label="Character preview"></canvas><strong>${escapeHtml(player.profile.name)}</strong><span>${escapeHtml(cosmeticLabel(cosmeticId))}</span></div>
+        <div class="field"><label>Choose one cosmetic</label><div class="cosmetic-grid">${COSMETICS.map((cosmetic) => `<button type="button" class="cosmetic-button ${cosmeticId === cosmetic.id ? "selected" : ""}" data-cosmetic="${cosmetic.id}" aria-label="${cosmetic.label}"><span>${cosmetic.symbol}</span><small>${cosmetic.label}</small></button>`).join("")}</div></div>
+        ${styleError ? `<p class="error" role="alert">${escapeHtml(styleError)}</p>` : ""}
+        <div class="actions customization-actions"><button class="button secondary" id="reselect-color">Reselect color</button><button class="button ${player.lobby.ready ? "secondary" : "yellow"}" id="ready" ${cosmeticId ? "" : "disabled"}>${player.lobby.ready ? "Not ready" : "Ready"}</button></div>
+        <p class="muted">${lobby.livesPerPacman} lives per Pac-Man · ${formatTime(lobby.roundDurationMs)} time limit</p>
       </div></section></main>`;
+    const preview = document.querySelector<HTMLCanvasElement>("#character-preview");
+    if (preview) renderCharacterPreview(preview, player.profile.colorId, previewCosmetic, player.assignment?.role ?? "pacman");
+    document.querySelectorAll<HTMLButtonElement>("[data-cosmetic]").forEach((button) => button.addEventListener("click", () => {
+      room.send("style", { cosmeticId: button.dataset.cosmetic });
+    }));
+    document.querySelector<HTMLButtonElement>("#reselect-color")?.addEventListener("click", () => {
+      selectedColor = player.profile.colorId;
+      reselectingColor = true;
+      styleError = "";
+      renderPlayerLobby(lobby, player);
+    });
     document.querySelector<HTMLButtonElement>("#ready")?.addEventListener("click", () => room.send("ready", !player.lobby.ready));
   }
 
@@ -361,7 +436,8 @@ async function playerApp(code: string) {
       "my-score": actor.score.toLocaleString(),
       "team-score": (actor.role === "pacman" ? snapshot.pacmanScore : snapshot.ghostScore).toLocaleString(),
       "mobile-time": formatTime(snapshot.roundEndsAt - snapshot.hostTime),
-      "mobile-lives": actor.role === "pacman" ? String(snapshot.pacmanLives) : String(actor.kills),
+      "mobile-lives": String(snapshot.pacmanLives),
+      "mobile-dots": String(snapshot.pellets.length + snapshot.powerPellets.length),
     };
     Object.entries(values).forEach(([id, value]) => {
       const element = document.querySelector<HTMLElement>(`#${id}`);
@@ -376,6 +452,13 @@ async function playerApp(code: string) {
       if (heading) heading.textContent = snapshot.winner === actor.role ? "Your team wins" : `${snapshot.winner === "ghost" ? "Ghost" : "Pac-Man"} team wins`;
       const reason = overlay.querySelector<HTMLElement>("#mobile-result-reason");
       if (reason) reason.textContent = snapshot.resultReason ?? "Round complete";
+      const mvp = winningMvp(snapshot);
+      const mvpName = overlay.querySelector<HTMLElement>("#mobile-mvp-name");
+      const mvpStats = overlay.querySelector<HTMLElement>("#mobile-mvp-stats");
+      const mvpPreview = overlay.querySelector<HTMLCanvasElement>("#mobile-mvp-preview");
+      if (mvpName) mvpName.textContent = mvp?.name ?? "—";
+      if (mvpStats) mvpStats.textContent = mvpDetail(snapshot);
+      if (mvpPreview && mvp) renderCharacterPreview(mvpPreview, mvp.colorId, mvp.cosmeticId, mvp.role, 76);
     }
   }
 
@@ -384,8 +467,8 @@ async function playerApp(code: string) {
     const actor = snapshot.actors[uid];
     if (!actor) return;
     app.innerHTML = `<main class="player-game">
-      <div class="mobile-hud"><div class="mobile-stat">You<strong id="my-score">0</strong></div><div class="mobile-stat">Team<strong id="team-score">0</strong></div><div class="mobile-stat">Time<strong id="mobile-time">5:00</strong></div><div class="mobile-stat">${actor.role === "pacman" ? "Lives" : "Kills"}<strong id="mobile-lives">0</strong></div><div class="mobile-stat">Ping<strong id="network-ping">—</strong></div></div>
-      <div class="game-stage"><canvas class="game-canvas" id="player-canvas" aria-label="Your centered maze view"></canvas><div class="overlay" id="mobile-result" hidden><div><div class="eyebrow">Round complete</div><h2></h2><p class="muted" id="mobile-result-reason"></p><p class="muted">Look at the host screen for the full scoreboard.</p></div></div></div>
+      <div class="mobile-hud"><div class="mobile-stat">You<strong id="my-score">0</strong></div><div class="mobile-stat">Team<strong id="team-score">0</strong></div><div class="mobile-stat">Time<strong id="mobile-time">5:00</strong></div><div class="mobile-stat">Lives<strong id="mobile-lives">0</strong></div><div class="mobile-stat">Dots<strong id="mobile-dots">0</strong></div><div class="mobile-stat">Ping<strong id="network-ping">—</strong></div></div>
+      <div class="game-stage"><canvas class="game-canvas" id="player-canvas" aria-label="Your centered maze view"></canvas><div class="overlay" id="mobile-result" hidden><div class="result-card"><div class="eyebrow">Round complete</div><h2></h2><p class="muted" id="mobile-result-reason"></p><div class="mvp-card"><div class="mvp-crown">★ Winning team MVP</div><div class="mvp-player"><canvas class="mvp-appearance" id="mobile-mvp-preview" aria-label="MVP appearance"></canvas><div><strong id="mobile-mvp-name">—</strong><small id="mobile-mvp-stats"></small></div></div></div><p class="muted">Look at the host screen for the full scoreboard.</p></div></div></div>
       <div class="dpad" aria-label="Movement controls"><button data-direction="up" aria-label="Move up">▲</button><button data-direction="left" aria-label="Move left">◀</button><button data-direction="down" aria-label="Move down">▼</button><button data-direction="right" aria-label="Move right">▶</button></div>
     </main>`;
     document.querySelectorAll<HTMLButtonElement>("[data-direction]").forEach((button) => button.addEventListener("pointerdown", () => sendDirection(button.dataset.direction as Direction)));
@@ -431,6 +514,16 @@ async function playerApp(code: string) {
       joinError = result.reason ?? "Could not join the room.";
       if (lobbyState) renderJoin(lobbyState);
     }
+  });
+  room.onMessage<ServerMessages["styleResult"]>("styleResult", (result) => {
+    if (result.ok) {
+      styleError = "";
+      reselectingColor = false;
+      return;
+    }
+    styleError = result.reason ?? "Could not update your character.";
+    const player = lobbyState?.players[uid];
+    if (lobbyState && player) renderPlayerLobby(lobbyState, player);
   });
   room.onMessage<ServerMessages["lobby"]>("lobby", (lobby) => {
     lobbyState = lobby;

@@ -10,12 +10,24 @@ export interface LobbySnapshot {
   roundId: number;
   maxPlayers: number;
   pacmanCount: number;
+  livesPerPacman: number;
+  roundDurationMs: number;
   players: Record<string, PlayerRecord>;
+}
+
+export interface RoundSettingsMessage {
+  livesPerPacman: number;
+  roundDurationMs: number;
 }
 
 export interface JoinMessage {
   name: string;
   colorId: string;
+}
+
+export interface PlayerStyleMessage {
+  colorId?: string;
+  cosmeticId?: string;
 }
 
 export interface DirectionMessage {
@@ -53,6 +65,7 @@ export type ServerMessages = {
   lobby: LobbySnapshot;
   snapshot: NetworkSnapshot;
   joinResult: { ok: boolean; reason?: string };
+  styleResult: { ok: boolean; reason?: string };
   error: { message: string };
   closed: { message: string };
   pong: PingMessage;

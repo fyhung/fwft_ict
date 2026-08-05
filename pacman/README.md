@@ -97,13 +97,21 @@ At each stage, test Pac-Man eating a power pellet and a Ghost, a Ghost catching 
 ## Implemented game rules
 
 - One shared maze for all players; Ghost spawn slots are four tiles above Pac-Man slots.
-- The host chooses the Pac-Man count; all remaining players become Ghosts. Odd totals are supported.
+- The host chooses the Pac-Man count, lives per Pac-Man, and round time limit; all remaining players become Ghosts. Odd totals are supported.
+- Every player claims a unique color from 64 varied choices, including bright hues, whites, greys, and dark tones.
+- After joining, each player chooses one of ten synchronized cosmetics and can return to reselect an available color.
+- The host lobby shows every player's complete appearance and assigned Pac-Man or Ghost form.
 - Small pellet: 10 Pac-Man points.
 - Power pellet: 50 Pac-Man points and six seconds of frightened Ghosts.
 - Frightened Ghost chain: 200, 400, 800, then 1,600 points.
 - Ghost capture: 500 Ghost points.
-- Pac-Man team lives: three per Pac-Man player.
-- Pac-Man wins by clearing the maze; Ghosts win by exhausting lives or the five-minute timer.
+- Pac-Man team lives are configurable from one to nine per Pac-Man player (default: three).
+- Round time is configurable from one to fifteen minutes (default: five).
+- The live dashboard shows dots remaining and total Pac-Man team lives.
+- Pac-Man wins by clearing the maze; Ghosts win by exhausting lives or the timer.
+- The result screen names the winning team and its highest-scoring MVP, with role-specific tie-breakers.
+- The MVP card displays the winning player's color, role, and cosmetic appearance.
+- On the host screen, results appear beside the frozen final maze so the ending positions and remaining dots stay visible.
 
 ## Important limits
 

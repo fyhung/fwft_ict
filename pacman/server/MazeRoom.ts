@@ -3,7 +3,8 @@ import { Room, type Client } from "@colyseus/core";
 import { canActorOccupy, createInitialGame, stepGame, type EngineState } from "../src/engine.ts";
 import { MAZE_WIDTH, TUNNEL_ROW } from "../src/maze.ts";
 import { createNetworkSnapshot } from "../src/network.ts";
-import { MAX_PLAYERS, type DirectionMessage, type JoinMessage, type LobbySnapshot, type PingMessage, type PositionMessage, type ResetMessage } from "../src/protocol.ts";
+import { COSMETIC_IDS, type CosmeticId } from "../src/cosmetics.ts";
+import { MAX_PLAYERS, type DirectionMessage, type JoinMessage, type LobbySnapshot, type PingMessage, type PlayerStyleMessage, type PositionMessage, type ResetMessage, type RoundSettingsMessage } from "../src/protocol.ts";
 import type { Direction, GameSnapshot, InputState, PlayerRecord } from "../src/types.ts";
 
 const ROOM_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -34,6 +35,8 @@ export class MazeRoom extends Room {
   private status: LobbySnapshot["status"] = "lobby";
   private roundId = 0;
   private pacmanCount = 1;
+  private livesPerPacman = 3;
+  private roundDurationMs = 5 * 60_000;
   private players: Record<string, PlayerRecord> = {};
   private inputs: Record<string, InputState> = {};
   private engine: EngineState | null = null;
@@ -48,10 +51,12 @@ export class MazeRoom extends Room {
 
     this.onMessage("sync", (client) => this.sendCurrentState(client));
     this.onMessage<JoinMessage>("join", (client, message) => this.joinPlayer(client, message));
+    this.onMessage<PlayerStyleMessage>("style", (client, message) => this.setPlayerStyle(client, message));
     this.onMessage<boolean>("ready", (client, ready) => this.setReady(client, ready));
     this.onMessage<DirectionMessage>("direction", (client, message) => this.setDirection(client, message));
     this.onMessage<PositionMessage>("position", (client, message) => this.setPosition(client, message));
     this.onMessage<number>("pacmanCount", (client, count) => this.setPacmanCount(client, count));
+    this.onMessage<RoundSettingsMessage>("settings", (client, settings) => this.setRoundSettings(client, settings));
     this.onMessage("randomize", (client) => this.randomizeRoles(client));
     this.onMessage("start", (client) => this.startRound(client));
     this.onMessage<ResetMessage>("reset", (client, message) => this.resetRound(client, Boolean(message?.keepTeams)));
@@ -99,6 +104,8 @@ export class MazeRoom extends Room {
       roundId: this.roundId,
       maxPlayers: MAX_PLAYERS,
       pacmanCount: this.pacmanCount,
+      livesPerPacman: this.livesPerPacman,
+      roundDurationMs: this.roundDurationMs,
       players: structuredClone(this.players),
     };
   }
@@ -135,7 +142,7 @@ export class MazeRoom extends Room {
     if (!seatId) return client.send("joinResult", { ok: false, reason: "The room is full." });
     this.players[client.sessionId] = {
       seatId,
-      profile: { name, colorId },
+      profile: { name, colorId, cosmeticId: "" },
       presence: { online: true, lastSeenAt: Date.now() },
       lobby: { ready: false, joinedAt: Date.now() },
     };
@@ -143,9 +150,35 @@ export class MazeRoom extends Room {
     this.broadcastLobby();
   }
 
+  private setPlayerStyle(client: Client, message: PlayerStyleMessage) {
+    const player = this.players[client.sessionId];
+    if (!player || this.status !== "lobby") return;
+    if (message.colorId !== undefined) {
+      if (!/^c(?:0\d|[1-5]\d|6[0-3])$/.test(message.colorId)) {
+        return client.send("styleResult", { ok: false, reason: "Choose a valid color." });
+      }
+      if (Object.entries(this.players).some(([uid, other]) => uid !== client.sessionId && other.profile.colorId === message.colorId)) {
+        return client.send("styleResult", { ok: false, reason: "That color was just taken." });
+      }
+      player.profile.colorId = message.colorId;
+    }
+    if (message.cosmeticId !== undefined) {
+      if (!COSMETIC_IDS.has(message.cosmeticId)) {
+        return client.send("styleResult", { ok: false, reason: "Choose a valid cosmetic." });
+      }
+      player.profile.cosmeticId = message.cosmeticId as CosmeticId;
+    }
+    player.lobby.ready = false;
+    client.send("styleResult", { ok: true });
+    this.broadcastLobby();
+  }
+
   private setReady(client: Client, ready: boolean) {
     const player = this.players[client.sessionId];
     if (!player || this.status !== "lobby") return;
+    if (ready && !COSMETIC_IDS.has(player.profile.cosmeticId)) {
+      return client.send("styleResult", { ok: false, reason: "Choose a cosmetic before getting ready." });
+    }
     player.lobby.ready = Boolean(ready);
     this.broadcastLobby();
   }
@@ -214,6 +247,18 @@ export class MazeRoom extends Room {
     this.broadcastLobby();
   }
 
+  private setRoundSettings(client: Client, settings: RoundSettingsMessage) {
+    if (!this.isHost(client) || this.status !== "lobby") return;
+    if (Number.isFinite(settings?.livesPerPacman)) {
+      this.livesPerPacman = Math.max(1, Math.min(9, Math.round(settings.livesPerPacman)));
+    }
+    if (Number.isFinite(settings?.roundDurationMs)) {
+      const wholeMinutes = Math.round(settings.roundDurationMs / 60_000);
+      this.roundDurationMs = Math.max(1, Math.min(15, wholeMinutes)) * 60_000;
+    }
+    this.broadcastLobby();
+  }
+
   private randomizeRoles(client: Client) {
     if (!this.isHost(client) || this.status !== "lobby") return;
     const uids = shuffled(Object.keys(this.players));
@@ -237,7 +282,13 @@ export class MazeRoom extends Room {
       players.every((player) => player.presence.online && player.lobby.ready && player.assignment) &&
       assignedPacmen === this.pacmanCount;
     if (!canStart) return client.send("error", { message: "Every player must be online, ready, and assigned before starting." });
-    this.engine = createInitialGame(this.players, Date.now(), 5 * 60_000, this.roundId);
+    this.engine = createInitialGame(
+      this.players,
+      Date.now(),
+      this.roundDurationMs,
+      this.roundId,
+      this.livesPerPacman,
+    );
     this.inputs = {};
     this.accumulator = 0;
     this.lastBroadcastPellets = null;

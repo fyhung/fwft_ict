@@ -1,3 +1,5 @@
+import type { CosmeticId } from "./cosmetics.ts";
+
 export type Direction = "up" | "down" | "left" | "right" | "none";
 export type Role = "pacman" | "ghost";
 export type RoomStatus = "lobby" | "countdown" | "playing" | "paused" | "results" | "closed";
@@ -8,6 +10,7 @@ export interface PlayerRecord {
   profile: {
     name: string;
     colorId: string;
+    cosmeticId: CosmeticId | "";
   };
   presence: {
     online: boolean;
@@ -45,6 +48,7 @@ export interface Actor {
   uid: string;
   name: string;
   colorId: string;
+  cosmeticId: CosmeticId;
   role: Role;
   x: number;
   y: number;

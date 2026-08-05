@@ -1,4 +1,5 @@
 import { createMaze, isWall, MAZE_WIDTH, tileKey, TUNNEL_ROW, type Maze } from "./maze.ts";
+import { COSMETIC_IDS, type CosmeticId } from "./cosmetics.ts";
 import type { Actor, Direction, GameSnapshot, InputState, PlayerRecord } from "./types.ts";
 
 const BASE_SPEED = 6.25;
@@ -30,6 +31,7 @@ export function createInitialGame(
   now = Date.now(),
   roundDurationMs = DEFAULT_ROUND_DURATION_MS,
   roundId = 0,
+  livesPerPacman = 3,
 ): EngineState {
   const maze = createMaze();
   const actors: Record<string, Actor> = {};
@@ -46,6 +48,7 @@ export function createInitialGame(
       uid,
       name: player.profile.name,
       colorId: player.profile.colorId,
+      cosmeticId: (COSMETIC_IDS.has(player.profile.cosmeticId) ? player.profile.cosmeticId : "party-hat") as CosmeticId,
       role,
       x: spawn.x,
       y: spawn.y,
@@ -68,6 +71,9 @@ export function createInitialGame(
   const safeRoundDuration = Number.isFinite(roundDurationMs) && roundDurationMs >= 30_000
     ? roundDurationMs
     : DEFAULT_ROUND_DURATION_MS;
+  const safeLivesPerPacman = Number.isFinite(livesPerPacman)
+    ? Math.max(1, Math.min(9, Math.round(livesPerPacman)))
+    : 3;
   return {
     maze,
     snapshot: {
@@ -81,7 +87,7 @@ export function createInitialGame(
       powerPellets: [...maze.powerPellets],
       frightenedUntil: 0,
       ghostChain: 0,
-      pacmanLives: Math.max(1, pacmanCount * 3),
+      pacmanLives: Math.max(1, pacmanCount * safeLivesPerPacman),
       pacmanScore: 0,
       ghostScore: 0,
       winner: null,

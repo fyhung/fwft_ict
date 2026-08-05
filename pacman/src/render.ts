@@ -1,12 +1,13 @@
-import { colorValue } from "./palette.ts";
+import { colorValue, contrastValue } from "./palette.ts";
+import type { CosmeticId } from "./cosmetics.ts";
 import type { Maze } from "./maze.ts";
 import type { Actor, GameSnapshot } from "./types.ts";
 
-function angleFor(actor: Actor): number {
+function angleFor(actor: Pick<Actor, "direction">): number {
   return { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2, none: 0 }[actor.direction];
 }
 
-function drawPacman(context: CanvasRenderingContext2D, actor: Actor, x: number, y: number, radius: number) {
+function drawPacman(context: CanvasRenderingContext2D, actor: Pick<Actor, "direction" | "colorId">, x: number, y: number, radius: number) {
   const angle = angleFor(actor);
   const mouth = 0.28 * Math.PI;
   context.fillStyle = colorValue(actor.colorId);
@@ -15,9 +16,12 @@ function drawPacman(context: CanvasRenderingContext2D, actor: Actor, x: number, 
   context.arc(x, y, radius, angle + mouth, angle + Math.PI * 2 - mouth);
   context.closePath();
   context.fill();
+  context.strokeStyle = contrastValue(actor.colorId);
+  context.lineWidth = Math.max(1, radius * 0.12);
+  context.stroke();
 }
 
-function drawGhost(context: CanvasRenderingContext2D, actor: Actor, x: number, y: number, radius: number) {
+function drawGhost(context: CanvasRenderingContext2D, actor: Pick<Actor, "state" | "colorId">, x: number, y: number, radius: number) {
   context.fillStyle = actor.state === "frightened" ? "#526dff" : colorValue(actor.colorId);
   context.beginPath();
   context.arc(x, y, radius, Math.PI, 0);
@@ -28,12 +32,118 @@ function drawGhost(context: CanvasRenderingContext2D, actor: Actor, x: number, y
   context.lineTo(x - radius, y + radius);
   context.closePath();
   context.fill();
+  context.strokeStyle = contrastValue(actor.colorId);
+  context.lineWidth = Math.max(1, radius * 0.12);
+  context.stroke();
 
   context.fillStyle = "white";
   context.beginPath();
   context.arc(x - radius * 0.34, y - radius * 0.1, radius * 0.22, 0, Math.PI * 2);
   context.arc(x + radius * 0.34, y - radius * 0.1, radius * 0.22, 0, Math.PI * 2);
   context.fill();
+  context.fillStyle = "#172033";
+  context.beginPath();
+  context.arc(x - radius * 0.34, y - radius * 0.08, radius * 0.09, 0, Math.PI * 2);
+  context.arc(x + radius * 0.34, y - radius * 0.08, radius * 0.09, 0, Math.PI * 2);
+  context.fill();
+}
+
+function drawCosmetic(context: CanvasRenderingContext2D, cosmeticId: CosmeticId, x: number, y: number, radius: number) {
+  const top = y - radius * 0.92;
+  context.save();
+  context.lineJoin = "round";
+  context.lineCap = "round";
+  context.lineWidth = Math.max(1, radius * 0.1);
+  context.strokeStyle = "#101425";
+
+  if (cosmeticId === "party-hat") {
+    context.fillStyle = "#ff4d9d";
+    context.beginPath();
+    context.moveTo(x, top - radius * 0.95);
+    context.lineTo(x - radius * 0.62, top + radius * 0.12);
+    context.lineTo(x + radius * 0.62, top + radius * 0.12);
+    context.closePath(); context.fill(); context.stroke();
+    context.fillStyle = "#f8d94e";
+    context.beginPath(); context.arc(x, top - radius, radius * 0.18, 0, Math.PI * 2); context.fill();
+  } else if (cosmeticId === "crown") {
+    context.fillStyle = "#ffd84d";
+    context.beginPath();
+    context.moveTo(x - radius * 0.7, top + radius * 0.08);
+    context.lineTo(x - radius * 0.62, top - radius * 0.62);
+    context.lineTo(x - radius * 0.2, top - radius * 0.25);
+    context.lineTo(x, top - radius * 0.78);
+    context.lineTo(x + radius * 0.2, top - radius * 0.25);
+    context.lineTo(x + radius * 0.62, top - radius * 0.62);
+    context.lineTo(x + radius * 0.7, top + radius * 0.08);
+    context.closePath(); context.fill(); context.stroke();
+  } else if (cosmeticId === "top-hat") {
+    context.fillStyle = "#252b43";
+    context.fillRect(x - radius * 0.48, top - radius * 0.78, radius * 0.96, radius * 0.78);
+    context.strokeRect(x - radius * 0.48, top - radius * 0.78, radius * 0.96, radius * 0.78);
+    context.fillStyle = "#ff4f72";
+    context.fillRect(x - radius * 0.48, top - radius * 0.2, radius * 0.96, radius * 0.2);
+    context.fillStyle = "#252b43";
+    context.fillRect(x - radius * 0.75, top - radius * 0.08, radius * 1.5, radius * 0.22);
+  } else if (cosmeticId === "cap") {
+    context.fillStyle = "#58a6ff";
+    context.beginPath(); context.arc(x, top, radius * 0.66, Math.PI, 0); context.lineTo(x - radius * 0.66, top); context.fill(); context.stroke();
+    context.beginPath(); context.ellipse(x + radius * 0.55, top + radius * 0.02, radius * 0.48, radius * 0.13, 0, 0, Math.PI * 2); context.fill(); context.stroke();
+  } else if (cosmeticId === "beanie") {
+    context.fillStyle = "#a96cff";
+    context.beginPath(); context.arc(x, top, radius * 0.64, Math.PI, 0); context.lineTo(x - radius * 0.64, top); context.fill(); context.stroke();
+    context.fillRect(x - radius * 0.68, top - radius * 0.08, radius * 1.36, radius * 0.28);
+    context.beginPath(); context.arc(x, top - radius * 0.7, radius * 0.2, 0, Math.PI * 2); context.fill(); context.stroke();
+  } else if (cosmeticId === "cowboy") {
+    context.fillStyle = "#b97836";
+    context.beginPath(); context.ellipse(x, top + radius * 0.04, radius * 0.88, radius * 0.2, 0, 0, Math.PI * 2); context.fill(); context.stroke();
+    context.beginPath(); context.moveTo(x - radius * 0.48, top); context.quadraticCurveTo(x - radius * 0.42, top - radius * 0.78, x, top - radius * 0.58); context.quadraticCurveTo(x + radius * 0.42, top - radius * 0.78, x + radius * 0.48, top); context.closePath(); context.fill(); context.stroke();
+  } else if (cosmeticId === "halo") {
+    context.strokeStyle = "#ffe66b";
+    context.lineWidth = Math.max(2, radius * 0.14);
+    context.beginPath(); context.ellipse(x, top - radius * 0.48, radius * 0.72, radius * 0.22, 0, 0, Math.PI * 2); context.stroke();
+  } else if (cosmeticId === "antenna") {
+    context.strokeStyle = "#7ef9ff";
+    context.lineWidth = Math.max(2, radius * 0.11);
+    context.beginPath(); context.moveTo(x, top); context.lineTo(x - radius * 0.15, top - radius * 0.72); context.stroke();
+    context.fillStyle = "#ff5da2";
+    context.beginPath(); context.arc(x - radius * 0.15, top - radius * 0.84, radius * 0.19, 0, Math.PI * 2); context.fill(); context.stroke();
+  } else if (cosmeticId === "cat-ears") {
+    context.fillStyle = "#ff9fbd";
+    context.beginPath(); context.moveTo(x - radius * 0.68, top + radius * 0.1); context.lineTo(x - radius * 0.48, top - radius * 0.72); context.lineTo(x - radius * 0.05, top); context.closePath(); context.fill(); context.stroke();
+    context.beginPath(); context.moveTo(x + radius * 0.68, top + radius * 0.1); context.lineTo(x + radius * 0.48, top - radius * 0.72); context.lineTo(x + radius * 0.05, top); context.closePath(); context.fill(); context.stroke();
+  } else if (cosmeticId === "bow") {
+    context.fillStyle = "#ff5577";
+    context.beginPath(); context.moveTo(x, top - radius * 0.08); context.quadraticCurveTo(x - radius * 0.85, top - radius * 0.65, x - radius * 0.66, top + radius * 0.2); context.lineTo(x, top); context.quadraticCurveTo(x + radius * 0.85, top - radius * 0.65, x + radius * 0.66, top + radius * 0.2); context.closePath(); context.fill(); context.stroke();
+    context.beginPath(); context.arc(x, top - radius * 0.02, radius * 0.18, 0, Math.PI * 2); context.fill(); context.stroke();
+  }
+  context.restore();
+}
+
+export function renderCharacterPreview(
+  canvas: HTMLCanvasElement,
+  colorId: string,
+  cosmeticId: CosmeticId | "",
+  role: "pacman" | "ghost" = "pacman",
+  size = 190,
+) {
+  const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = size * pixelRatio;
+  canvas.height = size * pixelRatio;
+  const context = canvas.getContext("2d");
+  if (!context) return;
+  context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  const center = size / 2;
+  const characterY = size * 0.61;
+  const radius = size * 0.253;
+  const gradient = context.createRadialGradient(center, center, size * 0.03, center, center, size * 0.53);
+  gradient.addColorStop(0, "#172044");
+  gradient.addColorStop(1, "#080b1c");
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, size, size);
+  const actor = { colorId, direction: "right" as const, state: "normal" as const };
+  if (role === "ghost") drawGhost(context, actor, center, characterY, radius);
+  else drawPacman(context, actor, center, characterY, radius);
+  if (cosmeticId) drawCosmetic(context, cosmeticId, center, characterY, radius);
 }
 
 export function renderGame(canvas: HTMLCanvasElement, snapshot: GameSnapshot, maze: Maze, localUid?: string) {
@@ -94,16 +204,20 @@ export function renderGame(canvas: HTMLCanvasElement, snapshot: GameSnapshot, ma
     context.fill();
   });
 
-  Object.values(snapshot.actors).forEach((actor) => {
-    if (actor.state === "dead") return;
+  Object.values(snapshot.actors)
+    .sort((first, second) => Number(first.state === "dead") - Number(second.state === "dead"))
+    .forEach((actor) => {
+    if (actor.state === "dead" && snapshot.status !== "results") return;
     const x = offsetX + (actor.x + 0.5) * tileSize;
     const y = offsetY + (actor.y + 0.5) * tileSize;
     const radius = tileSize * 0.36;
     context.save();
     if (actor.state === "invulnerable" && Math.floor(snapshot.hostTime / 150) % 2 === 0) context.globalAlpha = 0.4;
     if (actor.state === "eaten") context.globalAlpha = 0.28;
+    if (actor.state === "dead") context.globalAlpha = 0.62;
     if (actor.role === "pacman") drawPacman(context, actor, x, y, radius);
     else drawGhost(context, actor, x, y, radius);
+    drawCosmetic(context, actor.cosmeticId, x, y, radius);
     if (actor.uid === localUid) {
       context.strokeStyle = "white";
       context.lineWidth = Math.max(2, tileSize * 0.07);
@@ -122,7 +236,7 @@ export function renderGame(canvas: HTMLCanvasElement, snapshot: GameSnapshot, ma
       context.fillText(actor.name, x, y - radius - 3);
     }
     context.restore();
-  });
+    });
 }
 
 export function scoreboardRows(snapshot: GameSnapshot, role: "pacman" | "ghost") {

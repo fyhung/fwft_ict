@@ -5,7 +5,7 @@ import type { PlayerRecord, Role } from "./types.ts";
 function player(index: number, role: Role): PlayerRecord {
   return {
     seatId: `s0${index}`,
-    profile: { name: `Player ${index}`, colorId: `c0${index}` },
+    profile: { name: `Player ${index}`, colorId: `c0${index}`, cosmeticId: "party-hat" },
     presence: { online: true, lastSeenAt: 0 },
     lobby: { ready: true, joinedAt: 0 },
     assignment: { role, spawnId: `${role[0]}${index}` },

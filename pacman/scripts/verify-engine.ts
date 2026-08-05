@@ -3,12 +3,14 @@ import { createInitialGame, predictActorMovement, stepGame } from "../src/engine
 import { sampleSnapshot, updateInterpolation } from "../src/interpolation.ts";
 import { createMaze } from "../src/maze.ts";
 import { createNetworkSnapshot, mergeNetworkSnapshot } from "../src/network.ts";
+import { PALETTE } from "../src/palette.ts";
 import {
   advanceLocalPrediction,
   applyLocalPrediction,
   reconcileClientOwnedPrediction,
   reconcileLocalPrediction,
 } from "../src/prediction.ts";
+import { mvpDetail, winningMvp } from "../src/stats.ts";
 import type { Direction, InputState, PlayerRecord, Role } from "../src/types.ts";
 
 const maze = createMaze();
@@ -26,7 +28,7 @@ maze.pacmanSpawns.forEach((pacman, index) => {
 function player(index: number, role: Role): PlayerRecord {
   return {
     seatId: `s${String(index).padStart(2, "0")}`,
-    profile: { name: `Player ${index + 1}`, colorId: `c${String(index).padStart(2, "0")}` },
+    profile: { name: `Player ${index + 1}`, colorId: `c${String(index).padStart(2, "0")}`, cosmeticId: "party-hat" },
     presence: { online: true, lastSeenAt: 0 },
     lobby: { ready: true, joinedAt: 0 },
     assignment: { role, spawnId: `${role[0]}${index}` },
@@ -41,6 +43,38 @@ assert.equal(actors.length, 13);
 assert.equal(actors.filter(({ role }) => role === "pacman").length, 5);
 assert.equal(actors.filter(({ role }) => role === "ghost").length, 8);
 assert.equal(state.snapshot.pacmanLives, 15);
+
+const customRules = createInitialGame(oddPlayers, 1_000, 120_000, 7, 5);
+assert.equal(customRules.snapshot.roundId, 7);
+assert.equal(customRules.snapshot.pacmanLives, 25);
+assert.equal(customRules.snapshot.roundEndsAt, 121_000);
+const clampedLives = createInitialGame(oddPlayers, 1_000, 60_000, 1, 20);
+assert.equal(clampedLives.snapshot.pacmanLives, 45);
+
+assert.equal(PALETTE.length, 64);
+assert.equal(new Set(PALETTE.map(({ id }) => id)).size, 64);
+assert.equal(new Set(PALETTE.map(({ hex }) => hex)).size, 64);
+assert.ok(PALETTE.some(({ label }) => label.includes("white")));
+assert.ok(PALETTE.some(({ label }) => label.includes("grey")));
+assert.ok(PALETTE.some(({ label }) => label.startsWith("Night")));
+assert.ok(Object.values(customRules.snapshot.actors).every(({ cosmeticId }) => cosmeticId === "party-hat"));
+
+const mvpSnapshot = structuredClone(customRules.snapshot);
+mvpSnapshot.winner = "pacman";
+const pacmanMvpCandidates = Object.values(mvpSnapshot.actors).filter(({ role }) => role === "pacman");
+pacmanMvpCandidates[0].score = 500;
+pacmanMvpCandidates[0].ghostsEaten = 1;
+pacmanMvpCandidates[1].score = 500;
+pacmanMvpCandidates[1].ghostsEaten = 2;
+assert.equal(winningMvp(mvpSnapshot)?.id, pacmanMvpCandidates[1].id);
+assert.match(mvpDetail(mvpSnapshot), /500 points/);
+mvpSnapshot.winner = "ghost";
+const ghostMvpCandidates = Object.values(mvpSnapshot.actors).filter(({ role }) => role === "ghost");
+ghostMvpCandidates[0].score = 700;
+ghostMvpCandidates[0].kills = 1;
+ghostMvpCandidates[1].score = 700;
+ghostMvpCandidates[1].kills = 2;
+assert.equal(winningMvp(mvpSnapshot)?.id, ghostMvpCandidates[1].id);
 stepGame(state, {}, 1 / 60, 1_017);
 assert.equal(state.snapshot.status, "playing");
 assert.equal(state.snapshot.pacmanLives, 15);
