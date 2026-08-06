@@ -1,7 +1,7 @@
 import { colorValue, contrastValue } from "./palette.ts";
 import type { CosmeticId } from "./cosmetics.ts";
 import type { Maze } from "./maze.ts";
-import type { Actor, GameSnapshot } from "./types.ts";
+import type { Actor, BonusFruit, GameSnapshot } from "./types.ts";
 
 function angleFor(actor: Pick<Actor, "direction">): number {
   return { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2, none: 0 }[actor.direction];
@@ -46,6 +46,48 @@ function drawGhost(context: CanvasRenderingContext2D, actor: Pick<Actor, "state"
   context.arc(x - radius * 0.34, y - radius * 0.08, radius * 0.09, 0, Math.PI * 2);
   context.arc(x + radius * 0.34, y - radius * 0.08, radius * 0.09, 0, Math.PI * 2);
   context.fill();
+}
+
+function drawBonusFruit(context: CanvasRenderingContext2D, fruit: BonusFruit, x: number, y: number, radius: number) {
+  context.save();
+  context.lineCap = "round";
+  context.lineJoin = "round";
+  context.strokeStyle = "#4fd36b";
+  context.lineWidth = Math.max(1.5, radius * 0.16);
+  context.beginPath();
+  context.moveTo(x, y - radius * 0.15);
+  context.quadraticCurveTo(x + radius * 0.16, y - radius * 0.85, x + radius * 0.62, y - radius * 0.82);
+  context.stroke();
+  context.fillStyle = "#58dc71";
+  context.beginPath();
+  context.ellipse(x + radius * 0.7, y - radius * 0.82, radius * 0.35, radius * 0.18, -0.35, 0, Math.PI * 2);
+  context.fill();
+
+  context.fillStyle = fruit.kind === "cherry" ? "#ff304f" : "#ff3d65";
+  context.strokeStyle = "#720c28";
+  context.lineWidth = Math.max(1, radius * 0.08);
+  if (fruit.kind === "cherry") {
+    context.beginPath();
+    context.arc(x - radius * 0.3, y + radius * 0.2, radius * 0.42, 0, Math.PI * 2);
+    context.arc(x + radius * 0.3, y + radius * 0.2, radius * 0.42, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+  } else {
+    context.beginPath();
+    context.moveTo(x, y + radius * 0.65);
+    context.bezierCurveTo(x - radius, y, x - radius * 0.62, y - radius * 0.55, x, y - radius * 0.42);
+    context.bezierCurveTo(x + radius * 0.62, y - radius * 0.55, x + radius, y, x, y + radius * 0.65);
+    context.closePath();
+    context.fill();
+    context.stroke();
+    context.fillStyle = "#ffd95b";
+    for (const [dx, dy] of [[-0.3, -0.08], [0.28, -0.12], [-0.18, 0.25], [0.2, 0.28]] as const) {
+      context.beginPath();
+      context.arc(x + radius * dx, y + radius * dy, Math.max(1, radius * 0.06), 0, Math.PI * 2);
+      context.fill();
+    }
+  }
+  context.restore();
 }
 
 function drawCosmetic(context: CanvasRenderingContext2D, cosmeticId: CosmeticId, x: number, y: number, radius: number) {
@@ -203,6 +245,18 @@ export function renderGame(canvas: HTMLCanvasElement, snapshot: GameSnapshot, ma
     context.arc(offsetX + (x + 0.5) * tileSize, offsetY + (y + 0.5) * tileSize, Math.max(2.5, tileSize * 0.2), 0, Math.PI * 2);
     context.fill();
   });
+  if (snapshot.fruit) {
+    const fruitX = offsetX + (snapshot.fruit.x + 0.5) * tileSize;
+    const fruitY = offsetY + (snapshot.fruit.y + 0.5) * tileSize;
+    drawBonusFruit(context, snapshot.fruit, fruitX, fruitY, tileSize * 0.38);
+    if (tileSize >= 24) {
+      context.font = `800 ${Math.max(9, tileSize * 0.26)}px system-ui`;
+      context.textAlign = "center";
+      context.textBaseline = "top";
+      context.fillStyle = "#ffd95b";
+      context.fillText(String(snapshot.fruit.value), fruitX, fruitY + tileSize * 0.42);
+    }
+  }
 
   Object.values(snapshot.actors)
     .sort((first, second) => Number(first.state === "dead") - Number(second.state === "dead"))

@@ -1,4 +1,5 @@
 export const COSMETICS = [
+  { id: "none", label: "None", symbol: "—" },
   { id: "party-hat", label: "Party hat", symbol: "△" },
   { id: "crown", label: "Crown", symbol: "♛" },
   { id: "top-hat", label: "Top hat", symbol: "▰" },

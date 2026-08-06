@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { createInitialGame, predictActorMovement, stepGame } from "../src/engine.ts";
+import { COSMETIC_IDS } from "../src/cosmetics.ts";
+import { createInitialGame, drainGameEvents, predictActorMovement, stepGame } from "../src/engine.ts";
 import { sampleSnapshot, updateInterpolation } from "../src/interpolation.ts";
 import { createMaze } from "../src/maze.ts";
 import { createNetworkSnapshot, mergeNetworkSnapshot } from "../src/network.ts";
@@ -58,6 +59,47 @@ assert.ok(PALETTE.some(({ label }) => label.includes("white")));
 assert.ok(PALETTE.some(({ label }) => label.includes("grey")));
 assert.ok(PALETTE.some(({ label }) => label.startsWith("Night")));
 assert.ok(Object.values(customRules.snapshot.actors).every(({ cosmeticId }) => cosmeticId === "party-hat"));
+assert.ok(COSMETIC_IDS.has("none"));
+
+const eventState = createInitialGame({ solo: player(0, "pacman") }, 1_000, 60_000, 9);
+assert.deepEqual(drainGameEvents(eventState).map(({ type }) => type), ["round-start"]);
+const eventPacman = eventState.snapshot.actors.solo;
+eventState.snapshot.pellets = eventState.snapshot.pellets.slice(70).filter((key) => key !== "20,15");
+eventState.snapshot.powerPellets = eventState.snapshot.powerPellets.filter((key) => key !== "20,15");
+stepGame(eventState, {}, 1 / 60, 2_000, false);
+assert.equal(eventState.snapshot.fruit?.kind, "cherry");
+assert.equal(eventState.snapshot.fruit?.value, 100);
+eventPacman.x = 20;
+eventPacman.y = 15;
+const scoreBeforeFruit = eventPacman.score;
+stepGame(eventState, {}, 1 / 60, 2_017, false);
+assert.equal(eventPacman.score - scoreBeforeFruit, 100);
+assert.equal(eventPacman.fruitsEaten, 1);
+assert.equal(eventState.snapshot.fruit, null);
+assert.ok(drainGameEvents(eventState).some(({ type, actorId, value }) =>
+  type === "fruit-eaten" && actorId === "solo" && value === 100,
+));
+eventPacman.x = eventPacman.spawnX;
+eventPacman.y = eventPacman.spawnY;
+eventState.snapshot.pellets = eventState.snapshot.pellets.slice(100);
+stepGame(eventState, {}, 1 / 60, 3_000, false);
+assert.equal(eventState.snapshot.fruit?.kind, "strawberry");
+assert.equal(eventState.snapshot.fruit?.value, 300);
+stepGame(eventState, {}, 1 / 60, 13_001, false);
+assert.equal(eventState.snapshot.fruit, null);
+
+const extraLifeState = createInitialGame({ solo: player(0, "pacman") }, 1_000, 60_000);
+drainGameEvents(extraLifeState);
+const extraLifeActor = extraLifeState.snapshot.actors.solo;
+const [lifePelletX, lifePelletY] = extraLifeState.snapshot.pellets[0].split(",").map(Number);
+extraLifeActor.x = lifePelletX;
+extraLifeActor.y = lifePelletY;
+extraLifeState.snapshot.pacmanScore = 9_990;
+const livesBeforeBonus = extraLifeState.snapshot.pacmanLives;
+stepGame(extraLifeState, {}, 1 / 60, 2_000, false);
+assert.equal(extraLifeState.snapshot.pacmanLives, livesBeforeBonus + 1);
+assert.equal(extraLifeState.snapshot.extraLifeAwarded, true);
+assert.ok(drainGameEvents(extraLifeState).some(({ type }) => type === "extra-life"));
 
 const mvpSnapshot = structuredClone(customRules.snapshot);
 mvpSnapshot.winner = "pacman";

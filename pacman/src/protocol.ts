@@ -1,4 +1,4 @@
-import type { Direction, GameSnapshot, PlayerRecord, RoomStatus } from "./types.ts";
+import type { Direction, GameEvent, GameSnapshot, PlayerRecord, Role, RoomStatus } from "./types.ts";
 
 export const ROOM_TYPE = "maze_chase";
 export const SERVER_PORT = 2567;
@@ -28,6 +28,11 @@ export interface JoinMessage {
 export interface PlayerStyleMessage {
   colorId?: string;
   cosmeticId?: string;
+}
+
+export interface AssignRoleMessage {
+  playerId: string;
+  role: Role;
 }
 
 export interface DirectionMessage {
@@ -64,6 +69,7 @@ export type NetworkSnapshot = Omit<GameSnapshot, "pellets" | "powerPellets"> & {
 export type ServerMessages = {
   lobby: LobbySnapshot;
   snapshot: NetworkSnapshot;
+  gameEvent: GameEvent;
   joinResult: { ok: boolean; reason?: string };
   styleResult: { ok: boolean; reason?: string };
   error: { message: string };

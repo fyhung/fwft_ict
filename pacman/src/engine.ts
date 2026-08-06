@@ -1,6 +1,6 @@
 import { createMaze, isWall, MAZE_WIDTH, tileKey, TUNNEL_ROW, type Maze } from "./maze.ts";
 import { COSMETIC_IDS, type CosmeticId } from "./cosmetics.ts";
-import type { Actor, Direction, GameSnapshot, InputState, PlayerRecord } from "./types.ts";
+import type { Actor, Direction, GameEvent, GameEventType, GameSnapshot, InputState, PlayerRecord } from "./types.ts";
 
 const BASE_SPEED = 6.25;
 const PACMAN_SPEED = BASE_SPEED * 0.8;
@@ -12,6 +12,12 @@ const START_COLLISION_GRACE_MS = 3_000;
 const DEFAULT_ROUND_DURATION_MS = 5 * 60_000;
 const PLAYER_RADIUS = 0.31;
 const TURN_WINDOW = 0.16;
+const FRUIT_DURATION_MS = 10_000;
+const FRUIT_DOT_THRESHOLDS = [70, 170] as const;
+const FRUIT_REWARDS = [100, 300] as const;
+const EXTRA_LIFE_SCORE = 10_000;
+const FRUIT_X = 20;
+const FRUIT_Y = 15;
 
 const vectors: Record<Direction, { x: number; y: number }> = {
   up: { x: 0, y: -1 },
@@ -24,6 +30,27 @@ const vectors: Record<Direction, { x: number; y: number }> = {
 export interface EngineState {
   maze: Maze;
   snapshot: GameSnapshot;
+  events: GameEvent[];
+  nextEventId: number;
+}
+
+function emitEvent(
+  state: EngineState,
+  type: GameEventType,
+  at: number,
+  details: Pick<GameEvent, "actorId" | "targetId" | "value"> = {},
+) {
+  state.events.push({
+    id: state.nextEventId++,
+    roundId: state.snapshot.roundId,
+    type,
+    at,
+    ...details,
+  });
+}
+
+export function drainGameEvents(state: EngineState): GameEvent[] {
+  return state.events.splice(0);
 }
 
 export function createInitialGame(
@@ -63,6 +90,7 @@ export function createInitialGame(
       score: 0,
       kills: 0,
       ghostsEaten: 0,
+      fruitsEaten: 0,
       pellets: 0,
     };
   });
@@ -74,7 +102,7 @@ export function createInitialGame(
   const safeLivesPerPacman = Number.isFinite(livesPerPacman)
     ? Math.max(1, Math.min(9, Math.round(livesPerPacman)))
     : 3;
-  return {
+  const state: EngineState = {
     maze,
     snapshot: {
       roundId,
@@ -85,16 +113,23 @@ export function createInitialGame(
       actors,
       pellets: [...maze.pellets],
       powerPellets: [...maze.powerPellets],
+      fruit: null,
+      fruitWave: 0,
       frightenedUntil: 0,
       ghostChain: 0,
       pacmanLives: Math.max(1, pacmanCount * safeLivesPerPacman),
       pacmanScore: 0,
       ghostScore: 0,
+      extraLifeAwarded: false,
       winner: null,
       resultReason: null,
       roundEndsAt: now + safeRoundDuration,
     },
+    events: [],
+    nextEventId: 1,
   };
+  emitEvent(state, "round-start", now);
+  return state;
 }
 
 export function canActorOccupy(maze: Maze, x: number, y: number): boolean {
@@ -197,7 +232,8 @@ export function predictActorMovement(
   }
 }
 
-function finish(snapshot: GameSnapshot, winner: "pacman" | "ghost", reason: string) {
+function finish(state: EngineState, winner: "pacman" | "ghost", reason: string, now: number) {
+  const { snapshot } = state;
   snapshot.status = "results";
   snapshot.winner = winner;
   snapshot.resultReason = reason;
@@ -205,6 +241,7 @@ function finish(snapshot: GameSnapshot, winner: "pacman" | "ghost", reason: stri
     actor.direction = "none";
     actor.wantedDirection = "none";
   });
+  emitEvent(state, "round-end", now);
 }
 
 export function stepGame(
@@ -257,10 +294,12 @@ export function stepGame(
         actor.score += 10;
         actor.pellets += 1;
         snapshot.pacmanScore += 10;
+        emitEvent(state, "pellet", now, { actorId: actor.uid, value: 10 });
       }
       if (powerSet.delete(key)) {
         actor.score += 50;
         snapshot.pacmanScore += 50;
+        emitEvent(state, "power-pellet", now, { actorId: actor.uid, value: 50 });
         snapshot.frightenedUntil = now + FRIGHTENED_MS;
         snapshot.ghostChain = 0;
         Object.values(snapshot.actors).forEach((ghost) => {
@@ -270,6 +309,37 @@ export function stepGame(
     });
   snapshot.pellets = [...pelletSet];
   snapshot.powerPellets = [...powerSet];
+
+  if (snapshot.fruit && now >= snapshot.fruit.expiresAt) snapshot.fruit = null;
+  const totalDots = maze.pellets.length + maze.powerPellets.length;
+  const remainingDots = snapshot.pellets.length + snapshot.powerPellets.length;
+  const dotsEaten = totalDots - remainingDots;
+  if (!snapshot.fruit && snapshot.fruitWave < FRUIT_DOT_THRESHOLDS.length && dotsEaten >= FRUIT_DOT_THRESHOLDS[snapshot.fruitWave]) {
+    const wave = snapshot.fruitWave;
+    snapshot.fruit = {
+      id: wave + 1,
+      kind: wave === 0 ? "cherry" : "strawberry",
+      x: FRUIT_X,
+      y: FRUIT_Y,
+      value: FRUIT_REWARDS[wave],
+      expiresAt: now + FRUIT_DURATION_MS,
+    };
+    snapshot.fruitWave += 1;
+  }
+  if (snapshot.fruit) {
+    const fruit = snapshot.fruit;
+    const collector = Object.values(snapshot.actors)
+      .filter((actor) => actor.role === "pacman" && actor.state !== "dead")
+      .sort((a, b) => a.uid.localeCompare(b.uid))
+      .find((actor) => (actor.x - fruit.x) ** 2 + (actor.y - fruit.y) ** 2 <= 0.28);
+    if (collector) {
+      collector.score += fruit.value;
+      collector.fruitsEaten += 1;
+      snapshot.pacmanScore += fruit.value;
+      emitEvent(state, "fruit-eaten", now, { actorId: collector.uid, value: fruit.value });
+      snapshot.fruit = null;
+    }
+  }
 
   if (now - snapshot.roundStartedAt >= START_COLLISION_GRACE_MS) {
     const pacmen = Object.values(snapshot.actors).filter((actor) => actor.role === "pacman" && actor.state !== "dead");
@@ -287,6 +357,7 @@ export function stepGame(
           ghost.state = "eaten";
           ghost.respawnAt = now + 1_500;
           ghost.direction = "none";
+          emitEvent(state, "ghost-eaten", now, { actorId: pacman.uid, targetId: ghost.uid, value: award });
         } else if (ghost.state === "normal") {
           ghost.score += 500;
           ghost.kills += 1;
@@ -295,14 +366,21 @@ export function stepGame(
           pacman.state = "dead";
           pacman.respawnAt = now + 2_000;
           pacman.direction = "none";
+          emitEvent(state, "pacman-death", now, { actorId: pacman.uid, targetId: ghost.uid, value: 500 });
           break;
         }
       }
     }
   }
 
-  if (snapshot.pacmanLives <= 0) finish(snapshot, "ghost", "Pac-Man lives depleted");
-  else if (snapshot.pellets.length === 0 && snapshot.powerPellets.length === 0) finish(snapshot, "pacman", "Maze cleared");
-  else if (now >= snapshot.roundEndsAt) finish(snapshot, "ghost", "Time expired");
+  if (!snapshot.extraLifeAwarded && snapshot.pacmanScore >= EXTRA_LIFE_SCORE) {
+    snapshot.extraLifeAwarded = true;
+    snapshot.pacmanLives += 1;
+    emitEvent(state, "extra-life", now, { value: 1 });
+  }
+
+  if (snapshot.pacmanLives <= 0) finish(state, "ghost", "Pac-Man lives depleted", now);
+  else if (snapshot.pellets.length === 0 && snapshot.powerPellets.length === 0) finish(state, "pacman", "Maze cleared", now);
+  else if (now >= snapshot.roundEndsAt) finish(state, "ghost", "Time expired", now);
   return snapshot;
 }

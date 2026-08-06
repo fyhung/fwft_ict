@@ -8,7 +8,7 @@ export function winningMvp(snapshot: GameSnapshot) {
       second.score - first.score ||
       (snapshot.winner === "ghost"
         ? second.kills - first.kills
-        : second.ghostsEaten - first.ghostsEaten || second.pellets - first.pellets) ||
+        : second.ghostsEaten - first.ghostsEaten || second.fruitsEaten - first.fruitsEaten || second.pellets - first.pellets) ||
       first.name.localeCompare(second.name),
     )[0] ?? null;
 }
@@ -18,5 +18,5 @@ export function mvpDetail(snapshot: GameSnapshot) {
   if (!mvp) return "";
   return mvp.role === "ghost"
     ? `${mvp.score.toLocaleString()} points · ${mvp.kills} capture${mvp.kills === 1 ? "" : "s"}`
-    : `${mvp.score.toLocaleString()} points · ${mvp.pellets} dots · ${mvp.ghostsEaten} Ghost${mvp.ghostsEaten === 1 ? "" : "s"} eaten`;
+    : `${mvp.score.toLocaleString()} points · ${mvp.pellets} dots · ${mvp.fruitsEaten} fruit · ${mvp.ghostsEaten} Ghost${mvp.ghostsEaten === 1 ? "" : "s"} eaten`;
 }

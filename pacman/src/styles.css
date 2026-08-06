@@ -30,9 +30,12 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 .shell { width: min(1440px, 100%); min-height: 100dvh; margin: 0 auto; padding: 24px; }
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
 .brand { display: flex; align-items: center; gap: 12px; }
+.brand-copy { min-width: 0; }
 .brand-mark { width: 44px; aspect-ratio: 1; border-radius: 50%; background: var(--yellow); box-shadow: 0 0 32px rgba(248, 217, 78, 0.38); position: relative; }
 .brand-mark::after { content: ""; position: absolute; right: -2px; top: 10px; border: 12px solid transparent; border-right-color: #090b16; }
 .brand h1 { margin: 0; font-size: clamp(1.2rem, 3vw, 1.7rem); letter-spacing: -0.035em; }
+.brand-credit { margin-top: 2px; max-width: 78ch; color: var(--muted); font-size: clamp(.62rem, 1.2vw, .75rem); line-height: 1.25; }
+.version { margin-left: 5px; color: var(--muted); font-size: .56em; font-weight: 700; letter-spacing: .02em; vertical-align: middle; }
 .eyebrow { color: var(--yellow); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 800; }
 .status-pill { border: 1px solid var(--line); color: var(--muted); border-radius: 999px; padding: 8px 12px; font-size: 0.82rem; }
 .status-pill.online { color: #74f0b0; border-color: rgba(116, 240, 176, 0.4); }
@@ -41,6 +44,7 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 .hero-card { width: min(680px, 100%); padding: clamp(28px, 7vw, 64px); border: 1px solid var(--line); border-radius: 28px; background: linear-gradient(145deg, rgba(24, 30, 63, 0.95), rgba(10, 13, 30, 0.94)); box-shadow: 0 30px 80px rgba(0,0,0,.35); }
 .hero-card h2 { font-size: clamp(2.2rem, 8vw, 5.4rem); line-height: .92; letter-spacing: -.07em; margin: 12px 0 20px; }
 .hero-card p { color: var(--muted); font-size: 1.05rem; line-height: 1.65; max-width: 52ch; margin: 0 auto 28px; }
+.hero-card .project-credit { margin-top: -12px; font-size: .8rem; line-height: 1.45; }
 
 .button { min-height: 46px; border: 0; border-radius: 14px; padding: 0 18px; background: var(--blue); color: white; font-weight: 800; box-shadow: 0 8px 24px rgba(88, 118, 255, .25); }
 .button.secondary { background: #222947; box-shadow: none; border: 1px solid var(--line); }
@@ -74,6 +78,10 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 .player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 9px; max-height: 56vh; overflow: auto; }
 .player-card { min-width: 0; display: grid; grid-template-columns: 58px 1fr auto; gap: 10px; align-items: center; background: #0b0e21; border: 1px solid var(--line); border-radius: 13px; padding: 8px; }
 .appearance-thumb { width: 58px; height: 58px; display: block; border: 1px solid var(--line); border-radius: 12px; }
+.role-picker { display: grid; grid-template-columns: repeat(2, 30px); gap: 4px; }
+.role-picker button { width: 30px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 9px; background: #151a34; color: var(--muted); font-size: .7rem; font-weight: 900; }
+.role-picker button.selected.pacman { border-color: var(--yellow); background: rgba(248, 217, 78, .18); color: var(--yellow); }
+.role-picker button.selected.ghost { border-color: #8fa3ff; background: rgba(88, 118, 255, .2); color: #b9c4ff; }
 .swatch { width: 13px; height: 34px; border-radius: 999px; }
 .player-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 750; }
 .player-meta { color: var(--muted); font-size: .74rem; }

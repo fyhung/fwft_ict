@@ -1,11 +1,11 @@
 import { randomBytes } from "node:crypto";
 import { Room, type Client } from "@colyseus/core";
-import { canActorOccupy, createInitialGame, stepGame, type EngineState } from "../src/engine.ts";
+import { canActorOccupy, createInitialGame, drainGameEvents, stepGame, type EngineState } from "../src/engine.ts";
 import { MAZE_WIDTH, TUNNEL_ROW } from "../src/maze.ts";
 import { createNetworkSnapshot } from "../src/network.ts";
 import { COSMETIC_IDS, type CosmeticId } from "../src/cosmetics.ts";
-import { MAX_PLAYERS, type DirectionMessage, type JoinMessage, type LobbySnapshot, type PingMessage, type PlayerStyleMessage, type PositionMessage, type ResetMessage, type RoundSettingsMessage } from "../src/protocol.ts";
-import type { Direction, GameSnapshot, InputState, PlayerRecord } from "../src/types.ts";
+import { MAX_PLAYERS, type AssignRoleMessage, type DirectionMessage, type JoinMessage, type LobbySnapshot, type PingMessage, type PlayerStyleMessage, type PositionMessage, type ResetMessage, type RoundSettingsMessage } from "../src/protocol.ts";
+import type { Direction, GameEvent, GameSnapshot, InputState, PlayerRecord } from "../src/types.ts";
 
 const ROOM_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const VALID_DIRECTIONS = new Set<Direction>(["up", "down", "left", "right", "none"]);
@@ -56,6 +56,7 @@ export class MazeRoom extends Room {
     this.onMessage<DirectionMessage>("direction", (client, message) => this.setDirection(client, message));
     this.onMessage<PositionMessage>("position", (client, message) => this.setPosition(client, message));
     this.onMessage<number>("pacmanCount", (client, count) => this.setPacmanCount(client, count));
+    this.onMessage<AssignRoleMessage>("assignRole", (client, message) => this.assignRole(client, message));
     this.onMessage<RoundSettingsMessage>("settings", (client, settings) => this.setRoundSettings(client, settings));
     this.onMessage("randomize", (client) => this.randomizeRoles(client));
     this.onMessage("start", (client) => this.startRound(client));
@@ -117,6 +118,20 @@ export class MazeRoom extends Room {
 
   private broadcastLobby() {
     this.broadcast("lobby", this.lobbySnapshot());
+  }
+
+  private flushGameEvents() {
+    if (!this.engine) return;
+    for (const event of drainGameEvents(this.engine)) {
+      const global = event.type === "round-start" || event.type === "round-end" || event.type === "extra-life";
+      const recipients = new Set<string>([this.hostSessionId]);
+      if (global) this.clients.forEach((client) => recipients.add(client.sessionId));
+      if (event.actorId) recipients.add(event.actorId);
+      if (event.targetId) recipients.add(event.targetId);
+      this.clients.forEach((client) => {
+        if (recipients.has(client.sessionId)) client.send("gameEvent", event satisfies GameEvent);
+      });
+    }
   }
 
   private joinPlayer(client: Client, message: JoinMessage) {
@@ -259,6 +274,27 @@ export class MazeRoom extends Room {
     this.broadcastLobby();
   }
 
+  private assignRole(client: Client, message: AssignRoleMessage) {
+    if (!this.isHost(client) || this.status !== "lobby") return;
+    if (!message || (message.role !== "pacman" && message.role !== "ghost")) return;
+    const player = this.players[message.playerId];
+    if (!player) return;
+    player.assignment = { role: message.role, spawnId: "" };
+
+    let pacmanIndex = 0;
+    let ghostIndex = 0;
+    Object.values(this.players)
+      .sort((first, second) => first.seatId.localeCompare(second.seatId))
+      .forEach((assignedPlayer) => {
+        if (!assignedPlayer.assignment) return;
+        const roleIndex = assignedPlayer.assignment.role === "pacman" ? pacmanIndex++ : ghostIndex++;
+        assignedPlayer.assignment.spawnId = `${assignedPlayer.assignment.role === "pacman" ? "p" : "g"}${String(roleIndex).padStart(2, "0")}`;
+      });
+    const playerCount = Object.keys(this.players).length;
+    this.pacmanCount = Math.max(1, Math.min(Math.max(1, playerCount - 1), pacmanIndex));
+    this.broadcastLobby();
+  }
+
   private randomizeRoles(client: Client) {
     if (!this.isHost(client) || this.status !== "lobby") return;
     const uids = shuffled(Object.keys(this.players));
@@ -296,6 +332,7 @@ export class MazeRoom extends Room {
     this.status = "playing";
     this.broadcastLobby();
     this.broadcastGame(true);
+    this.flushGameEvents();
   }
 
   private resetRound(client: Client, keepTeams: boolean) {
@@ -325,6 +362,7 @@ export class MazeRoom extends Room {
     this.accumulator += Math.min(100, deltaMs) / 1_000;
     while (this.accumulator >= 1 / 60 && this.engine.snapshot.status === "playing") {
       stepGame(this.engine, this.inputs, 1 / 60, Date.now(), false);
+      this.flushGameEvents();
       this.accumulator -= 1 / 60;
     }
     if (this.engine.snapshot.status === "results") {

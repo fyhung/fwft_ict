@@ -16,7 +16,7 @@ async function createHostWindow() {
     height: 960,
     minWidth: 1024,
     minHeight: 700,
-    title: "Maze Chase Host",
+    title: "FWFT ICT Maze Chase Host",
     backgroundColor: "#090b16",
     autoHideMenuBar: true,
     webPreferences: {

@@ -1,6 +1,8 @@
 import { Client as ColyseusClient, type Room as ColyseusRoom } from "@colyseus/sdk";
 import QRCode from "qrcode";
+import packageInfo from "../package.json";
 import "./styles.css";
+import { gameSounds } from "./audio.ts";
 import { COSMETICS, cosmeticLabel } from "./cosmetics.ts";
 import { sampleSnapshot, updateInterpolation, type SnapshotInterpolation } from "./interpolation.ts";
 import { createMaze } from "./maze.ts";
@@ -15,7 +17,7 @@ import {
 import { ROOM_TYPE, SERVER_PORT, type LobbySnapshot, type ServerMessages } from "./protocol.ts";
 import { renderCharacterPreview, renderGame, scoreboardRows } from "./render.ts";
 import { mvpDetail, winningMvp } from "./stats.ts";
-import type { Direction, GameSnapshot, PlayerRecord } from "./types.ts";
+import type { Direction, GameSnapshot, PlayerRecord, Role } from "./types.ts";
 
 const appElement = document.querySelector<HTMLDivElement>("#app");
 if (!appElement) throw new Error("App root not found.");
@@ -37,7 +39,7 @@ function escapeHtml(value: string) {
 
 function header(connection = "Local server connected") {
   return `<header class="topbar">
-    <div class="brand"><span class="brand-mark" aria-hidden="true"></span><div><div class="eyebrow">Shared arena</div><h1>Maze Chase Party</h1></div></div>
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span><div class="brand-copy"><div class="eyebrow">TWGHs Mrs. Fung Wong Fung Ting College</div><h1>ICT Maze Chase Party <span class="version">v${escapeHtml(packageInfo.version)}</span></h1><div class="brand-credit">Information and Communication Technology · 2026 Summer · Created by fyhung with help from ChatGPT 5.6 sol</div></div></div>
     <span class="status-pill online">${escapeHtml(connection)}</span>
   </header>`;
 }
@@ -89,12 +91,15 @@ async function createHostRoom() {
 function playerCards(players: Record<string, PlayerRecord>) {
   const entries = Object.entries(players).sort(([, first], [, second]) => first.seatId.localeCompare(second.seatId));
   if (!entries.length) return `<p class="muted">Waiting for players to scan the QR code.</p>`;
-  return `<div class="player-grid">${entries.map(([, player]) => {
+  return `<div class="player-grid">${entries.map(([playerId, player]) => {
     const assignment = player.assignment?.role;
     return `<article class="player-card">
       <canvas class="appearance-thumb" data-player-seat="${escapeHtml(player.seatId)}" aria-label="${escapeHtml(player.profile.name)} appearance"></canvas>
       <div><div class="player-name">${escapeHtml(player.profile.name)}</div><div class="player-meta">${player.presence.online ? "Online" : "Disconnected"} · ${player.lobby.ready ? "Ready" : "Not ready"} · ${escapeHtml(cosmeticLabel(player.profile.cosmeticId))}</div></div>
-      <span class="role ${assignment ?? ""}">${assignment ?? "—"}</span>
+      <div class="role-picker" aria-label="Assign ${escapeHtml(player.profile.name)} to a team">
+        <button class="${assignment === "pacman" ? "selected pacman" : ""}" data-assignment-player="${escapeHtml(playerId)}" data-assignment-role="pacman" aria-label="Assign ${escapeHtml(player.profile.name)} to Pac-Man">P</button>
+        <button class="${assignment === "ghost" ? "selected ghost" : ""}" data-assignment-player="${escapeHtml(playerId)}" data-assignment-role="ghost" aria-label="Assign ${escapeHtml(player.profile.name)} to Ghost">G</button>
+      </div>
     </article>`;
   }).join("")}</div>`;
 }
@@ -123,9 +128,10 @@ function bindRoomFailure(room: GameRoom) {
 async function landing() {
   clearSubscriptions();
   app.innerHTML = `<main class="shell">${header("Ready to host on this computer")}
-    <section class="hero"><div class="hero-card"><div class="eyebrow">Up to 30 players</div>
+    <section class="hero"><div class="hero-card"><div class="eyebrow">Information and Communication Technology · 2026 Summer</div>
       <h2>One maze.<br>Two teams.</h2>
       <p>This computer runs the authoritative game server. Put this screen on a projector, then let players scan the room QR code.</p>
+      <p class="project-credit">Created by fyhung with help from ChatGPT 5.6 sol<br>TWGHs Mrs. Fung Wong Fung Ting College</p>
       <button class="button yellow" id="create-room">Create game room</button>
       <p class="error" id="landing-error" role="alert"></p>
     </div></section></main>`;
@@ -228,13 +234,13 @@ async function hostApp(room: GameRoom) {
           <input id="pac-count" type="number" min="1" max="${maxPacmen}" value="${pacmanCount}" ${count < 2 ? "disabled" : ""}>
           <button id="pac-plus" aria-label="More Pac-Man">+</button>
         </div></div>
-        <p class="muted">The chosen number becomes Pac-Man; every remaining player becomes a Ghost.</p>
+        <p class="muted">Assign each player with the P/G buttons, or choose a count and randomize the teams.</p>
         <div class="round-settings">
           <div class="setting-card"><label>Lives per Pac-Man</label><div class="mini-counter"><button id="lives-minus" aria-label="Fewer lives">−</button><strong>${livesPerPacman}</strong><button id="lives-plus" aria-label="More lives">+</button></div><small>${pacmanCount * livesPerPacman} team lives</small></div>
           <div class="setting-card"><label>Time limit</label><div class="mini-counter"><button id="time-minus" aria-label="Shorter game">−</button><strong>${timeMinutes}</strong><button id="time-plus" aria-label="Longer game">+</button></div><small>minutes</small></div>
         </div>
         <div class="actions"><button class="button secondary" id="randomize" ${count < 2 ? "disabled" : ""}>Randomize roles</button><button class="button yellow" id="start" ${canStart ? "" : "disabled"}>Start game</button></div>
-        <p class="muted">${count < 2 ? "At least two players are required." : !allReady ? "Waiting for every player to be ready." : !assigned || assignedPacmen !== pacmanCount ? "Randomize roles after choosing the Pac-Man count." : "Ready to start."}</p>
+        <p class="muted">${count < 2 ? "At least two players are required." : !allReady ? "Waiting for every player to be ready." : !assigned || assignedPacmen !== pacmanCount ? "Assign every player manually or randomize the teams." : "Ready to start."}</p>
         <p class="error" id="server-error"></p>
       </aside><section class="panel"><div class="topbar" style="margin-bottom:14px"><div><div class="eyebrow">Players</div><h2>${count} / ${lobby.maxPlayers}</h2></div><span class="status-pill">Pac-Man ${assignedPacmen} · Ghost ${count - assignedPacmen}</span></div>${playerCards(players)}</section></section>
     </main>`;
@@ -242,6 +248,12 @@ async function hostApp(room: GameRoom) {
       const player = Object.values(players).find(({ seatId }) => seatId === canvas.dataset.playerSeat);
       if (player) renderCharacterPreview(canvas, player.profile.colorId, player.profile.cosmeticId, player.assignment?.role ?? "pacman", 64);
     });
+    document.querySelectorAll<HTMLButtonElement>("[data-assignment-player]").forEach((button) => button.addEventListener("click", () => {
+      room.send("assignRole", {
+        playerId: button.dataset.assignmentPlayer,
+        role: button.dataset.assignmentRole as Role,
+      });
+    }));
     document.querySelector<HTMLButtonElement>("#copy-link")?.addEventListener("click", async (event) => {
       await navigator.clipboard.writeText(playerJoinUrl);
       (event.currentTarget as HTMLButtonElement).textContent = "Copied";
@@ -301,6 +313,7 @@ async function hostApp(room: GameRoom) {
     if (screen !== "game") renderHostGame(snapshot);
     else updateHostHud(snapshot);
   });
+  room.onMessage<ServerMessages["gameEvent"]>("gameEvent", (event) => gameSounds.handle(event));
   cleanup.push(() => stopFrame(), () => void room.leave());
   room.send("sync");
   if (latestLobby) renderLobby(latestLobby);
@@ -555,6 +568,7 @@ async function playerApp(code: string) {
     if (screen !== "game") renderPlayerGame(snapshot);
     else updateMobileHud(snapshot);
   });
+  room.onMessage<ServerMessages["gameEvent"]>("gameEvent", (event) => gameSounds.handle(event));
   room.onMessage<ServerMessages["pong"]>("pong", (message) => {
     const latency = Math.max(0, Math.round(performance.now() - message.clientTime));
     const display = document.querySelector<HTMLElement>("#network-ping");

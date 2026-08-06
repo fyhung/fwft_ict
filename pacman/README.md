@@ -1,6 +1,10 @@
-# Maze Chase Host
+# FWFT ICT Maze Chase Host
 
-Maze Chase Host is a local-network multiplayer Pac-Man-style game for one teacher host and up to 30 student devices. Each phone owns its responsive movement while the teacher computer validates positions and remains authoritative for every game rule. Firebase is no longer used.
+FWFT ICT Maze Chase Host is a local-network multiplayer Pac-Man-style game for one teacher host and up to 30 student devices. Each phone owns its responsive movement while the teacher computer validates positions and remains authoritative for every game rule. Firebase is no longer used.
+
+Created by **fyhung**, with help from **ChatGPT 5.6 sol**, for the **Information and Communication Technology** class at **TWGHs Mrs. Fung Wong Fung Ting College**, Summer 2026.
+
+Current version: **0.3.0**. See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 No `.env` values or Firebase repository variables are needed. An old local `.env` file can be deleted; it is ignored and is never included in the Windows application.
 
@@ -99,12 +103,16 @@ At each stage, test Pac-Man eating a power pellet and a Ghost, a Ghost catching 
 - One shared maze for all players; Ghost spawn slots are four tiles above Pac-Man slots.
 - The host chooses the Pac-Man count, lives per Pac-Man, and round time limit; all remaining players become Ghosts. Odd totals are supported.
 - Every player claims a unique color from 64 varied choices, including bright hues, whites, greys, and dark tones.
-- After joining, each player chooses one of ten synchronized cosmetics and can return to reselect an available color.
+- After joining, each player chooses one of ten synchronized cosmetics or **None**, and can return to reselect an available color.
+- The host can assign each player manually to Pac-Man or Ghost, or use randomized teams.
 - The host lobby shows every player's complete appearance and assigned Pac-Man or Ghost form.
 - Small pellet: 10 Pac-Man points.
 - Power pellet: 50 Pac-Man points and six seconds of frightened Ghosts.
+- Bonus fruit: a 100-point cherry after 70 dots and a 300-point strawberry after 170 dots; each remains for ten seconds.
 - Frightened Ghost chain: 200, 400, 800, then 1,600 points.
 - Ghost capture: 500 Ghost points.
+- The Pac-Man team earns one extra shared life the first time it reaches 10,000 points.
+- Supplied arcade sounds play for round start/end, dots, fruit, Ghosts eaten, Pac-Man deaths, and the extra life.
 - Pac-Man team lives are configurable from one to nine per Pac-Man player (default: three).
 - Round time is configurable from one to fifteen minutes (default: five).
 - The live dashboard shows dots remaining and total Pac-Man team lives.

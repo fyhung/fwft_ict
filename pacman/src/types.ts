@@ -4,6 +4,35 @@ export type Direction = "up" | "down" | "left" | "right" | "none";
 export type Role = "pacman" | "ghost";
 export type RoomStatus = "lobby" | "countdown" | "playing" | "paused" | "results" | "closed";
 export type ActorState = "normal" | "frightened" | "eaten" | "dead" | "invulnerable";
+export type FruitKind = "cherry" | "strawberry";
+export type GameEventType =
+  | "round-start"
+  | "pellet"
+  | "power-pellet"
+  | "fruit-eaten"
+  | "ghost-eaten"
+  | "pacman-death"
+  | "extra-life"
+  | "round-end";
+
+export interface BonusFruit {
+  id: number;
+  kind: FruitKind;
+  x: number;
+  y: number;
+  value: number;
+  expiresAt: number;
+}
+
+export interface GameEvent {
+  id: number;
+  roundId: number;
+  type: GameEventType;
+  at: number;
+  actorId?: string;
+  targetId?: string;
+  value?: number;
+}
 
 export interface PlayerRecord {
   seatId: string;
@@ -63,6 +92,7 @@ export interface Actor {
   score: number;
   kills: number;
   ghostsEaten: number;
+  fruitsEaten: number;
   pellets: number;
 }
 
@@ -75,11 +105,14 @@ export interface GameSnapshot {
   actors: Record<string, Actor>;
   pellets: string[];
   powerPellets: string[];
+  fruit: BonusFruit | null;
+  fruitWave: number;
   frightenedUntil: number;
   ghostChain: number;
   pacmanLives: number;
   pacmanScore: number;
   ghostScore: number;
+  extraLifeAwarded: boolean;
   winner: Role | null;
   resultReason: string | null;
   roundEndsAt: number;

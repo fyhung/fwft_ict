@@ -73,7 +73,7 @@ try {
   playerOne.send("style", { colorId: "c48", cosmeticId: "crown" });
   assert.deepEqual(await styledOne, { ok: true });
   const styledTwo = nextMessage(playerTwo, "styleResult");
-  playerTwo.send("style", { cosmeticId: "cat-ears" });
+  playerTwo.send("style", { cosmeticId: "none" });
   assert.deepEqual(await styledTwo, { ok: true });
 
   const configuredLobby = nextMessage(host, "lobby", (message) =>
@@ -92,26 +92,32 @@ try {
   playerOne.send("ready", true);
   playerTwo.send("ready", true);
   await readyLobby;
-  host.send("pacmanCount", 1);
   const assignedLobby = nextMessage(host, "lobby", (message) =>
     Object.keys(message.players).length === 2 &&
-    Object.values(message.players).every((player) => player.lobby.ready && player.assignment),
+    message.pacmanCount === 1 &&
+    message.players[playerOne.sessionId]?.assignment?.role === "pacman" &&
+    message.players[playerTwo.sessionId]?.assignment?.role === "ghost",
     5_000,
     "assigned roles",
   );
-  host.send("randomize");
+  host.send("assignRole", { playerId: playerOne.sessionId, role: "pacman" });
+  host.send("assignRole", { playerId: playerTwo.sessionId, role: "ghost" });
   await assignedLobby;
 
   const firstSnapshot = nextMessage(host, "snapshot", (message) => message.status === "playing", 5_000, "initial game snapshot");
+  const roundStartEvent = nextMessage(host, "gameEvent", (message) => message.type === "round-start", 5_000, "round start sound event");
   host.send("start");
-  const initial = await firstSnapshot;
+  const [initial, started] = await Promise.all([firstSnapshot, roundStartEvent]);
+  assert.equal(started.roundId, initial.roundId);
   assert.equal(Object.keys(initial.actors).length, 2);
   assert.equal(Object.values(initial.actors).filter((actor) => actor.role === "pacman").length, 1);
   assert.equal(initial.pacmanLives, 5);
   assert.equal(initial.roundEndsAt - initial.roundStartedAt, 120_000);
   assert.equal(initial.actors[playerOne.sessionId].colorId, "c48");
   assert.equal(initial.actors[playerOne.sessionId].cosmeticId, "crown");
-  assert.equal(initial.actors[playerTwo.sessionId].cosmeticId, "cat-ears");
+  assert.equal(initial.actors[playerOne.sessionId].role, "pacman");
+  assert.equal(initial.actors[playerTwo.sessionId].role, "ghost");
+  assert.equal(initial.actors[playerTwo.sessionId].cosmeticId, "none");
 
   const acknowledged = nextMessage(
     playerOne,
@@ -156,7 +162,7 @@ try {
   const correction = await rejectedTeleport;
   assert.ok(Math.abs(correction.actor.x - targetPlayerX) < 0.001);
 
-  console.log("Server verification passed: joining, roles, client position acceptance, teleport rejection, rules, snapshots, and input acknowledgement work.");
+  console.log("Server verification passed: joining, manual roles, cosmetics, sound events, client position acceptance, teleport rejection, rules, snapshots, and input acknowledgement work.");
 } finally {
   await Promise.allSettled([playerOne?.leave(), playerTwo?.leave(), host?.leave()]);
   await server.close();

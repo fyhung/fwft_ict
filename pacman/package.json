@@ -1,8 +1,10 @@
 {
   "name": "maze-chase-party",
-  "productName": "Maze Chase Host",
+  "productName": "FWFT ICT Maze Chase Host",
+  "description": "A classroom multiplayer maze chase project created by fyhung with help from ChatGPT 5.6 sol for TWGHs Mrs. Fung Wong Fung Ting College.",
+  "author": "fyhung",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.3.0",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -49,8 +51,9 @@
     "vitest": "3.2.7"
   },
   "build": {
+    "npmRebuild": false,
     "appId": "hk.fwft.ict.mazechasehost",
-    "productName": "Maze Chase Host",
+    "productName": "FWFT ICT Maze Chase Host",
     "directories": {
       "output": "release"
     },
