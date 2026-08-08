@@ -1,0 +1,1020 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SQL Query Visualizer — FYHUNG ICT Project</title>
+<style>
+  :root{
+    --bg:#f6f7fb;--panel:#fff;--ink:#172033;--muted:#687086;--line:#dfe3eb;
+    --active:#fff3bf;--pass:#daf5df;--fail:#fde0e0;--match:#dcecff;--accent:#3857d6;
+    --shadow:0 8px 24px rgba(20,31,55,.08);--radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+  button,select,textarea,input{font:inherit}
+  button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:8px 11px;cursor:pointer}
+  button:hover{border-color:#b7bfce;background:#fafbff}
+  button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .app{min-height:100vh;display:grid;grid-template-rows:1fr auto}
+  .layout{display:grid;grid-template-columns:minmax(300px,32%) minmax(0,1fr);min-height:0}
+  .left{padding:0;border-right:1px solid var(--line);background:#fbfcff;overflow:auto;min-width:0}
+  .left-topbar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line);padding:11px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .brand-block{min-width:0;flex:1}
+  .brand{font-weight:850;font-size:17px;line-height:1.15;letter-spacing:-.01em}
+  .project-meta{margin-top:4px;color:var(--muted);font-size:11px;line-height:1.35}
+  .project-meta strong{color:#4d566a;font-weight:700}
+  .top-actions{display:flex;gap:6px;flex:0 0 auto}
+  .top-actions button{padding:6px 8px;font-size:12px}
+  .left-content{padding:14px}
+  .right{padding:12px 14px;overflow:auto;min-width:0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:14px}
+  h2,h3{margin:0 0 10px}h2{font-size:16px}h3{font-size:14px}
+  textarea{width:100%;min-height:210px;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:12px;background:#0f172a;color:#e5edf9;line-height:1.5;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .presets{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .controls{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+  .speed{display:flex;gap:8px;align-items:center;margin-top:12px}.speed input{flex:1}
+  .muted{color:var(--muted);font-size:13px}.tiny{font-size:12px;color:var(--muted)}
+  .stagebar{display:flex;gap:6px;flex-wrap:wrap}.stage{padding:6px 9px;border-radius:999px;background:#eef1f6;color:#667085;font-size:12px;border:1px solid transparent}.stage.current{background:#fff4c2;border-color:#efcf62;color:#7b5d00}.stage.done{background:#e3f7e8;color:#246b31}
+  .tables-grid{display:grid;grid-template-columns:repeat(2,minmax(240px,1fr));gap:12px;align-items:start}
+  .table-card{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}.table-title{padding:9px 10px;font-weight:800;background:#f5f7fb;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}.scroll{overflow:auto;max-height:310px}
+  table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:7px 9px;border-bottom:1px solid #edf0f4;text-align:left;white-space:nowrap}th{position:sticky;top:0;background:#f9fafc;z-index:2;transition:background .25s,color .25s,opacity .4s,transform .4s}td{transition:opacity .4s,transform .4s,background .22s,color .22s,box-shadow .22s}.dbrow{transition:opacity .35s,background .2s,transform .35s,filter .35s}.dbrow.current{background:var(--active)!important;outline:2px solid #e6bb2f;outline-offset:-2px}.dbrow.pass{background:var(--pass)}.dbrow.fail{background:var(--fail);opacity:.10;filter:grayscale(1)}.dbrow.match{background:var(--match)}
+  .dbrow.join-match{background:var(--pass)!important}.dbrow.join-match.current{outline-color:#55a867}.join-key{background:#bfecc9!important;color:#155d28;font-weight:800;box-shadow:inset 0 0 0 2px #62b873}.dbrow.join-match .join-key{background:#9fe0ae!important}
+  .dbrow.grouped{background:#eef4ff}.dbrow.group-summary{background:#f4f7ff}.group-key-head{background:#dce8ff!important;color:#244c91;box-shadow:inset 0 -3px 0 #7598dc}.group-key-cell{background:#e4edff!important;font-weight:800;color:#244c91}.group-summary td{font-weight:650}.agg-cell{background:#f3edff;color:#62449a;font-weight:800}
+  tbody.group-block .group-label-row td{padding:5px 8px;background:#e9f1ff;border-top:2px solid #86a4df;border-left:2px solid #86a4df;border-right:2px solid #86a4df;border-bottom:1px solid #b9cbee;color:#294e91;font-weight:800}
+  tbody.group-block.active-group .group-label-row td{background:#d9e8ff;border-color:#5f86d2;box-shadow:inset 0 0 0 1px rgba(71,112,193,.12)}
+  .group-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;background:#fff;border:1px solid #b8c9eb;font-size:11px;font-weight:850}.group-badge-count{margin-left:7px;font-size:11px;color:#5c6f94;font-weight:700}
+  tbody.group-block .group-member td:first-child{border-left:2px solid #86a4df}tbody.group-block .group-member td:last-child{border-right:2px solid #86a4df}tbody.group-block .group-member:last-child td{border-bottom:2px solid #86a4df}
+  tbody.group-block.active-group .group-member td:first-child{border-left-color:#5f86d2}tbody.group-block.active-group .group-member td:last-child{border-right-color:#5f86d2}tbody.group-block.active-group .group-member:last-child td{border-bottom-color:#5f86d2}
+  .waiting-label td{padding:6px 9px!important;background:#fafbfe;color:#8992a5;font-size:11px;font-weight:750;border-top:1px dashed #cfd5e1}.group-agg-head{background:#eee6ff!important;color:#60419a;box-shadow:inset 0 -3px 0 #a17ad8}.group-agg-preview{background:#f6f0ff!important;color:#60419a;font-weight:850}.group-agg-preview small{display:block;color:#8b79aa;font-size:9px;font-weight:650;margin-top:1px}
+  th.col-keep{background:#ccefd4;color:#185c27;box-shadow:inset 0 -3px 0 #5fb06f}th.col-reject{background:#ffdada;color:#8d3030;box-shadow:inset 0 -3px 0 #dc7777}
+  .work-area{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(260px,.75fr);gap:12px;margin-top:12px}.operation{min-height:190px}.op-title{font-weight:800;font-size:15px;margin-bottom:8px}.formula{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#f7f8fb;border:1px solid var(--line);padding:10px;border-radius:10px;white-space:pre-wrap}.verdict{margin-top:10px;font-weight:800}.verdict.pass{color:#257a36}.verdict.fail{color:#a13f3f}.counter-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.counter{background:#f7f8fb;border:1px solid var(--line);border-radius:9px;padding:8px}.counter b{display:block;font-size:18px}
+  .card-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.card-heading h2{margin:0}.focus-btn{padding:5px 9px;font-size:12px;white-space:nowrap}.right.focus-table .work-area{grid-template-columns:minmax(0,1fr)}.right.focus-table #operationCard,.right.focus-table #teachingCard{display:none}.right.focus-table #workingCard{margin-bottom:0}.right.focus-table #workingTable .scroll{max-height:calc(100vh - 165px)}.right.focus-table #workingTable .table-card{min-height:0}.right.focus-table #workingTable table{font-size:14px}
+  .statusbar{padding:9px 16px;background:#111827;color:#f2f5fb;display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:13px}.statusbar .muted{color:#b7c0d0}.progress{height:7px;background:#303949;border-radius:99px;overflow:hidden;min-width:180px}.progress>span{display:block;height:100%;background:#d9e3ff;width:0%}
+  .notice{padding:9px 10px;border-radius:9px;background:#f3f6ff;border:1px solid #d9e1ff;font-size:13px}.error{background:#fff0f0;border-color:#ffcaca;color:#8d3030}.hidden{display:none!important}
+  dialog{border:0;border-radius:14px;max-width:850px;width:min(850px,92vw);box-shadow:0 30px 90px rgba(0,0,0,.25);padding:0}dialog::backdrop{background:rgba(18,24,38,.45)}.modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}.modal-body{padding:16px;max-height:75vh;overflow:auto}.dict{margin-bottom:18px}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}.left{border-right:0;border-bottom:1px solid var(--line)}.left-topbar{position:relative}.tables-grid{grid-template-columns:1fr}.work-area{grid-template-columns:1fr}.controls{grid-template-columns:repeat(3,1fr)}}
+  @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.dbrow{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <main class="layout">
+    <section class="left">
+      <div class="left-topbar">
+        <div class="brand-block">
+          <div class="brand">SQL Query Visualizer</div>
+          <div class="project-meta">
+            Created by <strong>FYHUNG</strong> with help from <strong>ChatGPT 5.6</strong><br>
+            TWGHs Mrs. Fung Wong Fung Ting College · Information and Communication Technology · Summer 2026
+          </div>
+        </div>
+        <div class="top-actions">
+          <button id="dictBtn" title="Open Data Dictionary">Dictionary</button>
+          <button id="resetBtn" title="Reset the visualizer">Reset</button>
+        </div>
+      </div>
+
+      <div class="left-content">
+      <div class="card">
+        <h2>Playback</h2>
+        <div class="controls">
+          <button id="restartBtn">↺ Restart</button>
+          <button id="backBtn">← Back</button>
+          <button id="playBtn">▶ Play</button>
+          <button id="pauseBtn">❚❚ Pause</button>
+          <button id="nextBtn">Next →</button>
+        </div>
+        <div class="speed">
+          <label for="speed">Speed</label>
+          <input id="speed" type="range" min="0.25" max="4" step="0.25" value="1" />
+          <strong id="speedLabel">1×</strong>
+        </div>
+        <div class="tiny" style="margin-top:8px">Space: play/pause · ←/→: step · Home: restart</div>
+      </div>
+
+      <div class="card">
+        <h2>SQL Query</h2>
+        <textarea id="sqlEditor" spellcheck="false"></textarea>
+        <div class="row" style="margin-top:10px">
+          <button id="buildBtn" class="primary">Build / Run</button>
+          <span id="buildHint" class="tiny">Builds a visual trace; does not autoplay.</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Preset Queries</h2>
+        <div class="presets" id="presetBox"></div>
+      </div>
+
+      <div class="card">
+        <h2>Logical SQL Order</h2>
+        <div class="stagebar" id="stageBar"></div>
+      </div>
+
+      <div id="messageBox" class="notice hidden"></div>
+      </div>
+    </section>
+
+    <section class="right">
+      <div class="card hidden" id="sourceCard">
+        <h2>JOIN Source Tables</h2>
+        <div class="tables-grid" id="sourceTables"></div>
+      </div>
+
+      <div class="work-area">
+        <div class="card" id="workingCard">
+          <div class="card-heading">
+            <h2>Working Table</h2>
+            <button id="focusTableBtn" class="focus-btn" type="button" aria-pressed="false" title="Hide Current Operation and Teaching Note, and expand the Working Table">⛶ Focus Table</button>
+          </div>
+          <div id="workingTable" class="muted">Build a query to begin.</div>
+        </div>
+
+        <div class="card operation" id="operationCard">
+          <h2>Current Operation</h2>
+          <div id="opTitle" class="op-title">Ready</div>
+          <div id="opText" class="muted">Choose a preset query or enter SQL, then press Build / Run.</div>
+          <div id="opFormula" class="formula" style="margin-top:10px">—</div>
+          <div id="opVerdict" class="verdict"></div>
+          <div class="counter-grid">
+            <div class="counter"><span class="tiny">Input</span><b id="countInput">0</b></div>
+            <div class="counter"><span class="tiny">Kept / Matches</span><b id="countKept">0</b></div>
+            <div class="counter"><span class="tiny">Output</span><b id="countOutput">0</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="teachingCard">
+        <h2>Teaching Note</h2>
+        <div class="muted">The prototype visualizes SQL's logical stages. GROUP BY visibly assigns rows into groups before aggregate values are produced; HAVING then filters whole groups. JOIN uses a nested-loop comparison and ORDER BY uses adjacent swaps for teaching clarity; real database engines may use different physical algorithms.</div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="statusbar">
+    <div><strong id="statusStep">Step 0 / 0</strong> <span class="muted" id="statusClause">IDLE</span></div>
+    <div class="progress"><span id="progressFill"></span></div>
+    <div id="statusText">Ready</div>
+  </footer>
+</div>
+
+<dialog id="dictDialog">
+  <div class="modal-head"><strong>Data Dictionary · SQL Query Visualizer</strong><button id="closeDict">Close</button></div>
+  <div class="modal-body" id="dictBody"></div>
+</dialog>
+
+<script>
+(() => {
+  'use strict';
+
+  const DB = {
+    STD: [
+      {SID:'24010001',SName:'李小明',CLS:'4A',CNO:15},
+      {SID:'24010002',SName:'陳美玲',CLS:'4A',CNO:3},
+      {SID:'24010003',SName:'王子健',CLS:'4B',CNO:8},
+      {SID:'24010004',SName:'周穎欣',CLS:'4A',CNO:22},
+      {SID:'24010005',SName:'何俊熙',CLS:'4B',CNO:12},
+      {SID:'24010006',SName:'梁樂兒',CLS:'4C',CNO:6},
+      {SID:'24010007',SName:'張家豪',CLS:'4A',CNO:9},
+      {SID:'24010008',SName:'吳芷晴',CLS:'4C',CNO:18}
+    ],
+    ELE: [
+      {EID:'PHY',ENAME:'物理',Teacher:'陳大文老師',MaxQuota:30},
+      {EID:'CHE',ENAME:'化學',Teacher:'張美儀老師',MaxQuota:25},
+      {EID:'BIO',ENAME:'生物',Teacher:'黃志強老師',MaxQuota:24},
+      {EID:'ICT',ENAME:'資訊及通訊科技',Teacher:'李國強老師',MaxQuota:20},
+      {EID:'ECO',ENAME:'經濟',Teacher:'林嘉慧老師',MaxQuota:28}
+    ],
+    ENROLL: [
+      {SID:'24010001',EID:'PHY',AYEAR:'2024-2025',Pref:1},
+      {SID:'24010001',EID:'ICT',AYEAR:'2024-2025',Pref:2},
+      {SID:'24010002',EID:'CHE',AYEAR:'2024-2025',Pref:1},
+      {SID:'24010002',EID:'PHY',AYEAR:'2024-2025',Pref:2},
+      {SID:'24010003',EID:'BIO',AYEAR:'2024-2025',Pref:1},
+      {SID:'24010003',EID:'ICT',AYEAR:'2024-2025',Pref:2},
+      {SID:'24010004',EID:'ICT',AYEAR:'2024-2025',Pref:1},
+      {SID:'24010004',EID:'CHE',AYEAR:'2024-2025',Pref:2},
+      {SID:'24010005',EID:'PHY',AYEAR:'2024-2025',Pref:1},
+      {SID:'24010006',EID:'BIO',AYEAR:'2024-2025',Pref:1},
+      {SID:'24010007',EID:'CHE',AYEAR:'2024-2025',Pref:1},
+      {SID:'24010007',EID:'ICT',AYEAR:'2024-2025',Pref:2},
+      {SID:'24010001',EID:'BIO',AYEAR:'2023-2024',Pref:3},
+      {SID:'24010005',EID:'CHE',AYEAR:'2023-2024',Pref:2}
+    ]
+  };
+
+  const DICT = {
+    ELE:[['EID','VARCHAR','4','科目代碼','PK'],['ENAME','VARCHAR','20','科目完整名稱',''],['Teacher','VARCHAR','30','負責老師',''],['MaxQuota','INTEGER','-','收生名額上限','']],
+    STD:[['SID','VARCHAR','8','學生註冊編號','PK'],['SName','VARCHAR','30','學生姓名',''],['CLS','VARCHAR','2','學生班別',''],['CNO','INTEGER','-','班內學號','']],
+    ENROLL:[['SID','VARCHAR','8','參照 STD.SID','PK, FK'],['EID','VARCHAR','4','參照 ELE.EID','PK, FK'],['AYEAR','VARCHAR','9','選修學年',''],['Pref','INTEGER','-','志願優先次序','']]
+  };
+
+  const PRESETS = {
+    'WHERE': `SELECT *\nFROM STD\nWHERE CLS = '4A';`,
+    'WHERE + ORDER': `SELECT SID, SName, CNO\nFROM STD\nWHERE CLS = '4A'\nORDER BY CNO ASC;`,
+    'INNER JOIN': `SELECT s.SName, e.EID, e.Pref\nFROM STD s\nINNER JOIN ENROLL e ON s.SID = e.SID\nORDER BY s.SID, e.Pref;`,
+    'LEFT JOIN': `SELECT s.SID, s.SName, e.EID\nFROM STD s\nLEFT JOIN ENROLL e ON s.SID = e.SID\nORDER BY s.SID;`,
+    '3 TABLE JOIN': `SELECT s.SName, s.CLS, ele.ENAME, e.Pref\nFROM STD s\nINNER JOIN ENROLL e ON s.SID = e.SID\nINNER JOIN ELE ele ON e.EID = ele.EID\nWHERE e.AYEAR = '2024-2025'\nORDER BY s.SName, e.Pref;`,
+    'ORDER ONLY': `SELECT SID, SName, CNO\nFROM STD\nORDER BY CNO DESC;`,
+    'GROUP BY': `SELECT CLS, COUNT(*) AS StudentCount\nFROM STD\nGROUP BY CLS\nORDER BY CLS;`,
+    'GROUP BY + HAVING': `SELECT CLS, COUNT(*) AS StudentCount\nFROM STD\nGROUP BY CLS\nHAVING COUNT(*) >= 3\nORDER BY StudentCount DESC;`
+  };
+
+  const STAGES = ['FROM','JOIN','WHERE','GROUP BY','HAVING','SELECT','ORDER BY','COMPLETE'];
+  const $ = id => document.getElementById(id);
+  const state = { plan:null, trace:[], step:0, playing:false, speed:1, token:0, snapshot:null };
+
+  function clone(v){ return JSON.parse(JSON.stringify(v)); }
+  function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+  function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+  function rowId(table,row){
+    if(table==='STD') return `STD:${row.SID}`;
+    if(table==='ELE') return `ELE:${row.EID}`;
+    if(table==='ENROLL') return `ENROLL:${row.SID}:${row.EID}:${row.AYEAR}`;
+    return `${table}:${Math.random()}`;
+  }
+
+  function sourceRow(table,row,alias=table){
+    const ctx={}; ctx[alias]={...row};
+    return { _id:rowId(table,row), _ctx:ctx, _flat:{...row} };
+  }
+
+  function parseSQL(sql){
+    let cleaned=sql.replace(/--.*$/gm,' ').replace(/\s+/g,' ').trim().replace(/;$/,'');
+    if(!/^SELECT\s/i.test(cleaned)) throw new Error('Prototype currently supports SELECT queries only.');
+    const m=cleaned.match(/^SELECT\s+(.+?)\s+FROM\s+(.+)$/i);
+    if(!m) throw new Error('Could not parse SELECT/FROM.');
+    const selectText=m[1].trim(); let rest=m[2].trim();
+
+    const clauses={where:null,group:null,having:null,order:null};
+    const clauseDefs=[
+      {key:'where',kw:' WHERE '},
+      {key:'group',kw:' GROUP BY '},
+      {key:'having',kw:' HAVING '},
+      {key:'order',kw:' ORDER BY '}
+    ].map(d=>({...d,pos:searchKeyword(rest,d.kw)})).filter(d=>d.pos>=0).sort((a,b)=>a.pos-b.pos);
+    const cut=clauseDefs.length?clauseDefs[0].pos:rest.length;
+    const fromJoinText=rest.slice(0,cut).trim();
+    for(let i=0;i<clauseDefs.length;i++){
+      const d=clauseDefs[i];
+      const end=i+1<clauseDefs.length?clauseDefs[i+1].pos:rest.length;
+      clauses[d.key]=rest.slice(d.pos+d.kw.length,end).trim();
+    }
+
+    const joinRegex=/\s+(INNER\s+JOIN|LEFT\s+JOIN|JOIN)\s+/ig;
+    const parts=fromJoinText.split(joinRegex);
+    const base=parseTableSpec(parts[0].trim());
+    const joins=[];
+    for(let i=1;i<parts.length;i+=2){
+      const jt=parts[i].toUpperCase().replace(/\s+/g,' ');
+      const spec=parts[i+1];
+      const onMatch=spec.match(/^(.+?)\s+ON\s+(.+)$/i);
+      if(!onMatch) throw new Error('JOIN requires an ON condition.');
+      joins.push({type:jt.startsWith('LEFT')?'LEFT':'INNER',...parseTableSpec(onMatch[1].trim()),on:onMatch[2].trim()});
+    }
+
+    const select=splitComma(selectText).map(x=>{
+      const am=x.match(/^(.+?)\s+AS\s+([A-Za-z_][\w]*)$/i);
+      return {expr:(am?am[1]:x).trim(),alias:am?am[2]:null};
+    });
+    const groupBy=clauses.group?splitComma(clauses.group):[];
+    const order=clauses.order?splitComma(clauses.order).map(x=>{
+      const mm=x.trim().match(/^(.+?)(?:\s+(ASC|DESC))?$/i);
+      return {expr:mm[1].trim(),dir:(mm[2]||'ASC').toUpperCase()};
+    }):[];
+    if(clauses.having && !groupBy.length) throw new Error('HAVING requires GROUP BY in this prototype.');
+    return {select,base,joins,where:clauses.where,groupBy,having:clauses.having,order,raw:sql};
+  }
+
+  function searchKeyword(s,kw){ return s.toUpperCase().indexOf(kw.toUpperCase()); }
+  function parseTableSpec(s){ const p=s.trim().split(/\s+/); const table=p[0].toUpperCase(); if(!DB[table]) throw new Error(`Unknown table: ${table}`); return {table,alias:p[1]||table}; }
+  function splitComma(s){ let out=[],cur='',quote=false; for(const ch of s){ if(ch==="'") quote=!quote; if(ch===','&&!quote){out.push(cur.trim());cur='';} else cur+=ch; } if(cur.trim()) out.push(cur.trim()); return out; }
+
+  function resolveToken(tok,row){
+    tok=tok.trim();
+    const aggKey=normalizeAggregateExpr(tok);
+    if(aggKey && row._agg && Object.prototype.hasOwnProperty.call(row._agg,aggKey)) return row._agg[aggKey];
+    if(/^'.*'$/.test(tok)) return tok.slice(1,-1);
+    if(/^\d+(\.\d+)?$/.test(tok)) return Number(tok);
+    if(/^NULL$/i.test(tok)) return null;
+    const parts=tok.split('.');
+    if(parts.length===2){ const a=parts[0],c=parts[1]; const key=Object.keys(row._ctx).find(k=>k.toLowerCase()===a.toLowerCase()); return key?row._ctx[key]?.[c]:undefined; }
+    const matches=[]; for(const obj of Object.values(row._ctx)){ if(Object.prototype.hasOwnProperty.call(obj,tok)) matches.push(obj[tok]); }
+    if(matches.length===1) return matches[0];
+    if(Object.prototype.hasOwnProperty.call(row._flat||{},tok)) return row._flat[tok];
+    return undefined;
+  }
+
+  function evalCondition(expr,row){
+    if(!expr) return {result:true,text:'No condition'};
+    const ands=splitBoolean(expr,'AND');
+    if(ands.length>1){ const parts=ands.map(x=>evalCondition(x,row)); return {result:parts.every(p=>p.result),text:parts.map(p=>p.text).join('\nAND\n')}; }
+    const ors=splitBoolean(expr,'OR');
+    if(ors.length>1){ const parts=ors.map(x=>evalCondition(x,row)); return {result:parts.some(p=>p.result),text:parts.map(p=>p.text).join('\nOR\n')}; }
+    let m=expr.trim().match(/^(.+?)\s+IS\s+(NOT\s+)?NULL$/i);
+    if(m){ const a=resolveToken(m[1],row), r=m[2]?a!==null&&a!==undefined:a===null||a===undefined; return {result:r,text:`${m[1].trim()} = ${fmt(a)}\n${m[2]?'IS NOT NULL':'IS NULL'} → ${r?'TRUE':'FALSE'}`}; }
+    m=expr.trim().match(/^(.+?)\s*(=|<>|!=|<=|>=|<|>)\s*(.+)$/);
+    if(!m) throw new Error(`Unsupported condition: ${expr}`);
+    const a=resolveToken(m[1],row), b=resolveToken(m[3],row), op=m[2];
+    let r=false; if(op==='=')r=a===b; else if(op==='!='||op==='<>')r=a!==b; else if(op==='<')r=a<b; else if(op==='<=')r=a<=b; else if(op==='>')r=a>b; else if(op==='>=')r=a>=b;
+    return {result:r,text:`${m[1].trim()} ${op} ${m[3].trim()}\n${fmt(a)} ${op} ${fmt(b)}\n→ ${r?'TRUE':'FALSE'}`};
+  }
+  function splitBoolean(expr,word){ const re=new RegExp(`\\s+${word}\\s+`,'i'); return expr.split(re).map(s=>s.trim()); }
+  function fmt(v){ return v===null||v===undefined?'NULL':typeof v==='string'?`'${v}'`:String(v); }
+
+  function getJoinKeySpec(on,rightAlias){
+    const terms=splitBoolean(on,'AND');
+    for(const term of terms){
+      const m=term.match(/^\s*([A-Za-z_][\w$]*)\.([A-Za-z_][\w$]*)\s*=\s*([A-Za-z_][\w$]*)\.([A-Za-z_][\w$]*)\s*$/i);
+      if(!m) continue;
+      const a1=m[1], f1=m[2], a2=m[3], f2=m[4];
+      if(a2.toLowerCase()===rightAlias.toLowerCase()) return {leftAlias:a1,leftField:f1,rightAlias:a2,rightField:f2};
+      if(a1.toLowerCase()===rightAlias.toLowerCase()) return {leftAlias:a2,leftField:f2,rightAlias:a1,rightField:f1};
+    }
+    return {leftAlias:null,leftField:null,rightAlias:rightAlias,rightField:null};
+  }
+
+  function flatColumnForAliasField(row,alias,field){
+    if(!row||!row._ctx||!field) return field;
+    const aliases=Object.keys(row._ctx);
+    const targetIndex=aliases.findIndex(a=>a.toLowerCase()===String(alias||'').toLowerCase());
+    if(targetIndex<0) return field;
+    let occurrence=0;
+    for(let i=0;i<=targetIndex;i++){
+      const obj=row._ctx[aliases[i]]||{};
+      if(Object.prototype.hasOwnProperty.call(obj,field)) occurrence++;
+    }
+    return field + '*'.repeat(Math.max(0,occurrence-1));
+  }
+
+  function combine(left,right,rightAlias,rightTable){
+    const ctx=clone(left._ctx); ctx[rightAlias]=right?{...right}:Object.fromEntries(Object.keys(DB[rightTable][0]).map(k=>[k,null]));
+    return {_id:left._id+'|'+(right?rowId(rightTable,right):rightTable+':NULL'),_ctx:ctx,_flat:{...left._flat,...(right||{})}};
+  }
+
+  function parseAggregateExpr(expr){
+    const m=String(expr||'').trim().match(/^(COUNT|SUM|AVG|MIN|MAX)\s*\(\s*(\*|[A-Za-z_][\w$]*(?:\.[A-Za-z_][\w$]*)?)\s*\)$/i);
+    if(!m) return null;
+    return {fn:m[1].toUpperCase(),arg:m[2]};
+  }
+
+  function normalizeAggregateExpr(expr){
+    const a=parseAggregateExpr(expr);
+    return a?`${a.fn}(${a.arg==='*'?'*':a.arg})`:null;
+  }
+
+  function collectAggregateExpressions(plan){
+    const found=new Map();
+    const add=expr=>{ const n=normalizeAggregateExpr(expr); if(n) found.set(n,n); };
+    plan.select.forEach(s=>add(s.expr));
+    const scan=text=>{
+      if(!text) return;
+      const re=/(COUNT|SUM|AVG|MIN|MAX)\s*\(\s*(\*|[A-Za-z_][\w$]*(?:\.[A-Za-z_][\w$]*)?)\s*\)/ig;
+      let m; while((m=re.exec(text))) add(m[0]);
+    };
+    scan(plan.having);
+    plan.order.forEach(o=>scan(o.expr));
+    return [...found.keys()];
+  }
+
+  function aggregateValue(expr,members){
+    const a=parseAggregateExpr(expr);
+    if(!a) return undefined;
+    const values=a.arg==='*'?members.map(()=>1):members.map(r=>resolveToken(a.arg,r)).filter(v=>v!==null&&v!==undefined);
+    if(a.fn==='COUNT') return a.arg==='*'?members.length:values.length;
+    if(!values.length) return null;
+    if(a.fn==='SUM') return values.reduce((sum,v)=>sum+Number(v),0);
+    if(a.fn==='AVG') return values.reduce((sum,v)=>sum+Number(v),0)/values.length;
+    if(a.fn==='MIN') return values.reduce((x,v)=>x<v?x:v);
+    if(a.fn==='MAX') return values.reduce((x,v)=>x>v?x:v);
+    return undefined;
+  }
+
+  function groupDisplayName(expr){ return expr.split('.').pop(); }
+  function groupBucketMeta(groupMap){
+    return [...groupMap.entries()].map(([key,g])=>({key,label:g.keyValues.map(fmt).join(' / '),count:g.members.length}));
+  }
+  function groupLayoutMeta(groupMap,aggregateExprs=[]){
+    return [...groupMap.entries()].map(([key,g])=>({
+      key,
+      label:g.keyValues.map(fmt).join(' / '),
+      count:g.members.length,
+      memberIds:g.members.map(r=>r._id),
+      aggregates:Object.fromEntries(aggregateExprs.map(expr=>[expr,aggregateValue(expr,g.members)]))
+    }));
+  }
+  function groupedMemberIds(groupMap){
+    return new Set([...groupMap.values()].flatMap(g=>g.members.map(r=>r._id)));
+  }
+
+  function makeGroupRows(groupMap,plan){
+    const aggregateExprs=collectAggregateExpressions(plan);
+    return [...groupMap.values()].map((g,index)=>{
+      const representative=g.members[0];
+      const agg={};
+      aggregateExprs.forEach(expr=>agg[expr]=aggregateValue(expr,g.members));
+      if(!Object.prototype.hasOwnProperty.call(agg,'COUNT(*)')) agg['COUNT(*)']=g.members.length;
+      const flat={};
+      plan.groupBy.forEach((expr,i)=>flat[groupDisplayName(expr)]=g.keyValues[i]);
+      flat['Rows in group']=g.members.length;
+      Object.entries(agg).forEach(([expr,value])=>flat[expr]=value);
+      return {
+        _id:`GROUP:${index}:${g.keyText}`,
+        _ctx:clone(representative?representative._ctx:{}),
+        _flat:flat,
+        _agg:agg,
+        _members:g.members.map(r=>r._id),
+        _groupKey:g.keyText
+      };
+    });
+  }
+
+  function projectRow(row,select){
+    if(select.length===1 && select[0].expr==='*') return flattenContext(row._ctx);
+    const out={}; for(const s of select){ const key=s.alias||s.expr.split('.').pop(); out[key]=resolveToken(s.expr,row); } return out;
+  }
+  function flattenContext(ctx){ const out={}; for(const obj of Object.values(ctx)) for(const [k,v] of Object.entries(obj)) { if(!(k in out)) out[k]=v; else out[k+'*']=v; } return out; }
+  function getSelectedHeaders(cols,select){
+    if(select.length===1&&select[0].expr==='*') return cols.slice();
+    const wanted=new Set(select.map(s=>s.expr.split('.').pop().replace(/^[`"']|[`"']$/g,'')));
+    return cols.filter(c=>wanted.has(c)||wanted.has(c.replace(/\*+$/,'')));
+  }
+
+  function buildTrace(plan){
+    const trace=[];
+    let rows=DB[plan.base.table].map(r=>sourceRow(plan.base.table,r,plan.base.alias));
+    if(plan.joins.length){
+      const first=plan.joins[0];
+      trace.push(event('SOURCE_LOAD','FROM',`Prepare ${plan.base.table} for JOIN`,`The query will join ${plan.base.table} with ${first.table}. Keep the original JOIN inputs visible.`,[],{
+        showSources:true,
+        sourcePanels:[
+          {title:plan.base.table,rows:clone(rows)},
+          {title:first.table,rows:DB[first.table].map(r=>sourceRow(first.table,r,first.alias))}
+        ]
+      }));
+    } else {
+      trace.push(event('SOURCE_LOAD','FROM',`Load ${plan.base.table}`,`Start with ${rows.length} rows from ${plan.base.table}.`,clone(rows),{showSources:false}));
+    }
+
+    for(let joinIndex=0; joinIndex<plan.joins.length; joinIndex++){
+      const j=plan.joins[joinIndex];
+      const leftInput=clone(rows);
+      const rightSource=DB[j.table].map(r=>sourceRow(j.table,r,j.alias));
+      const produced=[];
+      const leftTitle=joinIndex===0?plan.base.table:`Intermediate result ${joinIndex}`;
+      const sourcePanels=[
+        {title:leftTitle,rows:leftInput},
+        {title:j.table,rows:rightSource}
+      ];
+      const joinKey=getJoinKeySpec(j.on,j.alias);
+
+      for(const l of rows){
+        let matched=false;
+        const matchedRightIds=[];
+        const leftKeyColumn=flatColumnForAliasField(l,joinKey.leftAlias,joinKey.leftField);
+        for(const rr of DB[j.table]){
+          const combined=combine(l,rr,j.alias,j.table);
+          const ev=evalCondition(j.on,combined);
+          const rightId=rowId(j.table,rr);
+          if(ev.result && !matchedRightIds.includes(rightId)) matchedRightIds.push(rightId);
+          trace.push(event('JOIN_COMPARE','JOIN',`${j.type} JOIN comparison`,ev.text,clone(produced),{
+            showSources:true,sourcePanels,activeLeft:l._id,activeRight:rightId,pass:ev.result,
+            joinLeftKey:leftKeyColumn,joinRightKey:joinKey.rightField,matchedRightIds:clone(matchedRightIds)
+          }));
+          if(ev.result){
+            matched=true;
+            produced.push(combined);
+            trace.push(event('JOIN_EMIT','JOIN','JOIN match','This right-side row matches. Keep it highlighted green until the scan for the current left-side row is finished.',clone(produced),{
+              showSources:true,sourcePanels,activeLeft:l._id,activeRight:rightId,pass:true,
+              joinLeftKey:leftKeyColumn,joinRightKey:joinKey.rightField,matchedRightIds:clone(matchedRightIds)
+            }));
+          }
+        }
+        if(j.type==='LEFT'&&!matched){
+          produced.push(combine(l,null,j.alias,j.table));
+          trace.push(event('JOIN_LEFT_NULL','JOIN','LEFT JOIN keeps row','No right-side match. Keep the left row and fill right-side fields with NULL.',clone(produced),{
+            showSources:true,sourcePanels,activeLeft:l._id,pass:true,
+            joinLeftKey:leftKeyColumn,joinRightKey:joinKey.rightField,matchedRightIds:[]
+          }));
+        }
+      }
+      rows=produced;
+      trace.push(event('JOIN_COMPLETE','JOIN','JOIN complete',`The ${j.type} JOIN produced ${rows.length} row(s). Continue with this working table.`,clone(rows),{showSources:false}));
+    }
+
+    if(plan.where){
+      const scanRows=clone(rows);
+      const kept=[];
+      const rowStates={};
+      for(const r of rows){
+        const ev=evalCondition(plan.where,r);
+        trace.push(event('WHERE_TEST','WHERE','Test WHERE condition',ev.text,clone(scanRows),{
+          showSources:false,activeId:r._id,rowStates:clone(rowStates),pass:ev.result,keptCount:kept.length,activeCount:scanRows.length-Object.values(rowStates).filter(x=>x==='fail').length
+        }));
+        if(ev.result){
+          kept.push(r);
+          rowStates[r._id]='pass';
+          trace.push(event('WHERE_KEEP','WHERE','Keep row','Condition is TRUE, so this row turns light green and remains highlighted for the rest of the WHERE phase.',clone(scanRows),{
+            showSources:false,rowStates:clone(rowStates),pass:true,keptCount:kept.length,activeCount:scanRows.length-Object.values(rowStates).filter(x=>x==='fail').length
+          }));
+        } else {
+          rowStates[r._id]='fail';
+          trace.push(event('WHERE_REJECT','WHERE','Fade out row','Condition is FALSE, so this row fades out of the working table.',clone(scanRows),{
+            showSources:false,activeId:r._id,rowStates:clone(rowStates),pass:false,keptCount:kept.length,activeCount:scanRows.length-Object.values(rowStates).filter(x=>x==='fail').length
+          }));
+        }
+      }
+      rows=kept;
+      trace.push(event('WHERE_COMPLETE','WHERE','WHERE complete',`Filtering is complete. ${rows.length} row(s) remain in the working table.`,clone(rows),{showSources:false,keptCount:rows.length,activeCount:rows.length}));
+    }
+
+    if(plan.groupBy.length){
+      const scanRows=clone(rows);
+      const groupMap=new Map();
+      const rowStates={};
+      const groupKeyColumns=plan.groupBy.map(groupDisplayName);
+      const aggregateColumns=(()=>{ const a=collectAggregateExpressions(plan); return a.length?a:['COUNT(*)']; })();
+
+      for(const r of rows){
+        const keyValues=plan.groupBy.map(expr=>resolveToken(expr,r));
+        const keyText=keyValues.map((v,i)=>`${plan.groupBy[i]}=${fmt(v)}`).join(', ');
+        const mapKey=JSON.stringify(keyValues);
+        const currentCount=groupMap.get(mapKey)?.members.length||0;
+        const assignedBefore=groupedMemberIds(groupMap);
+        trace.push(event('GROUP_SCAN','GROUP BY','Read GROUP BY key',
+          `${keyText}
+${currentCount?`Group already exists with ${currentCount} row(s).`:'No matching group yet — a new group will be created.'}`,clone(scanRows),{
+            showSources:false,activeId:r._id,rowStates:clone(rowStates),groupKeyColumns,
+            groupLayout:groupLayoutMeta(groupMap,aggregateColumns),
+            unassignedIds:scanRows.filter(x=>!assignedBefore.has(x._id)).map(x=>x._id),
+            activeGroupKey:mapKey,keptCount:groupMap.size,activeCount:scanRows.length
+          }));
+
+        if(!groupMap.has(mapKey)) groupMap.set(mapKey,{keyValues,keyText,members:[]});
+        groupMap.get(mapKey).members.push(r);
+        rowStates[r._id]='grouped';
+        const assignedAfter=groupedMemberIds(groupMap);
+        const newCount=groupMap.get(mapKey).members.length;
+        trace.push(event('GROUP_ADD','GROUP BY',currentCount===0?'Create group':'Glide row into group',
+          `${keyText}
+${currentCount===0?'Create one bordered group block and move this row into it.':'This group already exists. Glide the row into the same bordered block.'}
+Rows in this group: ${newCount}`,
+          clone(scanRows),{
+            showSources:false,activeId:r._id,rowStates:clone(rowStates),groupKeyColumns,
+            groupLayout:groupLayoutMeta(groupMap,aggregateColumns),
+            unassignedIds:scanRows.filter(x=>!assignedAfter.has(x._id)).map(x=>x._id),
+            activeGroupKey:mapKey,glideRowId:r._id,pass:true,keptCount:groupMap.size,activeCount:scanRows.length
+          }));
+      }
+
+      const assignedAll=groupedMemberIds(groupMap);
+      trace.push(event('GROUP_AGGREGATES','GROUP BY','Show aggregate values',
+        `All rows are now arranged into groups. Add ${aggregateColumns.join(', ')} column${aggregateColumns.length===1?'':'s'} so the aggregate value for each group is visible before the rows collapse.`,
+        clone(scanRows),{
+          showSources:false,rowStates:clone(rowStates),groupKeyColumns,
+          groupLayout:groupLayoutMeta(groupMap,aggregateColumns),
+          unassignedIds:scanRows.filter(x=>!assignedAll.has(x._id)).map(x=>x._id),
+          aggregateColumns,showGroupAggregates:true,keptCount:groupMap.size,activeCount:scanRows.length
+        }));
+
+      rows=makeGroupRows(groupMap,plan);
+      trace.push(event('GROUP_COMPLETE','GROUP BY','Collapse groups to summary rows',
+        `${scanRows.length} raw row(s) collapse into ${rows.length} group row(s). Each result row now represents one complete group.`,
+        clone(rows),{showSources:false,groupSummary:true,keptCount:rows.length,activeCount:rows.length}
+      ));
+    }
+
+    if(plan.having){
+      const scanGroups=clone(rows);
+      const keptGroups=[];
+      const rowStates={};
+      for(const r of rows){
+        const ev=evalCondition(plan.having,r);
+        trace.push(event('HAVING_TEST','HAVING','Test HAVING condition',ev.text,clone(scanGroups),{
+          showSources:false,activeId:r._id,rowStates:clone(rowStates),groupSummary:true,pass:ev.result,
+          keptCount:keptGroups.length,activeCount:scanGroups.length-Object.values(rowStates).filter(x=>x==='fail').length
+        }));
+        if(ev.result){
+          keptGroups.push(r); rowStates[r._id]='pass';
+          trace.push(event('HAVING_KEEP','HAVING','Keep group','The HAVING condition is TRUE, so this whole group stays light green.',clone(scanGroups),{
+            showSources:false,rowStates:clone(rowStates),groupSummary:true,pass:true,keptCount:keptGroups.length,
+            activeCount:scanGroups.length-Object.values(rowStates).filter(x=>x==='fail').length
+          }));
+        } else {
+          rowStates[r._id]='fail';
+          trace.push(event('HAVING_REJECT','HAVING','Fade out group','The HAVING condition is FALSE, so this group fades out.',clone(scanGroups),{
+            showSources:false,activeId:r._id,rowStates:clone(rowStates),groupSummary:true,pass:false,keptCount:keptGroups.length,
+            activeCount:scanGroups.length-Object.values(rowStates).filter(x=>x==='fail').length
+          }));
+        }
+      }
+      rows=keptGroups;
+      trace.push(event('HAVING_COMPLETE','HAVING','HAVING complete',`${rows.length} group(s) remain after HAVING.`,clone(rows),{
+        showSources:false,groupSummary:true,keptCount:rows.length,activeCount:rows.length
+      }));
+    }
+
+    const preSelectRows=clone(rows);
+    const preSelectCols=preSelectRows.length?Object.keys(preSelectRows[0]._flat):[];
+    const selectedHeaders=getSelectedHeaders(preSelectCols,plan.select);
+    const rejectedHeaders=preSelectCols.filter(c=>!selectedHeaders.includes(c));
+    const headerStates=Object.fromEntries(preSelectCols.map(c=>[c,selectedHeaders.includes(c)?'keep':'reject']));
+
+    trace.push(event('SELECT_HIGHLIGHT','SELECT','Choose SELECT columns',
+      rejectedHeaders.length
+        ? `Selected columns turn green. Columns not included in SELECT turn red.`
+        : `All columns are selected.`,
+      clone(preSelectRows),{showSources:false,headerStates,selectedHeaders,rejectedHeaders}
+    ));
+
+    if(rejectedHeaders.length){
+      trace.push(event('SELECT_FADE','SELECT','Remove unselected columns',
+        `Fade out: ${rejectedHeaders.join(', ')}`,
+        clone(preSelectRows),{showSources:false,headerStates,selectedHeaders,rejectedHeaders,fadeColumns:rejectedHeaders}
+      ));
+    }
+
+    const projected=rows.map(r=>({_id:r._id,_ctx:r._ctx,_agg:r._agg,_flat:projectRow(r,plan.select)}));
+    rows=projected;
+    trace.push(event('SELECT_PROJECT','SELECT','SELECT projection','Only the selected columns remain in the working table.',clone(rows),{showSources:false}));
+
+    if(plan.order.length){
+      const arr=rows.slice();
+      let swapped=true;
+      while(swapped){
+        swapped=false;
+        for(let i=0;i<arr.length-1;i++){
+          const cmp=compareOrder(arr[i],arr[i+1],plan.order);
+          trace.push(event('SORT_COMPARE','ORDER BY','Compare adjacent rows',cmp.text,clone(arr),{showSources:false,activeId:arr[i]._id,activeId2:arr[i+1]._id,pass:cmp.swap}));
+          if(cmp.swap){
+            const t=arr[i]; arr[i]=arr[i+1]; arr[i+1]=t; swapped=true;
+            trace.push(event('SORT_SWAP','ORDER BY','Swap rows','Rows exchange positions to move toward the requested order.',clone(arr),{showSources:false,pass:true}));
+          }
+        }
+      }
+      rows=arr;
+    }
+
+    trace.push(event('COMPLETE','COMPLETE','Complete',`Final result: ${rows.length} row(s).`,clone(rows),{showSources:false,pass:true}));
+    return trace;
+  }
+
+  function compareOrder(a,b,order){
+    for(const o of order){ const av=resolveToken(o.expr,a), bv=resolveToken(o.expr,b); if(av===bv) continue; const asc=o.dir==='ASC'; const swap=asc?av>bv:av<bv; return {swap,text:`${o.expr} ${o.dir}\n${fmt(av)} vs ${fmt(bv)}\n${swap?'SWAP':'KEEP ORDER'}`}; }
+    return {swap:false,text:'Sort keys are equal\nKEEP ORDER'};
+  }
+
+  function event(type,clause,title,text,rows,meta){ return {type,clause,title,text,rows:clone(rows),meta:meta||{}}; }
+
+  function renderSourceTables(panels=[],active={}){
+    if(!panels.length){
+      $('sourceCard').classList.add('hidden');
+      $('sourceTables').innerHTML='';
+      return;
+    }
+    $('sourceCard').classList.remove('hidden');
+    const matchedRight=new Set(active.matchedRightIds||[]);
+    $('sourceTables').innerHTML=panels.map((panel,panelIndex)=>{
+      const rows=panel.rows||[];
+      if(!rows.length) return `<div class="table-card"><div class="table-title"><span>${escapeHtml(panel.title)}</span><span class="tiny">0 rows</span></div></div>`;
+      const display=rows.map(r=>r._flat?{id:r._id,data:r._flat}:{id:r._id||'',data:r});
+      const cols=Object.keys(display[0].data);
+      const keyCol=panelIndex===0?active.joinLeftKey:panelIndex===1?active.joinRightKey:null;
+      const trs=display.map(item=>{
+        let cls='dbrow';
+        const isLeft=active.activeLeft===item.id;
+        const isRight=active.activeRight===item.id;
+        if(isLeft||isRight) cls+=' current';
+        if(panelIndex===1 && matchedRight.has(item.id)) cls+=' join-match';
+        const cells=cols.map(c=>{
+          const keyActive=(panelIndex===0&&isLeft&&keyCol===c)||(panelIndex===1&&isRight&&keyCol===c);
+          return `<td class="${keyActive?'join-key':''}">${escapeHtml(item.data[c])}</td>`;
+        }).join('');
+        return `<tr class="${cls}" data-id="${escapeHtml(item.id)}" data-panel-index="${panelIndex}">${cells}</tr>`;
+      }).join('');
+      return `<div class="table-card" data-panel-index="${panelIndex}"><div class="table-title"><span>${escapeHtml(panel.title)}</span><span class="tiny">${rows.length} rows</span></div><div class="scroll" data-scroll-role="join-${panelIndex}"><table><thead><tr>${cols.map(c=>`<th>${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody>${trs}</tbody></table></div></div>`;
+    }).join('');
+  }
+
+  function renderWorking(rows,meta={}){
+    if(!rows||!rows.length){ $('workingTable').innerHTML='<div class="muted">No rows in the working table.</div>'; return; }
+    const baseCols=Object.keys(rows[0]._flat);
+    const aggregateColumns=meta.showGroupAggregates?(meta.aggregateColumns||[]):[];
+    const cols=[...baseCols,...aggregateColumns.filter(c=>!baseCols.includes(c))];
+    const states=meta.rowStates||{};
+    const headerStates=meta.headerStates||{};
+    const groupKeyColumns=meta.groupKeyColumns||[];
+    const colClass=c=>[
+      headerStates[c]==='keep'?'col-keep':headerStates[c]==='reject'?'col-reject':'',
+      groupKeyColumns.includes(c)?'group-key-head':'',
+      aggregateColumns.includes(c)?'group-agg-head':'',
+      /^(COUNT|SUM|AVG|MIN|MAX)\(/i.test(c)&&!aggregateColumns.includes(c)?'agg-cell':''
+    ].filter(Boolean).join(' ');
+
+    const renderCells=(r,group=null)=>cols.map(c=>{
+      const isGroupKey=groupKeyColumns.includes(c);
+      const isAggPreview=aggregateColumns.includes(c);
+      const value=isAggPreview?(group?.aggregates?.[c]??'NULL'):r._flat[c];
+      const tdClass=[colClass(c),isGroupKey?'group-key-cell':'',isAggPreview?'group-agg-preview':''].filter(Boolean).join(' ');
+      return `<td class="${tdClass}" data-col="${escapeHtml(c)}">${escapeHtml(value)}${isAggPreview?'<small>group value</small>':''}</td>`;
+    }).join('');
+
+    let body='';
+    if(meta.groupLayout && !meta.groupSummary){
+      const rowMap=new Map(rows.map(r=>[r._id,r]));
+      for(const g of meta.groupLayout){
+        const members=(g.memberIds||[]).map(id=>rowMap.get(id)).filter(Boolean);
+        if(!members.length) continue;
+        body+=`<tbody class="group-block ${g.key===meta.activeGroupKey?'active-group':''}" data-group-key="${escapeHtml(g.key)}">`;
+        body+=`<tr class="group-label-row"><td colspan="${cols.length}"><span class="group-badge">Group ${escapeHtml(g.label)}</span><span class="group-badge-count">${members.length} row${members.length===1?'':'s'}</span></td></tr>`;
+        for(const r of members){
+          let cls='dbrow group-member grouped';
+          if(states[r._id]) cls+=' '+states[r._id];
+          if(meta.activeId===r._id||meta.activeId2===r._id) cls+=' current';
+          body+=`<tr class="${cls}" data-id="${escapeHtml(r._id)}">${renderCells(r,g)}</tr>`;
+        }
+        body+='</tbody>';
+      }
+      const unassigned=(meta.unassignedIds||[]).map(id=>rowMap.get(id)).filter(Boolean);
+      if(unassigned.length){
+        body+=`<tbody class="ungrouped-block"><tr class="waiting-label"><td colspan="${cols.length}">Waiting to be grouped</td></tr>`;
+        for(const r of unassigned){
+          let cls='dbrow';
+          if(states[r._id]) cls+=' '+states[r._id];
+          if(meta.activeId===r._id||meta.activeId2===r._id) cls+=' current';
+          body+=`<tr class="${cls}" data-id="${escapeHtml(r._id)}">${renderCells(r,null)}</tr>`;
+        }
+        body+='</tbody>';
+      }
+    } else {
+      body='<tbody>'+rows.map(r=>{
+        let cls='dbrow';
+        if(states[r._id]) cls+=' '+states[r._id];
+        if(meta.groupSummary) cls+=' group-summary';
+        if(meta.activeId===r._id||meta.activeId2===r._id) cls+=' current';
+        return `<tr class="${cls}" data-id="${escapeHtml(r._id)}">${cols.map(c=>`<td class="${colClass(c)}" data-col="${escapeHtml(c)}">${escapeHtml(r._flat[c])}</td>`).join('')}</tr>`;
+      }).join('')+'</tbody>';
+    }
+
+    $('workingTable').innerHTML=`<div class="table-card"><div class="table-title"><span>${meta.groupSummary?'Grouped Working Table':meta.groupLayout?'Grouping Working Table':'Working Table'}</span><span class="tiny">${rows.length} visible row slot(s)</span></div><div class="scroll" data-scroll-role="working"><table><thead><tr>${cols.map(c=>`<th class="${colClass(c)}" data-col="${escapeHtml(c)}">${escapeHtml(c)}</th>`).join('')}</tr></thead>${body}</table></div></div>`;
+  }
+
+  function renderStage(clause){ $('stageBar').innerHTML=STAGES.map(s=>`<span class="stage ${s===clause?'current':stageDone(s,clause)?'done':''}">${s}</span>`).join(''); }
+  function stageDone(s,c){ return STAGES.indexOf(s)<STAGES.indexOf(c); }
+
+  // Preserve the scrollTop of each table viewport before re-rendering it.
+  // The renderer replaces table HTML on every trace event, so without this
+  // cache every new step would briefly start again at scrollTop = 0.
+  const tableScrollMemory = new Map();
+
+  function getScrollKey(scroller){
+    const role=scroller?.dataset?.scrollRole||'table';
+    const card=scroller?.closest('.table-card');
+    const title=card?.querySelector('.table-title span')?.textContent?.trim()||'';
+    return `${role}|${title}`;
+  }
+
+  function rememberTableScrollPositions(){
+    document.querySelectorAll('.scroll[data-scroll-role]').forEach(scroller=>{
+      tableScrollMemory.set(getScrollKey(scroller),scroller.scrollTop);
+    });
+  }
+
+  function restoreTableScrollPositions(){
+    document.querySelectorAll('.scroll[data-scroll-role]').forEach(scroller=>{
+      const saved=tableScrollMemory.get(getScrollKey(scroller));
+      if(Number.isFinite(saved)) scroller.scrollTop=saved;
+    });
+  }
+
+  function scrollRowIntoTableView(row,behavior='smooth'){
+    if(!row) return;
+    const scroller=row.closest('.scroll');
+    if(!scroller) return;
+
+    const rowRect=row.getBoundingClientRect();
+    const viewRect=scroller.getBoundingClientRect();
+    const header=scroller.querySelector('thead');
+    const headerHeight=header?header.getBoundingClientRect().height:0;
+    const pad=Math.min(28,Math.max(8,scroller.clientHeight*.08));
+    const visibleTop=viewRect.top+headerHeight+pad;
+    const visibleBottom=viewRect.bottom-pad;
+
+    // Move only as far as necessary from the CURRENT viewport position.
+    // Do not recenter the row; that creates the impression of jumping back
+    // to the top on every step when the table itself is re-rendered.
+    let delta=0;
+    if(rowRect.top<visibleTop) delta=rowRect.top-visibleTop;
+    else if(rowRect.bottom>visibleBottom) delta=rowRect.bottom-visibleBottom;
+    else return;
+
+    const maxTop=Math.max(0,scroller.scrollHeight-scroller.clientHeight);
+    const top=Math.min(maxTop,Math.max(0,scroller.scrollTop+delta));
+    const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    scroller.scrollTo({top,behavior:reduced?'auto':behavior});
+    tableScrollMemory.set(getScrollKey(scroller),top);
+  }
+
+  function autoScrollCurrentRows(){
+    requestAnimationFrame(()=>{
+      restoreTableScrollPositions();
+      requestAnimationFrame(()=>{
+        document.querySelectorAll('#sourceTables .dbrow.current, #workingTable .dbrow.current').forEach(row=>scrollRowIntoTableView(row,'smooth'));
+      });
+    });
+  }
+
+  function captureWorkingRowRects(){
+    const rects=new Map();
+    document.querySelectorAll('#workingTable .dbrow[data-id]').forEach(row=>rects.set(row.dataset.id,row.getBoundingClientRect()));
+    return rects;
+  }
+
+  function prepareWorkingFlip(oldRects){
+    const moves=[];
+    if(!oldRects||!oldRects.size) return moves;
+    document.querySelectorAll('#workingTable .dbrow[data-id]').forEach(row=>{
+      const before=oldRects.get(row.dataset.id);
+      if(!before) return;
+      const after=row.getBoundingClientRect();
+      const dx=before.left-after.left, dy=before.top-after.top;
+      if(Math.abs(dx)<1&&Math.abs(dy)<1) return;
+      row.style.transform=`translate(${dx}px, ${dy}px)`;
+      row.style.zIndex='3';
+      row.style.position='relative';
+      moves.push({row,dx,dy});
+    });
+    return moves;
+  }
+
+  function applyEvent(ev){
+    rememberTableScrollPositions();
+    const oldWorkingRects=(ev.type==='GROUP_ADD'||ev.type==='GROUP_COMPLETE')?captureWorkingRowRects():null;
+    renderSourceTables(ev.meta.showSources?ev.meta.sourcePanels:[],ev.meta); renderWorking(ev.rows,ev.meta); renderStage(ev.clause);
+    restoreTableScrollPositions();
+    state.pendingWorkingFlip=prepareWorkingFlip(oldWorkingRects);
+    $('opTitle').textContent=ev.title; $('opText').textContent=explain(ev); $('opFormula').textContent=ev.text||'—';
+    $('opVerdict').textContent=ev.meta.pass===true?'✓ TRUE / keep':ev.meta.pass===false?'✗ FALSE / reject':''; $('opVerdict').className='verdict '+(ev.meta.pass===true?'pass':ev.meta.pass===false?'fail':'');
+    $('countInput').textContent=inputCount(ev); $('countKept').textContent=keptCount(ev); $('countOutput').textContent=outputCount(ev);
+    updateStatus(ev);
+    autoScrollCurrentRows();
+  }
+
+  function explain(ev){
+    const map={SOURCE_LOAD:'FROM loads the source directly into the working table.',JOIN_COMPARE:'Compare the JOIN-key cells. The active left and right key values are highlighted green.',JOIN_EMIT:'The ON condition matched. The matching right-side row stays green until this left-row scan finishes.',JOIN_LEFT_NULL:'LEFT JOIN preserves the left row even when no right row matches.',JOIN_COMPLETE:'The source tables are now hidden; the joined rows become the working table.',WHERE_TEST:'Highlight the current working-table row and evaluate the WHERE condition.',WHERE_KEEP:'The row passed the filter. It turns light green and stays green until WHERE is complete.',WHERE_REJECT:'The row failed the filter, so it fades out in place.',WHERE_COMPLETE:'Filtering is finished; only surviving rows continue.',GROUP_SCAN:'Read the GROUP BY key and locate the matching bordered group.',GROUP_ADD:'Move the row into its shared group block. Rows in one group share one border and one badge.',GROUP_AGGREGATES:'Before collapsing the raw rows, reveal the aggregate value for every group in new column(s).',GROUP_COMPLETE:'Collapse each bordered group into one summary row for HAVING, SELECT, and ORDER BY.',HAVING_TEST:'HAVING runs after GROUP BY. Test this whole group using its aggregate values.',HAVING_KEEP:'This group passes HAVING and stays light green for the rest of the HAVING phase.',HAVING_REJECT:'This group fails HAVING, so the whole grouped row fades out.',HAVING_COMPLETE:'HAVING filtering is finished; only surviving groups continue to SELECT.',SELECT_HIGHLIGHT:'SELECT first identifies the columns to keep: selected headers are green and unselected headers are red.',SELECT_FADE:'The red columns are not part of the SELECT output, so they fade away.',SELECT_PROJECT:'Only the selected columns remain in the working result.',SORT_COMPARE:'ORDER BY compares the current sort key values.',SORT_SWAP:'These rows are swapped for teaching purposes.',COMPLETE:'The visual execution is complete.'}; return map[ev.type]||'';
+  }
+  function inputCount(ev){
+    if(ev.type.startsWith('JOIN')) return DB[state.plan.base.table].length;
+    if(ev.clause==='WHERE') return estimatePreWhere();
+    if(ev.clause==='GROUP BY'||ev.clause==='HAVING') return ev.meta.activeCount??ev.rows.length;
+    return ev.rows.length;
+  }
+  function estimatePreWhere(){ return state.trace.findLast? (state.trace.findLast((x,i)=>i<state.step&&x.clause==='JOIN')?.rows.length||DB[state.plan.base.table].length) : DB[state.plan.base.table].length; }
+  function keptCount(ev){ return ev.meta.keptCount ?? ev.rows.length; }
+  function outputCount(ev){ return ev.meta.activeCount ?? ev.rows.length; }
+
+  function updateStatus(ev){
+    $('statusStep').textContent=`Step ${Math.min(state.step+1,state.trace.length)} / ${state.trace.length}`; $('statusClause').textContent=ev.clause; $('statusText').textContent=ev.title;
+    const pct=state.trace.length?((state.step+1)/state.trace.length*100):0; $('progressFill').style.width=pct+'%';
+  }
+
+  async function nextStep(){
+    if(state.step>=state.trace.length){ state.playing=false; return; }
+    const my=++state.token; const ev=state.trace[state.step]; applyEvent(ev);
+    await animateCurrent(ev,my); if(my!==state.token) return;
+    state.step++; if(state.step>=state.trace.length) state.playing=false;
+  }
+
+  async function animateCurrent(ev,my){
+    const dur=Math.max(80,700/state.speed);
+
+    if(ev.type==='SELECT_HIGHLIGHT'){
+      const headers=[...document.querySelectorAll('#workingTable th.col-keep, #workingTable th.col-reject')];
+      if(headers.length){
+        await Promise.all(headers.map(n=>n.animate(
+          [{transform:'translateY(-2px)',opacity:.55},{transform:'translateY(0)',opacity:1}],
+          {duration:dur,easing:'ease-out'}
+        ).finished.catch(()=>{})));
+      } else await sleep(Math.min(260,dur));
+      if(my!==state.token) return;
+      return;
+    }
+
+    if(ev.type==='SELECT_FADE'){
+      const reject=[...document.querySelectorAll('#workingTable .col-reject')];
+      if(reject.length){
+        await Promise.all(reject.map(n=>n.animate(
+          [{opacity:1,transform:'scaleX(1)'},{opacity:.35,transform:'scaleX(.92)'},{opacity:.06,transform:'scaleX(.78)'}],
+          {duration:dur,easing:'ease-in',fill:'forwards'}
+        ).finished.catch(()=>{})));
+      } else await sleep(Math.min(260,dur));
+      if(my!==state.token) return;
+      return;
+    }
+
+    if(ev.type==='GROUP_ADD'){
+      const flips=state.pendingWorkingFlip||[];
+      const activeGroup=document.querySelector('#workingTable tbody.group-block.active-group');
+      const animations=[];
+      for(const move of flips){
+        move.row.style.transform='';
+        animations.push(move.row.animate(
+          [{transform:`translate(${move.dx}px, ${move.dy}px)`},{transform:'translate(0,0)'}],
+          {duration:Math.max(220,dur*1.05),easing:'cubic-bezier(.22,.8,.25,1)'}
+        ).finished.catch(()=>{}).finally(()=>{move.row.style.zIndex='';move.row.style.position='';}));
+      }
+      if(activeGroup){
+        animations.push(activeGroup.animate(
+          [{filter:'brightness(1)'},{filter:'brightness(1.035)'},{filter:'brightness(1)'}],
+          {duration:Math.max(180,dur*.8),easing:'ease-out'}
+        ).finished.catch(()=>{}));
+      }
+      if(animations.length) await Promise.all(animations); else await sleep(Math.min(260,dur));
+      state.pendingWorkingFlip=[];
+      if(my!==state.token) return;
+      return;
+    }
+
+    if(ev.type==='GROUP_AGGREGATES'){
+      const cells=[...document.querySelectorAll('#workingTable .group-agg-head, #workingTable .group-agg-preview')];
+      if(cells.length){
+        await Promise.all(cells.map((n,i)=>n.animate(
+          [{opacity:0,transform:'translateX(22px)'},{opacity:1,transform:'translateX(0)'}],
+          {duration:Math.max(220,dur*.9),delay:Math.min(i*12,120),easing:'cubic-bezier(.22,.8,.25,1)'}
+        ).finished.catch(()=>{})));
+      } else await sleep(Math.min(260,dur));
+      if(my!==state.token) return;
+      return;
+    }
+
+    if(ev.type==='GROUP_COMPLETE'){
+      const groups=[...document.querySelectorAll('#workingTable .group-summary')];
+      if(groups.length){
+        await Promise.all(groups.map((n,i)=>n.animate(
+          [{opacity:.08,transform:'translateY(14px) scale(.985)'},{opacity:1,transform:'translateY(0) scale(1)'}],
+          {duration:Math.max(220,dur*.9),delay:i*55,easing:'cubic-bezier(.22,.8,.25,1)'}
+        ).finished.catch(()=>{})));
+      } else await sleep(Math.min(260,dur));
+      if(my!==state.token) return;
+      return;
+    }
+
+    const nodes=[...document.querySelectorAll('.dbrow.current')];
+    if(nodes.length){
+      const anims=nodes.map(n=>{
+        const frames=(ev.type==='WHERE_REJECT'||ev.type==='HAVING_REJECT')
+          ? [{opacity:1,transform:'scale(1)'},{opacity:.72,transform:'scale(.995)'},{opacity:.10,transform:'scale(.985)'}]
+          : [{transform:'scale(1)'},{transform:'scale(1.02)'},{transform:'scale(1)'}];
+        return n.animate(frames,{duration:dur,easing:'ease'}).finished.catch(()=>{});
+      });
+      await Promise.all(anims);
+    } else await sleep(Math.min(260,dur));
+    if(my!==state.token) return;
+  }
+
+  async function play(){ if(!state.trace.length) return; if(state.playing) return; state.playing=true; while(state.playing&&state.step<state.trace.length){ const before=state.step; await nextStep(); if(!state.playing||state.step===before) break; await sleep(220/state.speed); } }
+  function pause(){ state.playing=false; state.token++; }
+  function back(){ pause(); if(state.step<=0) return; state.step=Math.max(0,state.step-1); const idx=Math.max(0,state.step-1); if(state.step===0) renderReady(); else applyEvent(state.trace[idx]); }
+  function restart(){ pause(); state.step=0; renderReady(); }
+
+  function renderReady(){ const baseRows=state.plan?DB[state.plan.base.table].map(r=>sourceRow(state.plan.base.table,r,state.plan.base.alias)):[]; if(state.plan?.joins?.length){ const first=state.plan.joins[0]; renderSourceTables([{title:state.plan.base.table,rows:baseRows},{title:first.table,rows:DB[first.table].map(r=>sourceRow(first.table,r,first.alias))}],{}); $('workingTable').innerHTML='<div class="muted">JOIN output will appear here as matches are found.</div>'; } else { renderSourceTables([],{}); renderWorking(baseRows,{}); } renderStage('FROM'); $('opTitle').textContent='Trace ready'; $('opText').textContent=state.plan?.joins?.length?'Source tables are shown because this query performs a JOIN.':'Single-table query: the source is already the working table.'; $('opFormula').textContent='—'; $('opVerdict').textContent=''; $('countInput').textContent=DB[state.plan?.base?.table]?.length||0; $('countKept').textContent='0'; $('countOutput').textContent=state.plan?.joins?.length?'0':String(baseRows.length); $('statusStep').textContent=`Step 0 / ${state.trace.length}`; $('statusClause').textContent='READY'; $('statusText').textContent='Ready to play'; $('progressFill').style.width='0%'; }
+
+  function build(){
+    pause(); hideMessage();
+    try{ const plan=parseSQL($('sqlEditor').value); const trace=buildTrace(plan); state.plan=plan; state.trace=trace; state.step=0; renderReady(); showMessage(`Built ${trace.length} visual steps. Supported prototype subset: SELECT, FROM, INNER/LEFT JOIN, WHERE, GROUP BY, HAVING, COUNT/SUM/AVG/MIN/MAX, and ORDER BY.`); }
+    catch(err){ state.plan=null; state.trace=[]; state.step=0; renderSourceTables([],{}); $('workingTable').innerHTML='<div class="muted">Fix the SQL and build again.</div>'; showMessage(err.message,true); $('statusText').textContent='SQL error'; }
+  }
+
+  function showMessage(msg,error=false){ const b=$('messageBox'); b.textContent=msg; b.className='notice'+(error?' error':''); }
+  function hideMessage(){ $('messageBox').className='notice hidden'; }
+
+  function renderPresets(){ $('presetBox').innerHTML=Object.keys(PRESETS).map(k=>`<button data-preset="${escapeHtml(k)}">${escapeHtml(k)}</button>`).join(''); $('presetBox').addEventListener('click',e=>{ const k=e.target.dataset.preset; if(!k)return; pause(); $('sqlEditor').value=PRESETS[k]; showMessage(`Loaded preset: ${k}. Press Build / Run.`); }); }
+  function renderDict(){ $('dictBody').innerHTML=Object.entries(DICT).map(([name,rows])=>`<div class="dict"><h3>${name}</h3><table><thead><tr><th>Field</th><th>Type</th><th>Size</th><th>Description</th><th>Key</th></tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${escapeHtml(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`).join('')+`<div class="notice">Relationship: STD.SID → ENROLL.SID and ELE.EID → ENROLL.EID. ENROLL uses a composite primary key (SID, EID).</div>`; }
+
+  $('buildBtn').onclick=build; $('nextBtn').onclick=()=>{pause();nextStep();}; $('playBtn').onclick=play; $('pauseBtn').onclick=pause; $('backBtn').onclick=back; $('restartBtn').onclick=restart;
+  function setFocusTable(on){
+    const right=document.querySelector('.right');
+    right.classList.toggle('focus-table',on);
+    const btn=$('focusTableBtn');
+    btn.setAttribute('aria-pressed',String(on));
+    btn.textContent=on?'⊞ Normal View':'⛶ Focus Table';
+    btn.title=on?'Restore Current Operation and Teaching Note':'Hide Current Operation and Teaching Note, and expand the Working Table';
+    requestAnimationFrame(()=>autoScrollCurrentRows());
+  }
+  $('focusTableBtn').onclick=()=>setFocusTable(!document.querySelector('.right').classList.contains('focus-table'));
+
+  $('resetBtn').onclick=()=>{ pause(); $('sqlEditor').value=PRESETS['WHERE + ORDER']; build(); };
+  $('speed').oninput=e=>{ state.speed=Number(e.target.value); $('speedLabel').textContent=state.speed+'×'; };
+  $('dictBtn').onclick=()=>$('dictDialog').showModal(); $('closeDict').onclick=()=>$('dictDialog').close();
+  $('sqlEditor').addEventListener('input',()=>{ pause(); showMessage('SQL changed. Press Build / Run to generate a new visualization.'); });
+  window.addEventListener('keydown',e=>{ if(document.activeElement===$('sqlEditor')) return; if(e.code==='Space'){e.preventDefault();state.playing?pause():play();} else if(e.key==='ArrowRight'){e.preventDefault();pause();nextStep();} else if(e.key==='ArrowLeft'){e.preventDefault();back();} else if(e.key==='Home'){e.preventDefault();restart();} });
+
+  renderPresets(); renderDict(); renderSourceTables([],{}); renderStage('FROM'); $('sqlEditor').value=PRESETS['WHERE + ORDER']; build();
+})();
+</script>
+</body>
+</html>
