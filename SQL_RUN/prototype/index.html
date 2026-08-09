@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Run — 動態玩法原型</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">SQL</div>
+        <div><strong>SQL RUN</strong><small>動態移動玩法原型</small></div>
+      </div>
+      <div class="hud" aria-label="遊戲狀態">
+        <div class="hud-chip"><b id="roundValue">—</b><span>關卡</span></div>
+        <div class="hud-chip"><b id="aliveValue">—</b><span>生還</span></div>
+        <div class="hud-chip"><b id="phaseValue">準備</b><span>階段</span></div>
+      </div>
+      <div class="top-actions">
+        <button class="icon-button" id="pauseButton" type="button" title="暫停或繼續（P）" aria-label="暫停">Ⅱ</button>
+        <button class="text-button" id="resetButton" type="button">重新開始 ↻</button>
+      </div>
+    </header>
+
+    <section class="layout">
+      <aside class="panel mission-panel">
+        <div class="eyebrow">目前任務</div>
+        <h1 id="missionTitle">建立正確的 SQL 查詢</h1>
+        <p id="missionCopy">留在地面上，移動到能正確延續 SQL 查詢的板塊。</p>
+        <div class="schema">
+          <div class="schema-name" id="schemaName">ELE</div>
+          <div class="schema-fields" id="schemaFields"></div>
+        </div>
+        <div class="rules">
+          <h2>移動規則</h2>
+          <p>使用 <kbd>WASD</kbd> 或 <kbd>方向鍵</kbd> 自由移動。</p>
+          <p>跑道會持續向下移動，只有目前板塊碰到畫面底部時才會停止。</p>
+          <p class="danger-rule">腳下沒有實體板塊便會立即墜落。</p>
+        </div>
+      </aside>
+
+      <section class="panel arena" aria-label="SQL Run 動態跑道">
+        <canvas id="gameCanvas" aria-label="動態 SQL 板塊跑道"></canvas>
+        <div class="query-board">
+          <span>目前建立的 SQL 查詢</span>
+          <code id="queryValue"><i></i></code>
+        </div>
+        <div class="phase-banner" id="phaseBanner" data-phase="ready">等待開始</div>
+        <div class="timer" id="timerWrap">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <circle class="timer-track" cx="32" cy="32" r="27"></circle>
+            <circle class="timer-value" id="timerCircle" cx="32" cy="32" r="27"></circle>
+          </svg>
+          <b id="timerNumber">—</b>
+        </div>
+        <div class="status-message" id="statusMessage">開始遊戲以測試連續移動。</div>
+
+        <div class="touch-pad" aria-label="觸控移動按鈕">
+          <button type="button" data-move="up" aria-label="向上移動">▲</button>
+          <button type="button" data-move="left" aria-label="向左移動">◀</button>
+          <button type="button" data-move="down" aria-label="向下移動">▼</button>
+          <button type="button" data-move="right" aria-label="向右移動">▶</button>
+        </div>
+      </section>
+
+      <aside class="panel ranking-panel">
+        <h2>即時排名</h2>
+        <div class="ranking-list" id="rankingList"></div>
+        <div class="race-feed">
+          <h2>賽事訊息</h2>
+          <p id="eventMessage">最早淘汰的玩家會排在最下方。</p>
+        </div>
+      </aside>
+    </section>
+
+    <footer class="testbar">
+      <strong>原型測試工具</strong>
+      <button type="button" data-speed="0.5">0.5×</button>
+      <button type="button" data-speed="1" class="active">1×</button>
+      <button type="button" data-speed="2">2×</button>
+      <button type="button" id="answerButton">顯示安全板塊：關</button>
+      <button type="button" id="boundsButton">碰撞邊界：關</button>
+      <button type="button" id="skipButton">跳過階段</button>
+      <span>直接開啟檔案 · 不使用伺服器 · 不使用網絡</span>
+    </footer>
+  </main>
+
+  <div class="overlay" id="startOverlay">
+    <section class="modal">
+      <div class="eyebrow">離線移動測試</div>
+      <h1>跑出正確 SQL。<br><span>不要離開跑道。</span></h1>
+      <p>每個板塊都是實體地面。跑道向下移動時，你可以在板塊之間順暢行走。請在其他板塊崩塌前移到正確的 SQL 板塊，並且不要走出任何板塊邊界。</p>
+      <div class="setup-grid">
+        <label>難度
+          <select id="difficultySelect">
+            <option value="easy">簡單 · 2 個板塊</option>
+            <option value="normal" selected>普通 · 2–3 個板塊</option>
+            <option value="hard">困難 · 3–4 個板塊</option>
+            <option value="nightmare">惡夢 · 4–5 個板塊</option>
+          </select>
+        </label>
+        <label>作答時間
+          <select id="timeSelect">
+            <option value="2">2 秒</option>
+            <option value="3">3 秒</option>
+            <option value="4">4 秒</option>
+            <option value="5" selected>5 秒</option>
+            <option value="6">6 秒</option>
+            <option value="7">7 秒</option>
+            <option value="8">8 秒</option>
+            <option value="9">9 秒</option>
+            <option value="10">10 秒</option>
+          </select>
+        </label>
+        <label>模擬玩家
+          <select id="runnerSelect">
+            <option value="4">4 位玩家</option>
+            <option value="8" selected>8 位玩家</option>
+            <option value="12">12 位玩家</option>
+            <option value="16">16 位玩家</option>
+          </select>
+        </label>
+      </div>
+      <button class="primary" id="startButton" type="button">查看題目並準備</button>
+      <small>操作：WASD、方向鍵，或畫面上的方向按鈕。</small>
+    </section>
+  </div>
+
+  <div class="overlay hidden" id="readyOverlay">
+    <section class="modal ready-modal">
+      <div class="eyebrow">比賽準備</div>
+      <h1>閱讀 SQL 任務</h1>
+      <div class="question-level" id="readyDifficulty" data-level="basic">基礎 · BASIC</div>
+      <div class="ready-question" id="readyQuestion">正在準備題目……</div>
+      <div class="ready-schema-grid">
+        <section>
+          <span>可用資料表</span>
+          <code id="readyTable">ELE</code>
+        </section>
+        <section>
+          <span>可用欄位</span>
+          <div class="ready-fields" id="readyFields"></div>
+        </section>
+      </div>
+      <p class="ready-note">題目隨機抽選自 <strong id="readyPoolCount">40</strong> 題題庫。請記住題目、資料表和中英欄位；比賽開始後，只有目前和已完成的板塊會顯示文字。</p>
+      <div class="ready-actions">
+        <button class="secondary" id="readyBackButton" type="button">返回設定</button>
+        <div class="refresh-group" aria-label="按題目難度換題">
+          <button class="refresh-button" id="readyRefreshBasic" data-level="basic" type="button" title="換一題基礎題" aria-label="換一題基礎題">↻</button>
+          <button class="refresh-button" id="readyRefreshMedium" data-level="medium" type="button" title="換一題中等題" aria-label="換一題中等題">↻</button>
+          <button class="refresh-button" id="readyRefreshHard" data-level="hard" type="button" title="換一題困難題" aria-label="換一題困難題">↻</button>
+        </div>
+        <button class="primary" id="readyButton" type="button">準備完成，開始比賽</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="overlay hidden" id="resultOverlay">
+    <section class="modal result-modal">
+      <div class="result-icon" id="resultIcon">🏆</div>
+      <div class="eyebrow">比賽結束</div>
+      <h1 id="resultTitle">結果</h1>
+      <p id="resultCopy"></p>
+      <code class="result-query" id="resultQuery"></code>
+      <div class="result-standings" id="resultStandings"></div>
+      <button class="primary" id="raceAgainButton" type="button">再玩一次</button>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="gameplay.js"></script>
+</body>
+</html>

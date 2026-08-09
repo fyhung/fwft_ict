@@ -202,6 +202,68 @@
       transform: translateX(4px);
     }
 
+    .pet-frame {
+      position: fixed;
+      z-index: 20;
+      right: 8.25rem;
+      bottom: 0;
+      width: min(560px, calc(100vw - 8.25rem));
+      height: 260px;
+      border: 0;
+      background: transparent;
+      pointer-events: none;
+    }
+
+    .pet-controls {
+      position: fixed;
+      z-index: 21;
+      right: max(0.7rem, env(safe-area-inset-right));
+      bottom: max(0.7rem, env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.35rem;
+    }
+
+    .pet-controls[hidden] {
+      display: none;
+    }
+
+    .pet-control {
+      min-width: 7rem;
+      padding: 0.58rem 0.85rem;
+      color: var(--text);
+      background: rgb(255 255 255 / 90%);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font: inherit;
+      font-size: 0.88rem;
+      font-weight: 750;
+      line-height: 1.2;
+      box-shadow: 0 6px 18px rgb(72 51 126 / 12%);
+      backdrop-filter: blur(12px);
+      cursor: pointer;
+      transition: color 160ms ease, background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    }
+
+    .pet-control:hover,
+    .pet-control:focus-visible {
+      color: white;
+      background: var(--accent);
+      outline: none;
+      transform: translateY(-1px);
+      box-shadow: 0 9px 24px rgb(72 51 126 / 22%);
+    }
+
+    .pet-control:focus-visible {
+      box-shadow: 0 0 0 3px rgb(115 85 199 / 28%);
+    }
+
+    .pet-control:disabled {
+      cursor: wait;
+      opacity: 0.5;
+    }
+
     @media (max-width: 760px) {
       .projects {
         grid-template-columns: 1fr;
@@ -210,6 +272,16 @@
       .projects li:last-child:nth-child(odd) {
         width: 100%;
         grid-column: auto;
+      }
+
+      .pet-controls {
+        right: max(0.45rem, env(safe-area-inset-right));
+        bottom: max(0.45rem, env(safe-area-inset-bottom));
+      }
+
+      .pet-frame {
+        right: 7.75rem;
+        width: calc(100vw - 7.75rem);
       }
     }
 
@@ -230,7 +302,8 @@
     @media (prefers-reduced-motion: reduce) {
       .project-link,
       .project-image img,
-      .open {
+      .open,
+      .pet-control {
         transition: none;
       }
     }
@@ -341,8 +414,69 @@
             </span>
           </a>
         </li>
+        <li>
+          <a class="project-link" href="SQL_Visual/index.html">
+            <picture class="project-image">
+              <source srcset="assets/SQL_Visual.webp" type="image/webp">
+              <img src="assets/SQL_Visual.png" alt="" width="1200" height="675" loading="lazy" decoding="async">
+            </picture>
+            <span class="project-meta">
+              <span class="project-name">
+                <span class="folder">SQL_Visual/</span>
+                <h2>SQL Query Visualizer</h2>
+              </span>
+              <span class="open" aria-hidden="true">→</span>
+            </span>
+          </a>
+        </li>
       </ul>
     </nav>
   </main>
+
+  <iframe
+    class="pet-frame"
+    id="sweetchie-pet"
+    src="sweetchie/sweetchie-pet.html?embed=1&amp;scale=0.68&amp;speed=1&amp;v=2"
+    title="Sweetchie animated website pet"
+    sandbox="allow-scripts"
+    tabindex="-1"
+  ></iframe>
+  <div class="pet-controls" aria-label="Sweetchie controls" hidden>
+    <button class="pet-control" type="button" data-pet-action="wave" disabled>Wave</button>
+    <button class="pet-control" type="button" data-pet-action="walk" disabled>Walk</button>
+    <button class="pet-control" type="button" data-pet-action="surprise" disabled>Surprise</button>
+    <button class="pet-control" type="button" data-pet-action="think" disabled>Think</button>
+    <button class="pet-control" type="button" data-pet-action="review" disabled>Review</button>
+    <button class="pet-control" type="button" data-pet-action="idle" disabled>Idle</button>
+  </div>
+  <script>
+    (() => {
+      const frame = document.querySelector("#sweetchie-pet");
+      const controlBar = document.querySelector(".pet-controls");
+      const controls = [...controlBar.querySelectorAll("[data-pet-action]")];
+
+      const setControlsReady = () => {
+        controlBar.hidden = false;
+        controls.forEach((control) => { control.disabled = false; });
+      };
+
+      const sendAction = (action) => {
+        frame.contentWindow?.postMessage({ type: "sweetchie-pet", action }, "*");
+      };
+
+      window.addEventListener("message", (event) => {
+        if (event.source !== frame.contentWindow || event.data?.type !== "sweetchie-pet-ready") return;
+        setControlsReady();
+      });
+
+      frame.addEventListener("load", setControlsReady);
+
+      controls.forEach((control) => {
+        control.addEventListener("click", () => {
+          sendAction(control.dataset.petAction);
+        });
+      });
+    })();
+  </script>
 </body>
 </html>

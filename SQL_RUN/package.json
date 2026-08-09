@@ -1,0 +1,74 @@
+{
+  "name": "sql-run",
+  "version": "1.0.0",
+  "private": true,
+  "description": "An authoritative LAN classroom game for building SQL queries one plate at a time.",
+  "author": "SQL Run Classroom Project",
+  "packageManager": "traversal@1.0.0",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "concurrently -k -n SERVER,WEB -c cyan,magenta \"tsx watch server/dev.ts\" \"vite --host 0.0.0.0\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:web": "vite build && node scripts/copy-prototype.mjs",
+    "build:server": "esbuild server/index.ts --bundle --platform=node --format=cjs --outfile=dist-server/server.cjs && esbuild server/standalone.ts --bundle --platform=node --format=cjs --outfile=dist-server/standalone.cjs",
+    "build": "npm run typecheck && npm run test && npm run build:web && npm run build:server",
+    "start": "node dist-server/standalone.cjs",
+    "package:portable": "npm run build && electron-builder --win portable --x64",
+    "package:installer": "npm run build && electron-builder --win nsis --x64"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@colyseus/core": "^0.16.5",
+    "@colyseus/ws-transport": "^0.16.5",
+    "colyseus.js": "^0.16.19",
+    "express": "^5.1.0",
+    "qrcode": "^1.5.4",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.2.1",
+    "@types/qrcode": "^1.5.5",
+    "concurrently": "^9.2.0",
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12",
+    "esbuild": "^0.25.8",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.1",
+    "vitest": "^3.2.4"
+  },
+  "build": {
+    "appId": "hk.edu.sqlrun.host",
+    "productName": "SQL Run",
+    "electronDownload": {
+      "cache": "work/electron-cache"
+    },
+    "asar": true,
+    "npmRebuild": false,
+    "directories": {
+      "output": "outputs"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-server/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "portable",
+        "nsis"
+      ],
+      "artifactName": "SQL-Run-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "SQL-Run-${version}-portable-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "SQL-Run-Setup-${version}-${arch}.${ext}"
+    }
+  }
+}

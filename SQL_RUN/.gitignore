@@ -1,0 +1,11 @@
+node_modules/
+dist/
+dist-server/
+outputs/*.exe
+outputs/*.blockmap
+*.log
+.vite/
+coverage/
+work/
+outputs/win-unpacked/
+outputs/builder-debug.yml
