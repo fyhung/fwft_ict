@@ -18,6 +18,8 @@ describe("RaceEngine", () => {
     expect(engine.eliminate(9_050)).toEqual(["bob"]);
     expect(engine.players.get("alice")?.alive).toBe(true);
     expect(engine.players.get("bob")?.alive).toBe(false);
+    expect(engine.players.get("bob")?.mistakes[0]?.correct.value).toBe("SELECT");
+    expect(engine.players.get("bob")?.mistakes[0]?.chosen).not.toBeNull();
     expect(engine.advance(10_150)).toBe("next");
     let now = 11_000;
     while (engine.phase !== "results") {
@@ -83,5 +85,6 @@ describe("RaceEngine", () => {
     expect(engine.players.get("runner")?.choice).toBe(0);
     expect(engine.move("runner", "section-0", -.01, .5, 2_100)).toBe("fell");
     expect(engine.players.get("runner")?.alive).toBe(false);
+    expect(engine.players.get("runner")?.mistakes[0]).toMatchObject({ sectionIndex: 0, chosen: null, correct: { value: "SELECT" } });
   });
 });

@@ -42,6 +42,7 @@ export class RaceEngine {
     for (const mission of missions) {
       if (!validateMissionTokens(mission.tokens)) throw new Error(`Invalid SQL mission: ${mission.id}`);
     }
+    this.selectMission();
   }
 
   addPlayer(id: string, name: string): RacePlayer {
@@ -59,6 +60,7 @@ export class RaceEngine {
       chosenAt: null,
       x: .5,
       y: .72,
+      mistakes: [],
     };
     this.players.set(id, player);
     return player;
@@ -73,9 +75,11 @@ export class RaceEngine {
     const plateDifficulty = settings.plateDifficulty && LANE_RANGES[settings.plateDifficulty] ? settings.plateDifficulty : "normal";
     const decisionSeconds = Math.max(2, Math.min(10, Math.round(settings.decisionSeconds ?? 5)));
     this.settings = { plateDifficulty, decisionSeconds, ...(settings.questionLevel ? { questionLevel: settings.questionLevel } : {}) };
-    const candidates = settings.questionLevel ? missions.filter((mission) => mission.level === settings.questionLevel) : missions;
-    const index = missionIndex ?? Math.floor(this.random() * candidates.length);
-    this.mission = candidates[index % candidates.length] ?? candidates[0] ?? null;
+    if (missionIndex !== undefined || !this.mission || (settings.questionLevel && this.mission.level !== settings.questionLevel)) {
+      const candidates = settings.questionLevel ? missions.filter((mission) => mission.level === settings.questionLevel) : missions;
+      const index = missionIndex ?? Math.floor(this.random() * candidates.length);
+      this.mission = candidates[index % candidates.length] ?? candidates[0] ?? null;
+    }
     if (!this.mission) throw new Error("No SQL missions are available.");
     this.sectionNumber = 0;
     this.completedTokens = [];
@@ -92,6 +96,7 @@ export class RaceEngine {
         chosenAt: null,
         x: .5,
         y: .72,
+        mistakes: [],
       });
     }
     this.section = this.createSection(0);
@@ -127,6 +132,7 @@ export class RaceEngine {
     player.x = x;
     player.y = y;
     if (x < 0 || x > 1 || y < 0 || y > 1) {
+      this.recordMistake(player, null);
       player.alive = false;
       player.choice = null;
       return "fell";
@@ -159,6 +165,8 @@ export class RaceEngine {
         if (player.chosenAt !== null && this.choosingStartedAt !== null) player.reactions.push(Math.max(0, player.chosenAt - this.choosingStartedAt));
         player.averageReactionMs = average(player.reactions);
       } else {
+        const chosen = this.section.plates.find((plate) => plate.lane === player.choice)?.token ?? null;
+        this.recordMistake(player, chosen);
         player.alive = false;
         eliminated.push(player.id);
       }
@@ -195,8 +203,14 @@ export class RaceEngine {
     this.choosingStartedAt = null;
     this.settings = { plateDifficulty: "normal", decisionSeconds: 5 };
     for (const player of this.players.values()) {
-      Object.assign(player, { ready: false, alive: true, choice: null, survivedSteps: 0, averageReactionMs: null, finalRank: null, reactions: [], chosenAt: null, x: .5, y: .72 });
+      Object.assign(player, { ready: false, alive: true, choice: null, survivedSteps: 0, averageReactionMs: null, finalRank: null, reactions: [], chosenAt: null, x: .5, y: .72, mistakes: [] });
     }
+    this.selectMission();
+  }
+
+  selectMission(level?: QuestionLevel): void {
+    const candidates = level ? missions.filter((mission) => mission.level === level) : missions;
+    this.mission = candidates[Math.floor(this.random() * candidates.length)] ?? candidates[0] ?? null;
   }
 
   getMissionView() {
@@ -217,6 +231,12 @@ export class RaceEngine {
   private setPhase(phase: RoomPhase, phaseEndsAt: number | null): void {
     this.phase = phase;
     this.phaseEndsAt = phaseEndsAt;
+  }
+
+  private recordMistake(player: RacePlayer, chosen: SqlToken | null): void {
+    const correct = this.mission?.tokens[this.sectionNumber];
+    if (!correct || player.mistakes.some((mistake) => mistake.sectionIndex === this.sectionNumber)) return;
+    player.mistakes.push({ sectionIndex: this.sectionNumber, chosen, correct });
   }
 
   private createSection(index: number): SectionView & { correctPlateId: string } {

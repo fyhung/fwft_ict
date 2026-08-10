@@ -193,14 +193,21 @@ function renderHost(): void {
     decisionSeconds: selectedDecisionSeconds,
     ...(selectedQuestionLevel === "all" ? {} : { questionLevel: selectedQuestionLevel }),
   }));
-  document.querySelector("[data-reset]")?.addEventListener("click", () => room?.send("host", { type: "reset_game" }));
+  document.querySelector("[data-reset]")?.addEventListener("click", () => {
+    selectedQuestionLevel = "all";
+    room?.send("host", { type: "reset_game" });
+  });
   document.querySelector<HTMLSelectElement>("[data-address]")?.addEventListener("change", (event) => {
     selectedAddress = (event.currentTarget as HTMLSelectElement).value;
     renderHost();
   });
   document.querySelector<HTMLSelectElement>("[data-plate-difficulty]")?.addEventListener("change", (event) => { selectedPlateDifficulty = (event.currentTarget as HTMLSelectElement).value as PlateDifficulty; });
   document.querySelector<HTMLSelectElement>("[data-decision-seconds]")?.addEventListener("change", (event) => { selectedDecisionSeconds = Number((event.currentTarget as HTMLSelectElement).value); });
-  document.querySelector<HTMLSelectElement>("[data-question-level]")?.addEventListener("change", (event) => { selectedQuestionLevel = (event.currentTarget as HTMLSelectElement).value as "all" | QuestionLevel; });
+  document.querySelectorAll<HTMLButtonElement>("[data-refresh-level]").forEach((button) => button.addEventListener("click", () => {
+    const level = button.dataset.refreshLevel as QuestionLevel;
+    selectedQuestionLevel = level;
+    room?.send("host", { type: "refresh_question", questionLevel: level });
+  }));
   document.querySelector("[data-copy-url]")?.addEventListener("click", () => {
     if (joinUrl) void navigator.clipboard?.writeText(joinUrl);
     notice = "已複製加入網址。";
@@ -212,13 +219,14 @@ function renderHost(): void {
 function hostLobbyStage(players: RoomSnapshot["players"], allReady: boolean): string {
   return `
     <div class="lobby-hero">
-      <div class="eyebrow">CLASSROOM ELIMINATION RACE</div>
-      <h1>Build the query.<br /><em>Stay on the track.</em></h1>
-      <p>Choose the SQL token that completes the next step. Wrong plates collapse. Last runner standing wins.</p>
-      <div class="flow-line"><span>SCAN</span><i></i><span>JOIN</span><i></i><span>READY</span><i></i><span>RUN</span></div>
+      <div class="eyebrow">課室 SQL 淘汰賽</div>
+      <h1>完成 SQL 查詢。<br /><em>留在安全地板上。</em></h1>
+      <p>走到能接續 SQL 的地板。錯誤地板會崩塌；最後仍在跑道上的玩家勝出。</p>
+      <div class="flow-line"><span>掃描</span><i></i><span>加入</span><i></i><span>準備</span><i></i><span>起跑</span></div>
+      ${readyQuestionPreview()}
       <div class="lobby-status ${allReady ? "ready" : ""}">
         <span class="pulse-ring"></span>
-        <div><strong>${players.length === 0 ? "Waiting for runners" : allReady ? "Grid locked and ready" : "Runners are joining"}</strong><small>${players.length === 0 ? "Point phone cameras at the QR code" : `${players.filter((player) => player.ready).length} of ${players.length} ready`}</small></div>
+        <div><strong>${players.length === 0 ? "等待玩家加入" : allReady ? "所有玩家準備完成" : "玩家正在加入"}</strong><small>${players.length === 0 ? "請用手機相機掃描 QR code" : `${players.filter((player) => player.ready).length}／${players.length} 人已準備`}</small></div>
       </div>
       <div class="demo-track" aria-hidden="true"><div class="demo-plate wrong">WHERE</div><div class="demo-plate correct">SELECT<span>✓</span></div><div class="runner-silhouette">▲</div></div>
     </div>`;
@@ -235,9 +243,9 @@ function hostRaceStage(): string {
   return `
     <div class="race-stage">
       <div class="mission-card"><span class="question-badge level-${snapshot.mission?.level ?? "basic"}">${questionLevelLabel(snapshot.mission?.level)}</span><strong>${escapeHtml(snapshot.mission?.prompt ?? "準備開始")}</strong><div class="schema-chip">${escapeHtml(schema)}</div></div>
-      <div class="query-strip"><span>CURRENT QUERY</span><code>${formatQuery(snapshot.completedTokens)}<b class="query-cursor">_</b></code></div>
-      <div class="race-meta"><div><span>SECTION</span><strong>${snapshot.sectionNumber + 1}<small>/${snapshot.mission?.totalSteps ?? 0}</small></strong></div><div class="countdown-orb"><strong data-countdown>—</strong><span>${snapshot.phase === "choosing" ? "SECONDS" : phaseLabel(snapshot.phase)}</span></div><div><span>ALIVE</span><strong>${active.length}<small>/${snapshot.players.length}</small></strong></div></div>
-      <div class="track-window phase-${snapshot.phase}">
+      <div class="query-strip"><span>目前 SQL</span><code>${formatQuery(snapshot.completedTokens)}<b class="query-cursor">_</b></code></div>
+      <div class="race-meta"><div><span>段落</span><strong>${snapshot.sectionNumber + 1}<small>/${snapshot.mission?.totalSteps ?? 0}</small></strong></div><div class="countdown-orb"><strong data-countdown>—</strong><span>${snapshot.phase === "choosing" ? "秒" : phaseLabel(snapshot.phase)}</span></div><div><span>仍在場</span><strong>${active.length}<small>/${snapshot.players.length}</small></strong></div></div>
+      <div class="track-window phase-${snapshot.phase}" style="--decision-duration:${snapshot.settings.decisionSeconds}s">
         <div class="track-grid"></div><div class="vanish-line"></div>
         <div class="plates-row" style="--lane-count:${laneCount}">${(section?.plates ?? []).map((plate) => hostPlate(plate.id, plate.lane, plate.token.value, correctId)).join("")}</div>
         <div class="runner-row" style="--lane-count:${laneCount}">${active.map((player, index) => `<div class="runner" data-player-id="${escapeHtml(player.id)}" style="--runner-index:${index};left:${(player.x * 100).toFixed(2)}%;top:${(player.y * 100).toFixed(2)}%"><span>${initials(player.name)}</span><small>${escapeHtml(player.name)}</small></div>`).join("")}</div>
@@ -248,13 +256,13 @@ function hostRaceStage(): string {
 
 function renderPlayer(): void {
   if (!room || !snapshot || !welcome) {
-    if (connection === "connecting" || connection === "reconnecting") renderPlayerConnecting("Connecting to the starting grid…");
+    if (connection === "connecting" || connection === "reconnecting") renderPlayerConnecting("正在連接起跑區…");
     else renderJoin();
     return;
   }
   const me = snapshot.players.find((player) => player.id === welcome?.playerId);
   if (!me) {
-    renderPlayerConnecting("Restoring your runner…");
+    renderPlayerConnecting("正在恢復你的角色…");
     return;
   }
   if (snapshot.phase === "lobby") renderPlayerLobby(me);
@@ -269,21 +277,21 @@ function renderJoin(): void {
       <div class="phone-brand"><span>SQL</span>RUN</div>
       <div class="join-art"><div class="track-lines"></div><div class="join-runner">▲</div><div class="join-plate">SELECT</div></div>
       <section class="phone-card">
-        <div class="eyebrow">ENTER THE GRID</div><h1>Ready to run?</h1><p>Pick the next valid SQL token before the track falls away.</p>
+        <div class="eyebrow">加入起跑區</div><h1>準備起跑？</h1><p>在跑道崩塌前，移動到下一個正確的 SQL token。</p>
         <form data-join-form>
-          <label>YOUR NAME<input name="name" maxlength="18" autocomplete="nickname" placeholder="e.g. Alice" required /></label>
-          <label>ROOM CODE<input name="roomCode" maxlength="5" value="${code}" placeholder="AB7K2" autocapitalize="characters" required /></label>
-          <button class="primary-button" type="submit">JOIN RACE <span>→</span></button>
+          <label>你的姓名<input name="name" maxlength="18" autocomplete="nickname" placeholder="例如：陳大文" required /></label>
+          <label>房間代碼<input name="roomCode" maxlength="5" value="${code}" placeholder="AB7K2" autocapitalize="characters" required /></label>
+          <button class="primary-button" type="submit">加入遊戲 <span>→</span></button>
         </form>
         ${notice ? `<div class="phone-error">${escapeHtml(notice)}</div>` : ""}
       </section>
-      <footer>Same Wi-Fi as the host · No app needed</footer>
+      <footer>與教師電腦連接相同 Wi-Fi · 無需安裝 app</footer>
     </main>`;
   document.querySelector<HTMLFormElement>("[data-join-form]")?.addEventListener("submit", (event) => void joinPlayer(event));
 }
 
 function renderPlayerConnecting(message: string): void {
-  app.innerHTML = `<main class="phone-shell connecting-screen"><div class="phone-brand"><span>SQL</span>RUN</div><div class="loader"><i></i><i></i><i></i></div><h1>${escapeHtml(message)}</h1><p>Keep this screen open.</p></main>`;
+  app.innerHTML = `<main class="phone-shell connecting-screen"><div class="phone-brand"><span>SQL</span>RUN</div><div class="loader"><i></i><i></i><i></i></div><h1>${escapeHtml(message)}</h1><p>請保持此畫面開啟。</p></main>`;
 }
 
 function renderPlayerLobby(me: RoomSnapshot["players"][number]): void {
@@ -291,15 +299,16 @@ function renderPlayerLobby(me: RoomSnapshot["players"][number]): void {
     <main class="phone-shell player-lobby">
       <header class="phone-top"><div class="phone-brand"><span>SQL</span>RUN</div><div class="connection-pill" data-connection><span></span>${connectionLabel()}</div></header>
       ${notice ? `<button class="notice" data-dismiss-notice>${escapeHtml(notice)}<span>×</span></button>` : ""}
-      <div class="runner-badge"><div>${initials(me.name)}</div><span>RUNNER</span></div>
-      <h1>${escapeHtml(me.name)}</h1><p>You’re in room <strong>${snapshot?.roomCode}</strong></p>
+      <div class="runner-badge"><div>${initials(me.name)}</div><span>玩家</span></div>
+      <h1>${escapeHtml(me.name)}</h1><p>你已加入房間 <strong>${snapshot?.roomCode}</strong></p>
+      ${readyQuestionPreview()}
       <section class="ready-card ${me.ready ? "is-ready" : ""}">
         <div class="ready-icon">${me.ready ? "✓" : "▲"}</div>
-        <h2>${me.ready ? "Locked in!" : "Take your mark"}</h2>
-        <p>${me.ready ? "Waiting for the host to start the race." : "Tap ready when you can see the host screen."}</p>
-        <button class="primary-button" data-ready>${me.ready ? "NOT READY" : "I’M READY"}</button>
+        <h2>${me.ready ? "準備完成！" : "各就各位"}</h2>
+        <p>${me.ready ? "等待教師開始遊戲。" : "看到教師主畫面後，請按準備。"}</p>
+        <button class="primary-button" data-ready>${me.ready ? "取消準備" : "我已準備"}</button>
       </section>
-      <div class="lobby-count"><strong>${snapshot?.players.length ?? 0}</strong><span>RUNNERS JOINED</span></div>
+      <div class="lobby-count"><strong>${snapshot?.players.length ?? 0}</strong><span>已加入玩家</span></div>
     </main>`;
   bindCommon();
   document.querySelector("[data-ready]")?.addEventListener("click", () => room?.send("player", { type: "set_ready", ready: !me.ready }));
@@ -308,7 +317,7 @@ function renderPlayerLobby(me: RoomSnapshot["players"][number]): void {
 function renderPlayerGame(me: RoomSnapshot["players"][number]): void {
   if (!snapshot) return;
   if (!me.alive) {
-    app.innerHTML = `<main class="phone-shell fallen-screen"><header class="phone-top"><div class="phone-brand"><span>SQL</span>RUN</div><div class="connection-pill" data-connection><span></span>${connectionLabel()}</div></header><div class="fallen-mark">×</div><div class="eyebrow">PLATE COLLAPSED</div><h1>You fell.</h1><p>You cleared <strong>${me.survivedSteps}</strong> SQL step${me.survivedSteps === 1 ? "" : "s"}. Watch the host screen for the final order.</p><div class="query-recap"><span>QUERY BUILT</span><code>${formatQuery(snapshot.completedTokens)}</code></div></main>`;
+    app.innerHTML = `<main class="phone-shell fallen-screen"><header class="phone-top"><div class="phone-brand"><span>SQL</span>RUN</div><div class="connection-pill" data-connection><span></span>${connectionLabel()}</div></header><div class="fallen-mark">×</div><div class="eyebrow">地板崩塌</div><h1>你掉下去了。</h1><p>你完成了 <strong>${me.survivedSteps}</strong> 個 SQL 步驟。請觀看教師主畫面的最終排名。</p><div class="query-recap"><span>已完成 SQL</span><code>${formatQuery(snapshot.completedTokens)}</code></div></main>`;
     return;
   }
   const section = snapshot.section;
@@ -321,8 +330,8 @@ function renderPlayerGame(me: RoomSnapshot["players"][number]): void {
   app.innerHTML = `
     <main class="phone-shell game-controller phase-${snapshot.phase}">
       <header class="phone-top"><div class="phone-brand"><span>SQL</span>RUN</div><div class="connection-pill" data-connection><span></span>${connectionLabel()}</div></header>
-      <div class="mobile-mission"><span>MISSION</span><p>${escapeHtml(snapshot.mission?.prompt ?? "")}</p></div>
-      <div class="mobile-query"><span>CURRENT SQL</span><code>${formatQuery(snapshot.completedTokens)} <b>_</b></code></div>
+      <div class="mobile-mission"><span>題目</span><p>${escapeHtml(snapshot.mission?.prompt ?? "")}</p></div>
+      <div class="mobile-query"><span>目前 SQL</span><code>${formatQuery(snapshot.completedTokens)} <b>_</b></code></div>
       <div class="mobile-timer"><strong data-countdown>—</strong><div><span>${phaseLabel(snapshot.phase)}</span><i></i></div></div>
       <div class="choice-prompt">${phaseInstruction(snapshot.phase)}</div>
       <div class="runner-control">
@@ -343,13 +352,23 @@ function renderPlayerGame(me: RoomSnapshot["players"][number]): void {
 function renderPlayerResults(me: RoomSnapshot["players"][number]): void {
   if (!snapshot) return;
   const won = snapshot.winnerId === me.id;
-  app.innerHTML = `<main class="phone-shell results-screen ${won ? "winner" : ""}"><div class="result-rays"></div><div class="phone-brand"><span>SQL</span>RUN</div><div class="result-rank">${won ? "★" : `#${me.finalRank ?? "—"}`}</div><div class="eyebrow">${won ? "QUERY CHAMPION" : "FINAL POSITION"}</div><h1>${won ? "You won!" : "Race complete"}</h1><p>${escapeHtml(me.name)} · ${me.survivedSteps} steps cleared</p><div class="query-recap"><span>FINAL QUERY</span><code>${formatQuery(snapshot.completedTokens)};</code></div><div class="waiting-host">Waiting for the host to open a new race…</div></main>`;
+  app.innerHTML = `<main class="phone-shell results-screen ${won ? "winner" : ""}"><div class="result-rays"></div><div class="phone-brand"><span>SQL</span>RUN</div><div class="result-rank">${won ? "★" : `#${me.finalRank ?? "—"}`}</div><div class="eyebrow">${won ? "SQL 冠軍" : "最終排名"}</div><h1>${won ? "你勝出了！" : "遊戲完成"}</h1><p>${escapeHtml(me.name)} · 完成 ${me.survivedSteps} 個步驟</p><div class="query-recap"><span>你的 SQL 對照</span>${sqlReview(me)}</div><div class="waiting-host">等待教師開啟新一局…</div></main>`;
 }
 
 function resultsStage(host: boolean): string {
   if (!snapshot) return "";
   const winner = snapshot.players.find((player) => player.id === snapshot?.winnerId);
-  return `<div class="host-results"><div class="eyebrow">RACE COMPLETE</div><div class="trophy">★</div><h1>${winner ? `${escapeHtml(winner.name)} wins!` : "Track cleared"}</h1><p class="result-sub">${winner ? `${winner.survivedSteps} SQL steps survived` : "No runner reached the safe plate."}</p><div class="final-query"><span>FINAL QUERY</span><code>${formatQuery(snapshot.completedTokens)};</code></div><div class="podium">${snapshot.players.slice(0, 5).map((player) => `<div class="podium-row rank-${player.finalRank}"><strong>${player.finalRank}</strong><span>${escapeHtml(player.name)}</span><small>${player.survivedSteps} steps</small></div>`).join("")}</div>${host ? "" : `<p>Waiting for the host…</p>`}</div>`;
+  return `<div class="host-results"><div class="eyebrow">遊戲完成</div><div class="trophy">★</div><h1>${winner ? `${escapeHtml(winner.name)} 勝出！` : "跑道完成"}</h1><p class="result-sub">${winner ? `完成 ${winner.survivedSteps} 個 SQL 步驟` : "沒有玩家到達安全地板。"}</p><div class="final-query"><span>完整正確 SQL</span><code>${formatQuery(snapshot.correctTokens ?? snapshot.completedTokens)};</code></div><div class="player-results">${snapshot.players.map((player) => `<div class="player-result"><header><strong>#${player.finalRank} ${escapeHtml(player.name)}</strong><small>${player.survivedSteps} 個步驟</small></header>${sqlReview(player)}</div>`).join("")}</div>${host ? "" : `<p>等待教師…</p>`}</div>`;
+}
+
+function sqlReview(player: RoomSnapshot["players"][number]): string {
+  const tokens = snapshot?.correctTokens ?? snapshot?.completedTokens ?? [];
+  const mistakes = new Map(player.mistakes.map((mistake) => [mistake.sectionIndex, mistake]));
+  return `<div class="sql-review">${tokens.map((token, index) => {
+    const mistake = mistakes.get(index);
+    if (!mistake) return `<span class="review-token">${escapeHtml(token.value)}</span>`;
+    return `<span class="review-token review-wrong"><del>${mistake.chosen ? escapeHtml(mistake.chosen.value) : "越界"}</del><b>${escapeHtml(token.value)}</b></span>`;
+  }).join("")}<span>;</span></div>`;
 }
 
 async function joinPlayer(event: SubmitEvent): Promise<void> {
@@ -358,12 +377,12 @@ async function joinPlayer(event: SubmitEvent): Promise<void> {
   const name = String(form.get("name") ?? "").trim().slice(0, 18);
   const roomCode = cleanCode(String(form.get("roomCode") ?? ""));
   if (!name || roomCode.length !== 5) {
-    notice = "Enter your name and the 5-character room code.";
+    notice = "請輸入姓名及 5 位房間代碼。";
     renderJoin();
     return;
   }
   connection = "connecting";
-  renderPlayerConnecting("Joining the starting grid…");
+  renderPlayerConnecting("正在加入起跑區…");
   try {
     const client = new ColyseusClient(endpoint);
     const roomId = params.get("rid");
@@ -467,7 +486,7 @@ async function updateQr(url: string): Promise<void> {
 function hostPlate(id: string, lane: Lane, value: string, correctId?: string): string {
   const correct = correctId === id;
   const broken = snapshot?.phase === "breaking" && !correct;
-  return `<div class="track-plate lane-${lane} ${correct ? "correct" : ""} ${broken ? "broken" : ""}"><span>${escapeHtml(value)}</span>${correct ? "<i>SAFE</i>" : ""}</div>`;
+  return `<div class="track-plate lane-${lane} ${correct ? "correct" : ""} ${broken ? "broken" : ""}"><span>${escapeHtml(value)}</span>${correct ? "<i>安全</i>" : ""}</div>`;
 }
 
 function playerPlate(id: string, lane: Lane, value: string, choice: Lane | null, correctId: string | undefined, _locked: boolean): string {
@@ -478,20 +497,27 @@ function playerPlate(id: string, lane: Lane, value: string, choice: Lane | null,
 
 function hostSettingsPanel(): string {
   const options = (values: Array<[string, string]>, selected: string) => values.map(([value, label]) => `<option value="${value}" ${value === selected ? "selected" : ""}>${label}</option>`).join("");
-  return `<div class="host-settings"><label>踏板難度<select data-plate-difficulty>${options([["easy","簡單 · 2"],["normal","普通 · 2–3"],["hard","困難 · 3–4"],["nightmare","惡夢 · 4–5"]], selectedPlateDifficulty)}</select></label><label>作答時間<select data-decision-seconds>${Array.from({ length: 9 }, (_, index) => { const value = String(index + 2); return `<option value="${value}" ${Number(value) === selectedDecisionSeconds ? "selected" : ""}>${value} 秒</option>`; }).join("")}</select></label><label>題目級別<select data-question-level>${options([["all","隨機混合"],["basic","基礎 · 綠"],["medium","中等 · 黃"],["hard","困難 · 紅"]], selectedQuestionLevel)}</select></label><a class="prototype-link" href="/prototype/index.html" target="_blank">開啟本機玩法測試</a></div>`;
+  return `<div class="host-settings"><label>踏板難度<select data-plate-difficulty>${options([["easy","簡單 · 2"],["normal","普通 · 2–3"],["hard","困難 · 3–4"],["nightmare","惡夢 · 4–5"]], selectedPlateDifficulty)}</select></label><label>作答時間<select data-decision-seconds>${Array.from({ length: 9 }, (_, index) => { const value = String(index + 2); return `<option value="${value}" ${Number(value) === selectedDecisionSeconds ? "selected" : ""}>${value} 秒</option>`; }).join("")}</select></label><div class="refresh-label">換一題</div><div class="refresh-buttons"><button class="refresh-basic" data-refresh-level="basic" title="基礎題">↻</button><button class="refresh-medium" data-refresh-level="medium" title="中等題">↻</button><button class="refresh-hard" data-refresh-level="hard" title="困難題">↻</button></div><a class="prototype-link" href="/prototype/index.html" target="_blank">開啟本機玩法測試</a></div>`;
+}
+
+function readyQuestionPreview(): string {
+  const mission = snapshot?.mission;
+  if (!mission) return "";
+  const tables = mission.schema.tables.map((table) => `<div><strong>${escapeHtml(table.name)}</strong><span>${table.fields.map((field) => `${escapeHtml(field.name)}（${escapeHtml(field.description)}）`).join(" · ")}</span></div>`).join("");
+  return `<section class="ready-question"><span class="question-badge level-${mission.level}">${questionLevelLabel(mission.level)}</span><h3>${escapeHtml(mission.prompt)}</h3><div class="ready-schema">${tables}</div></section>`;
 }
 
 function playerRow(player: RoomSnapshot["players"][number]): string {
-  return `<div class="roster-row ${!player.connected ? "offline" : ""} ${!player.alive ? "eliminated" : ""}"><div class="avatar">${initials(player.name)}</div><div><strong>${escapeHtml(player.name)}</strong><small>${player.finalRank ? `#${player.finalRank} · ${player.survivedSteps} steps` : !player.connected ? "Reconnecting…" : player.ready ? "Ready to run" : "Getting ready"}</small></div><span class="status-mark">${player.finalRank ? player.finalRank : player.ready ? "✓" : "·"}</span></div>`;
+  return `<div class="roster-row ${!player.connected ? "offline" : ""} ${!player.alive ? "eliminated" : ""}"><div class="avatar">${initials(player.name)}</div><div><strong>${escapeHtml(player.name)}</strong><small>${player.finalRank ? `#${player.finalRank} · ${player.survivedSteps} 個步驟` : !player.connected ? "重新連線中…" : player.ready ? "已準備" : "準備中"}</small></div><span class="status-mark">${player.finalRank ? player.finalRank : player.ready ? "✓" : "·"}</span></div>`;
 }
 
 function emptyRoster(): string {
-  return `<div class="empty-roster"><div>＋</div><strong>No runners yet</strong><span>Scan the code to join</span></div>`;
+  return `<div class="empty-roster"><div>＋</div><strong>尚未有玩家</strong><span>掃描 QR code 加入</span></div>`;
 }
 
 function addressSelector(): string {
   if (!health || health.addresses.length <= 1) return "";
-  return `<label class="address-select">JOIN NETWORK<select data-address>${health.addresses.map((address) => `<option ${address === selectedAddress ? "selected" : ""}>${address}</option>`).join("")}</select></label>`;
+  return `<label class="address-select">加入網絡<select data-address>${health.addresses.map((address) => `<option ${address === selectedAddress ? "selected" : ""}>${address}</option>`).join("")}</select></label>`;
 }
 
 function bindCommon(): void {
@@ -520,18 +546,18 @@ function updateConnectionPills(): void {
 }
 
 function connectionLabel(): string {
-  if (connection === "connected") return pingMs === null ? "CONNECTED" : `${pingMs} MS`;
-  if (connection === "reconnecting") return "RECONNECTING";
-  if (connection === "connecting") return "CONNECTING";
-  return "OFFLINE";
+  if (connection === "connected") return pingMs === null ? "已連線" : `${pingMs} MS`;
+  if (connection === "reconnecting") return "重新連線中";
+  if (connection === "connecting") return "連線中";
+  return "離線";
 }
 
 function phaseLabel(phase: RoomSnapshot["phase"]): string {
-  return ({ lobby: "LOBBY", prepare: "NEXT SECTION", choosing: "CHOOSE NOW", locked: "CHOICES LOCKED", reveal: "ANSWER REVEALED", breaking: "TRACK BREAKING", eliminating: "RUNNERS FALLING", advance: "ADVANCING", results: "FINAL RESULTS", closed: "ROOM CLOSED" })[phase];
+  return ({ lobby: "等候區", prepare: "下一段", choosing: "立即選擇", locked: "選擇鎖定", reveal: "公布答案", breaking: "跑道崩塌", eliminating: "玩家淘汰", advance: "前往下一段", results: "最終結果", closed: "房間已關閉" })[phase];
 }
 
 function phaseInstruction(phase: RoomSnapshot["phase"]): string {
-  return ({ lobby: "Wait for the host", prepare: "Read the mission. New plates incoming.", choosing: "Move to the token that continues the query!", locked: "Movement locked — hold on.", reveal: "The safe route is revealed.", breaking: "Wrong plates are falling!", eliminating: "Updating the survivor order…", advance: "Track moving — next section ahead.", results: "Race complete", closed: "The host closed the room." })[phase];
+  return ({ lobby: "等待教師開始", prepare: "閱讀題目；新地板即將到達。", choosing: "移動到能接續 SQL 的 token！", locked: "移動已鎖定，請站穩。", reveal: "安全路線已公布。", breaking: "錯誤地板正在崩塌！", eliminating: "正在更新生還次序…", advance: "跑道移動中；下一段即將到達。", results: "遊戲完成", closed: "教師已關閉房間。" })[phase];
 }
 
 function phaseGlyph(phase?: RoomSnapshot["phase"]): string {
@@ -543,7 +569,7 @@ function questionLevelLabel(level?: QuestionLevel): string {
 }
 
 function formatQuery(tokens: RoomSnapshot["completedTokens"]): string {
-  return tokens.length ? tokens.map((token) => escapeHtml(token.value)).join(" ") : "SELECT the safe path";
+  return tokens.length ? tokens.map((token) => escapeHtml(token.value)).join(" ") : "SELECT …";
 }
 
 function cleanCode(value: string): string {
@@ -564,15 +590,15 @@ function escapeHtml(value: string): string {
 
 function friendlyError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
-  if (/fetch|network|connect|ECONNREFUSED/i.test(message)) return "Could not reach the host. Check Wi-Fi, the join address, and the host firewall.";
-  return message.replace(/^Error:\s*/, "") || "Could not join this race.";
+  if (/fetch|network|connect|ECONNREFUSED/i.test(message)) return "無法連接教師電腦。請檢查 Wi-Fi、加入網址及教師電腦的 Firewall。";
+  return message.replace(/^Error:\s*/, "") || "無法加入此遊戲。";
 }
 
 function readJson<T>(response: Response): Promise<T> {
-  if (!response.ok) throw new Error(`Server returned ${response.status}.`);
+  if (!response.ok) throw new Error(`伺服器回傳錯誤 ${response.status}。`);
   return response.json() as Promise<T>;
 }
 
 function loadingStage(): string {
-  return `<div class="stage-loading"><div class="loader"><i></i><i></i><i></i></div><p>Starting LAN room…</p></div>`;
+  return `<div class="stage-loading"><div class="loader"><i></i><i></i><i></i></div><p>正在建立 LAN 房間…</p></div>`;
 }

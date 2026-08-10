@@ -37,16 +37,16 @@ export class SqlRunRoom extends Room {
   onJoin(client: Client, options: RoomOptions): void {
     const isHost = options.role === "host" && this.hostToken.length > 0 && options.hostToken === this.hostToken;
     if (isHost) {
-      if (this.hostClientId && this.hostClientId !== client.sessionId) throw new Error("A host is already connected.");
+      if (this.hostClientId && this.hostClientId !== client.sessionId) throw new Error("教師主機已連線。");
       this.hostClientId = client.sessionId;
       return;
     }
 
-    if (this.engine.phase !== "lobby") throw new Error("This race is already running.");
+    if (this.engine.phase !== "lobby") throw new Error("遊戲已經開始。");
     const name = cleanPlayerName(options.name);
-    if (!name) throw new Error("Enter a name between 1 and 18 characters.");
+    if (!name) throw new Error("請輸入 1 至 18 個字元的姓名。");
     if ([...this.engine.players.values()].some((player) => player.name.toLocaleLowerCase() === name.toLocaleLowerCase())) {
-      throw new Error("That name is already in the room.");
+      throw new Error("房間內已有相同姓名。");
     }
     const player = this.engine.addPlayer(client.sessionId, name);
     player.connected = true;
@@ -108,7 +108,7 @@ export class SqlRunRoom extends Room {
     this.lastSequence.set(client.sessionId, message.sequence);
     this.lastActionAt.set(client.sessionId, now);
     if (!this.engine.choose(client.sessionId, message.sectionId, message.lane, now)) {
-      this.sendError(client, "CHOICE_REJECTED", "That plate can no longer be selected.");
+      this.sendError(client, "CHOICE_REJECTED", "現在不能再選擇該地板。");
       return;
     }
     this.sendSnapshots();
@@ -151,15 +151,21 @@ export class SqlRunRoom extends Room {
 
   private handleHostCommand(client: Client, command: HostCommand): void {
     if (client.sessionId !== this.hostClientId) {
-      this.sendError(client, "HOST_ONLY", "Only the local host can control the race.");
+      this.sendError(client, "HOST_ONLY", "只有本機教師主機可以控制遊戲。");
       return;
     }
     if (!command || typeof command !== "object") return;
+    if (command.type === "refresh_question") {
+      if (this.engine.phase !== "lobby" || !["basic", "medium", "hard"].includes(command.questionLevel)) return;
+      this.engine.selectMission(command.questionLevel);
+      this.sendSnapshots();
+      return;
+    }
     if (command.type === "start_game") {
       if (this.engine.phase !== "lobby") return;
       const connected = [...this.engine.players.values()].filter((player) => player.connected);
-      if (connected.length === 0) return this.sendError(client, "NO_PLAYERS", "At least one player must join.");
-      if (connected.some((player) => !player.ready)) return this.sendError(client, "NOT_READY", "Every connected player must be ready.");
+      if (connected.length === 0) return this.sendError(client, "NO_PLAYERS", "至少需要一名玩家加入。");
+      if (connected.some((player) => !player.ready)) return this.sendError(client, "NOT_READY", "所有已連線玩家必須先按準備。");
       for (const player of [...this.engine.players.values()]) if (!player.connected) this.engine.removePlayer(player.id);
       const decisionSeconds = Number.isFinite(command.decisionSeconds) ? Math.max(2, Math.min(10, Math.round(command.decisionSeconds ?? 5))) : 5;
       const plateDifficulty = ["easy", "normal", "hard", "nightmare"].includes(command.plateDifficulty ?? "") ? command.plateDifficulty : "normal";
@@ -237,6 +243,7 @@ export class SqlRunRoom extends Room {
         finalRank: player.finalRank,
         x: player.x,
         y: player.y,
+        mistakes: this.engine.phase === "results" ? player.mistakes : [],
       }))
       .sort((a, b) => (a.finalRank ?? 999) - (b.finalRank ?? 999) || a.name.localeCompare(b.name));
     return {
@@ -251,6 +258,7 @@ export class SqlRunRoom extends Room {
       section: this.engine.getPublicSection(),
       players,
       winnerId: this.engine.winnerId,
+      correctTokens: this.engine.phase === "results" ? this.engine.mission?.tokens ?? null : null,
       settings: {
         plateDifficulty: this.engine.settings.plateDifficulty,
         decisionSeconds: this.engine.settings.decisionSeconds,

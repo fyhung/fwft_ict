@@ -9,57 +9,67 @@ using System.Windows.Forms;
 internal static class PortableLauncher
 {
     private const string ResourceName = "SQLRun.Payload.zip";
+    private const string Version = "1.0.1";
 
     [STAThread]
     private static int Main()
     {
-        string stage = Path.Combine(Path.GetTempPath(), "SQL-Run-1.0.0-" + Guid.NewGuid().ToString("N"));
-        try
+        bool ownsMutex;
+        using (Mutex mutex = new Mutex(true, @"Local\SQLRunLauncher-1.0.1", out ownsMutex))
         {
-            Directory.CreateDirectory(stage);
-            string payload = Path.Combine(stage, "payload.zip");
-            using (Stream input = Assembly.GetExecutingAssembly().GetManifestResourceStream(ResourceName))
+            if (!ownsMutex)
             {
-                if (input == null) throw new InvalidOperationException("找不到內置遊戲檔案。");
-                using (FileStream output = File.Create(payload)) input.CopyTo(output);
+                MessageBox.Show("SQL Run 已經在執行。", "SQL Run", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return 0;
             }
-
-            ZipFile.ExtractToDirectory(payload, stage);
-            File.Delete(payload);
+            string root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SQL Run");
+            string stage = Path.Combine(root, Version);
+            string marker = Path.Combine(stage, ".payload-ready");
             string application = Path.Combine(stage, "SQL Run.exe");
-            if (!File.Exists(application)) throw new FileNotFoundException("找不到 SQL Run 主程式。", application);
-
-            Process process = Process.Start(new ProcessStartInfo
+            string working = stage + ".staging-" + Guid.NewGuid().ToString("N");
+            try
             {
-                FileName = application,
-                WorkingDirectory = stage,
-                UseShellExecute = true
-            });
-            if (process == null) throw new InvalidOperationException("無法啟動 SQL Run。");
-            process.WaitForExit();
-            return process.ExitCode;
-        }
-        catch (Exception error)
-        {
-            MessageBox.Show(
-                "SQL Run 無法啟動。\r\n\r\n" + error.Message,
-                "SQL Run",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
-            return 1;
-        }
-        finally
-        {
-            for (int attempt = 0; attempt < 4; attempt++)
-            {
-                try
+                if (!File.Exists(marker) || !File.Exists(application))
                 {
+                    if (Directory.Exists(working)) Directory.Delete(working, true);
+                    Directory.CreateDirectory(working);
+                    string payload = Path.Combine(working, "payload.zip");
+                    using (Stream input = Assembly.GetExecutingAssembly().GetManifestResourceStream(ResourceName))
+                    {
+                        if (input == null) throw new InvalidOperationException("找不到內置遊戲檔案。");
+                        using (FileStream output = File.Create(payload)) input.CopyTo(output);
+                    }
+                    ZipFile.ExtractToDirectory(payload, working);
+                    File.Delete(payload);
+                    File.WriteAllText(Path.Combine(working, ".payload-ready"), Version);
                     if (Directory.Exists(stage)) Directory.Delete(stage, true);
-                    break;
+                    Directory.Move(working, stage);
                 }
-                catch
+
+                Process process = Process.Start(new ProcessStartInfo
                 {
-                    Thread.Sleep(500);
+                    FileName = application,
+                    WorkingDirectory = stage,
+                    UseShellExecute = true
+                });
+                if (process == null) throw new InvalidOperationException("無法啟動 SQL Run。");
+                process.WaitForExit();
+                return process.ExitCode;
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show(
+                    "SQL Run 無法啟動。\r\n\r\n" + error.Message,
+                    "SQL Run",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return 1;
+            }
+            finally
+            {
+                if (Directory.Exists(working))
+                {
+                    try { Directory.Delete(working, true); } catch { }
                 }
             }
         }

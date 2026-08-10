@@ -105,7 +105,14 @@ body::before {
 .host-settings { display: grid; gap: 7px; margin-bottom: 12px; }
 .host-settings label { color: #7d87a1; font: 800 8px/1 "Cascadia Code", monospace; letter-spacing: .1em; }
 .host-settings select { width: 100%; margin-top: 5px; padding: 7px; border: 1px solid var(--line); border-radius: 6px; color: #eef1f8; background: #11172a; }
+.refresh-label { color: #7d87a1; font: 800 8px/1 "Cascadia Code", monospace; letter-spacing: .1em; }
+.refresh-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+.refresh-buttons button { padding: 7px; border: 0; border-radius: 6px; color: #0c1120; font-size: 18px; font-weight: 900; }.refresh-basic { background: #61e5bd; }.refresh-medium { background: #ffd85a; }.refresh-hard { background: #ff714b; }
 .prototype-link { display: block; padding: 7px; border: 1px solid rgba(156,140,255,.25); border-radius: 6px; color: var(--lavender); text-align: center; text-decoration: none; font-size: 9px; }
+.ready-question { width: min(650px, 100%); margin: 14px 0; padding: 13px 15px; border: 1px solid rgba(156,140,255,.25); border-radius: 12px; background: rgba(18,24,44,.86); text-align: left; }
+.ready-question h3 { margin: 8px 0 10px; color: #f3f5fa; font-size: 16px; line-height: 1.35; }
+.ready-schema { display: grid; gap: 6px; max-height: 100px; overflow-y: auto; }.ready-schema div { display: grid; grid-template-columns: 70px 1fr; gap: 8px; }.ready-schema strong { color: var(--acid); font: 900 10px/1.4 "Cascadia Code", monospace; }.ready-schema span { color: #8f99b3; font: 600 9px/1.45 "Cascadia Code", monospace; }
+.player-lobby .ready-question { margin: 18px 0 8px; }
 .primary-button { width: 100%; border: 0; border-radius: 10px; padding: 14px 17px; display: flex; justify-content: center; gap: 14px; color: var(--ink); background: var(--acid); box-shadow: 0 8px 28px rgba(217,255,87,.12); font: 900 11px/1 "Cascadia Code", monospace; letter-spacing: .08em; cursor: pointer; transition: transform .16s, filter .16s; }
 .primary-button:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.07); }
 .primary-button:disabled { opacity: .28; cursor: not-allowed; }
@@ -134,7 +141,7 @@ body::before {
 .countdown-orb span { max-width: 55px; margin-top: 5px; text-align: center; font-size: 6px; line-height: 1.1; }
 .track-window { position: relative; min-height: 355px; margin-top: 5px; overflow: hidden; perspective: 700px; mask-image: linear-gradient(to bottom, transparent 0, black 13%, black 100%); }
 .track-grid { position: absolute; inset: -35% 8% -10%; border-left: 1px solid rgba(156,140,255,.3); border-right: 1px solid rgba(156,140,255,.3); background: repeating-linear-gradient(0deg, transparent 0 54px, rgba(156,140,255,.13) 55px 56px), linear-gradient(90deg, transparent 49.8%, rgba(156,140,255,.16) 50%, transparent 50.2%); transform: rotateX(56deg); transform-origin: bottom; animation: trackMove 1.8s linear infinite; }
-.track-window.phase-locked .track-grid, .track-window.phase-reveal .track-grid, .track-window.phase-breaking .track-grid { animation-play-state: paused; }
+.track-window.phase-locked .track-grid, .track-window.phase-reveal .track-grid, .track-window.phase-breaking .track-grid, .track-window.phase-eliminating .track-grid, .track-window.phase-advance .track-grid { animation-play-state: paused; }
 .vanish-line { position: absolute; left: 15%; right: 15%; top: 19%; height: 1px; background: linear-gradient(90deg, transparent, var(--lavender), transparent); box-shadow: 0 0 16px var(--lavender); opacity: .5; }
 .plates-row { position: absolute; left: 8%; right: 8%; top: 21%; display: grid; grid-template-columns: repeat(var(--lane-count, 2), minmax(0, 1fr)); gap: 8px; transform: rotateX(16deg); transform-origin: bottom; }
 .track-plate { min-width: 0; height: 122px; position: relative; display: grid; place-items: center; padding: 8px; overflow-wrap: anywhere; text-align: center; border: 2px solid rgba(255,255,255,.17); border-radius: 11px; color: #eef0f7; background: linear-gradient(150deg,#2a3454,#141a30 65%); box-shadow: inset 0 0 30px rgba(255,255,255,.03), 0 18px 30px rgba(0,0,0,.32); font: 900 clamp(13px,2vw,30px)/1.08 "Cascadia Code", monospace; transition: .35s; }
@@ -147,13 +154,23 @@ body::before {
 .runner > span { width: 39px; height: 47px; display: grid; place-items: center; clip-path: polygon(50% 0, 92% 27%, 79% 100%, 21% 100%, 8% 27%); color: var(--ink); background: var(--orange); filter: drop-shadow(0 0 12px rgba(255,113,75,.6)); font-size: 10px; font-weight: 900; animation: runBob .32s alternate infinite; }
 .runner:nth-child(3n+2) > span { background: var(--mint); }.runner:nth-child(3n+3) > span { background: var(--lavender); }
 .runner small { margin-top: 5px; padding: 2px 5px; border-radius: 4px; color: white; background: rgba(9,13,26,.8); font-size: 8px; }
+.track-window.phase-choosing .plates-row, .track-window.phase-choosing .runner-row { animation: plateApproach var(--decision-duration, 5s) linear forwards; }
+.track-window.phase-locked .plates-row, .track-window.phase-reveal .plates-row, .track-window.phase-breaking .plates-row, .track-window.phase-eliminating .plates-row, .track-window.phase-advance .plates-row,
+.track-window.phase-locked .runner-row, .track-window.phase-reveal .runner-row, .track-window.phase-breaking .runner-row, .track-window.phase-eliminating .runner-row, .track-window.phase-advance .runner-row { top: calc(100% - 122px); }
 .phase-caption { padding-top: 8px; color: #8a94ae; text-align: center; font: 700 10px/1.4 "Cascadia Code", monospace; letter-spacing: .04em; }
-.host-results { height: 100%; min-height: 650px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; }
+.host-results { height: 100%; min-height: 650px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 30px; overflow-y: auto; text-align: center; }
 .trophy { width: 82px; height: 82px; display: grid; place-items: center; margin: 16px; border-radius: 50%; color: var(--ink); background: var(--acid); box-shadow: 0 0 60px rgba(217,255,87,.24); font-size: 35px; }
 .host-results h1 { margin: 0; font-size: 50px; letter-spacing: -.05em; }.result-sub { margin: 8px 0 20px; color: #8f98b1; }
 .final-query { width: min(660px, 90%); padding: 14px; border: 1px solid rgba(97,229,189,.24); border-radius: 10px; background: rgba(97,229,189,.06); }
 .final-query span { display: block; color: var(--mint); margin-bottom: 7px; }.final-query code { font: 700 15px/1.4 "Cascadia Code", monospace; }
 .podium { width: min(470px, 90%); margin-top: 20px; }.podium-row { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 12px; padding: 10px; border-bottom: 1px solid var(--line); text-align: left; }.podium-row > strong { color: var(--acid); font: 900 16px/1 "Cascadia Code", monospace; }.podium-row small { color: #77819a; }
+.player-results { width: min(760px, 96%); margin-top: 18px; display: grid; gap: 10px; }
+.player-result { padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.035); text-align: left; }
+.player-result header { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 9px; }.player-result header small { color: #7f89a3; }
+.sql-review { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 5px; font: 700 12px/1.35 "Cascadia Code", monospace; }
+.review-token { padding: 4px 5px; border-radius: 4px; background: rgba(97,229,189,.08); }
+.review-wrong { display: inline-flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,113,75,.35); background: rgba(255,113,75,.07); }
+.review-wrong del { color: var(--orange); font-size: 10px; }.review-wrong b { color: var(--acid); font-weight: 900; }
 .stage-loading { height: 100%; min-height: 600px; display: grid; place-content: center; justify-items: center; color: #8e98b2; }
 .loader { display: flex; gap: 6px; }.loader i { width: 9px; height: 9px; border-radius: 50%; background: var(--acid); animation: loader 1s infinite alternate; }.loader i:nth-child(2) { animation-delay: .2s; }.loader i:nth-child(3) { animation-delay: .4s; }
 
@@ -177,7 +194,7 @@ body::before {
 .phone-error { margin-top: 13px; color: #ff9a7e; font-size: 12px; text-align: center; }
 .join-screen footer { margin-top: 18px; color: #626d88; font-size: 10px; }
 .connecting-screen { justify-content: center; text-align: center; }.connecting-screen .phone-brand { position: absolute; top: 24px; left: 22px; }.connecting-screen .loader { margin-bottom: 20px; }.connecting-screen h1 { max-width: 290px; margin: 0; font-size: 22px; }.connecting-screen p { color: #73809d; }
-.player-lobby { text-align: center; }.runner-badge { margin-top: auto; }.runner-badge div { width: 86px; height: 96px; display: grid; place-items: center; margin: 0 auto 12px; clip-path: polygon(50% 0, 93% 27%, 80% 100%, 20% 100%, 7% 27%); color: var(--ink); background: var(--orange); font-size: 24px; font-weight: 900; filter: drop-shadow(0 0 28px rgba(255,113,75,.35)); }.runner-badge span { color: #7a849e; font: 800 9px/1 "Cascadia Code", monospace; letter-spacing: .17em; }
+.player-lobby { overflow-y: auto; text-align: center; }.runner-badge { margin-top: auto; }.runner-badge div { width: 86px; height: 96px; display: grid; place-items: center; margin: 0 auto 12px; clip-path: polygon(50% 0, 93% 27%, 80% 100%, 20% 100%, 7% 27%); color: var(--ink); background: var(--orange); font-size: 24px; font-weight: 900; filter: drop-shadow(0 0 28px rgba(255,113,75,.35)); }.runner-badge span { color: #7a849e; font: 800 9px/1 "Cascadia Code", monospace; letter-spacing: .17em; }
 .player-lobby > h1 { margin: 9px 0 2px; font-size: 31px; }.player-lobby > p { margin: 0; color: #7e89a4; font-size: 13px; }.player-lobby > p strong { color: var(--acid); font-family: "Cascadia Code", monospace; letter-spacing: .13em; }
 .ready-card { width: min(400px, 100%); margin: 28px 0 auto; padding: 23px; border: 1px solid var(--line); border-radius: 17px; background: var(--panel); }.ready-icon { width: 48px; height: 48px; display: grid; place-items: center; margin: -48px auto 10px; border-radius: 50%; color: var(--ink); background: var(--lavender); border: 6px solid #0c1120; font-size: 18px; }.ready-card.is-ready { border-color: rgba(217,255,87,.25); }.ready-card.is-ready .ready-icon { background: var(--acid); }.ready-card h2 { margin: 7px 0; font-size: 21px; }.ready-card p { min-height: 39px; margin: 0 0 17px; color: #8993ad; font-size: 13px; line-height: 1.5; }.ready-card.is-ready .primary-button { color: #b2bad0; background: rgba(255,255,255,.08); box-shadow: none; }
 .lobby-count { margin: 20px 0; }.lobby-count strong, .lobby-count span { display: block; }.lobby-count strong { font-size: 26px; }.lobby-count span { color: #68738e; font: 700 8px/1 "Cascadia Code", monospace; letter-spacing: .14em; }
@@ -202,6 +219,7 @@ body::before {
 @keyframes blink { 50% { opacity: 0; } }
 @keyframes loader { to { transform: translateY(-8px); opacity: .35; } }
 @keyframes trackMove { to { background-position: 0 56px, 0 0; } }
+@keyframes plateApproach { from { top: 21%; } to { top: calc(100% - 122px); } }
 @keyframes runBob { to { transform: translateY(-4px) rotate(1deg); } }
 @keyframes spin { to { transform: rotate(360deg); } }
 

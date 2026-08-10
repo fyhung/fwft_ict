@@ -2,6 +2,13 @@
 
 All notable changes to SQL Run are documented here.
 
+## [1.0.1] - 2026-08-09
+
+### Fixed
+
+- Changed the single-file launcher to extract Electron to a stable LocalAppData path so Windows Firewall authorization remains valid across launches.
+- Excluded Proton/TUN/TAP and `/32` virtual adapters from student QR address selection.
+
 ## [1.0.0] - 2026-08-09
 
 ### Added

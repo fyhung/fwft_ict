@@ -4,7 +4,7 @@ SQL Run is a classroom elimination game about building SQL queries one token at 
 
 ## Windows LAN classroom version
 
-Run the portable `SQL-Run-1.0.0-portable-final-x64.exe` on the teacher computer. The app starts its own local server, opens the host dashboard through `127.0.0.1`, and shows a QR code plus LAN join address for phones on the same Wi-Fi or Ethernet network.
+Run the portable `SQL-Run-1.0.1-firewall-fix-x64.exe` on the teacher computer. The app starts its own local server, opens the host dashboard through `127.0.0.1`, and shows a QR code plus LAN join address for phones on the same Wi-Fi or Ethernet network. The single-file launcher extracts to a stable `%LOCALAPPDATA%\SQL Run\1.0.1` path so the Windows Firewall authorization remains valid across launches.
 
 Allow SQL Run through Windows Firewall on **Private networks**. Students do not install an app: they scan the QR code, enter a name, and ready up in their browser. The teacher chooses plate difficulty, answer time, and optional question level before starting.
 

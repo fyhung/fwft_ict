@@ -1,6 +1,6 @@
 {
   "name": "sql-run",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "An authoritative LAN classroom game for building SQL queries one plate at a time.",
   "author": "SQL Run Classroom Project",

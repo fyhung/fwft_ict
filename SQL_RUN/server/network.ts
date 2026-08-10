@@ -6,13 +6,14 @@ interface AddressCandidate {
   score: number;
 }
 
-export function localIPv4Addresses(): string[] {
+export function localIPv4Addresses(interfaces: ReturnType<typeof networkInterfaces> = networkInterfaces()): string[] {
   const physical = /wi-?fi|wireless|wlan|ethernet/i;
-  const virtual = /virtual|vmware|vbox|hyper-v|wsl|tailscale|zerotier|vpn|loopback|docker/i;
+  const virtual = /virtual|vmware|vbox|hyper-v|wsl|tailscale|zerotier|vpn|proton|protun|\btun\b|\btap\b|loopback|docker/i;
   const candidates: AddressCandidate[] = [];
-  for (const [adapter, entries] of Object.entries(networkInterfaces())) {
+  for (const [adapter, entries] of Object.entries(interfaces)) {
     for (const entry of entries ?? []) {
       if (entry.family !== "IPv4" || entry.internal || entry.address.startsWith("169.254.")) continue;
+      if (virtual.test(adapter) || entry.netmask === "255.255.255.255" || entry.mac === "00:00:00:00:00:00") continue;
       candidates.push({ adapter, address: entry.address, score: (physical.test(adapter) ? 2 : 0) - (virtual.test(adapter) ? 4 : 0) });
     }
   }

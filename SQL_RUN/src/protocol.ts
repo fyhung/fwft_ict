@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.0.0";
+export const APP_VERSION = "1.0.1";
 export const ROOM_TYPE = "sql_run";
 export const MAX_PLAYERS = 30;
 
@@ -49,6 +49,11 @@ export interface PlayerView {
   finalRank: number | null;
   x: number;
   y: number;
+  mistakes: Array<{
+    sectionIndex: number;
+    chosen: SqlToken | null;
+    correct: SqlToken;
+  }>;
 }
 
 export interface MissionView {
@@ -76,6 +81,7 @@ export interface RoomSnapshot {
   section: SectionView | null;
   players: PlayerView[];
   winnerId: string | null;
+  correctTokens: SqlToken[] | null;
   settings: {
     plateDifficulty: PlateDifficulty;
     decisionSeconds: number;
@@ -117,6 +123,7 @@ export interface PoseMessage {
 
 export type HostCommand =
   | { type: "start_game"; plateDifficulty?: PlateDifficulty; decisionSeconds?: number; questionLevel?: QuestionLevel }
+  | { type: "refresh_question"; questionLevel: QuestionLevel }
   | { type: "reset_game" }
   | { type: "close_room" };
 
