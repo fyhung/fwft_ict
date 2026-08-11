@@ -1,0 +1,37 @@
+project:
+  name: "AI Tutor ICT Infographics"
+  language: "zh-Hant"
+  aspect_ratio: "2:3"
+
+character:
+  identity: "AI Tutor"
+  identity_strength: "strict"
+  default_face_reference: "assets/character-reference/realistic-head-pose.png"
+  default_full_body_reference: "assets/character-reference/realistic-full-body.png"
+  default_outfit_reference: "assets/character-reference/default-outfit.png"
+  default_outfit_design: "assets/character-reference/default-outfit-design.png"
+
+visual:
+  rendering_style: "精緻日系教學插畫"
+  mood: "cute cute"
+  color_mode: "varied-harmonious"
+  background: "light"
+  character_area_percent: 30
+  information_density: "medium"
+  readability: "high"
+
+content:
+  chinese_variant: "Traditional Chinese"
+  bilingual_terms: true
+  term_format: "中文（English）"
+  audience: "Hong Kong secondary school students"
+  explanation_style: "簡潔易明"
+  maximum_sections: 6
+
+quality:
+  reject_simplified_chinese: true
+  reject_gibberish: true
+  reject_character_drift: true
+  reject_unsupported_facts: true
+  minimum_text_size: "mobile-readable"
+

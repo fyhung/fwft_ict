@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /dbmsUsers/{userId}/projects/{projectId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.sizeBytes is int
+        && request.resource.data.sizeBytes <= 10 * 1024 * 1024
+        && request.resource.data.chunkCount is int
+        && request.resource.data.chunkCount >= 1
+        && request.resource.data.chunkCount <= 16;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+
+      match /chunks/{chunkId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.ownerId == request.auth.uid
+          && request.resource.data.snapshotId is string
+          && request.resource.data.index is int
+          && request.resource.data.data is bytes
+          && request.resource.data.data.size() <= 700 * 1024;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}

@@ -24,5 +24,30 @@ service cloud.firestore {
       allow read: if owns(uid);
       allow write: if false;
     }
+
+    // ICT Browser Database Studio. Each user can access only projects stored
+    // under their own authenticated Firebase UID.
+    match /dbmsUsers/{uid}/projects/{projectId} {
+      allow read: if owns(uid);
+      allow create, update: if owns(uid)
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.sizeBytes is int
+        && request.resource.data.sizeBytes <= 10 * 1024 * 1024
+        && request.resource.data.chunkCount is int
+        && request.resource.data.chunkCount >= 1
+        && request.resource.data.chunkCount <= 16;
+      allow delete: if owns(uid);
+
+      match /chunks/{chunkId} {
+        allow read: if owns(uid);
+        allow create, update: if owns(uid)
+          && request.resource.data.ownerId == request.auth.uid
+          && request.resource.data.snapshotId is string
+          && request.resource.data.index is int
+          && request.resource.data.data is bytes
+          && request.resource.data.data.size() <= 700 * 1024;
+        allow delete: if owns(uid);
+      }
+    }
   }
 }

@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI Tutor Infographic Studio"
+  short_description: "Configure and generate consistent ICT infographics"
+  default_prompt: "Use $ai-tutor-infographic-studio to process a YAML job and create an AI Tutor ICT infographic."

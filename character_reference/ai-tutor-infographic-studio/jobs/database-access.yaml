@@ -1,0 +1,45 @@
+job:
+  id: "database-access-01"
+  series:
+    zh: "數據庫"
+    en: "Database"
+  topic:
+    zh: "Microsoft Access 資料庫物件"
+    en: "Microsoft Access Database Objects"
+  objective: "解釋 Access 的用途，以及資料表、查詢、表單和報表之間的關係。"
+  coverage:
+    - "資料表（Table）"
+    - "查詢（Query）"
+    - "表單（Form）"
+    - "報表（Report）"
+  source_files: []
+
+character:
+  concept: "可愛 DataBase 萌娘"
+  outfit: "default-lavender"
+  face_reference: "assets/character-reference/realistic-head-pose.png"
+  full_body_reference: "assets/character-reference/realistic-full-body.png"
+  outfit_reference: "assets/character-reference/default-outfit.png"
+  outfit_design: "assets/character-reference/default-outfit-design.png"
+
+visual:
+  aspect_ratio: "2:3"
+  style: "illustration"
+  mood: "cute"
+  palette: "lavender-blue-mint"
+  density: "medium"
+  layout: "character-plus-four-sections"
+  character_position: "right"
+  character_area_percent: 30
+
+content:
+  language: "zh-Hant"
+  bilingual_terms: true
+  explanation_level: "secondary-school"
+  use_diagrams: true
+  use_examples: true
+
+output:
+  directory: "../../notes/A"
+  filename: "COMIC_A_DB_Access_Objects.png"
+

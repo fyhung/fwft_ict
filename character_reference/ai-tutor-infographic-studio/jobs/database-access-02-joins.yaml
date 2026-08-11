@@ -1,0 +1,44 @@
+job:
+  id: "database-access-02-joins"
+  series:
+    zh: "數據庫"
+    en: "Database / Access"
+  topic:
+    zh: "四種資料表連接"
+    en: "Four Types of JOIN"
+  objective: "用簡潔圖示分辨 RIGHT JOIN、INNER JOIN、FULL JOIN 與 CROSS JOIN 的結果。"
+  coverage:
+    - "右連接（RIGHT JOIN）：保留右表全部記錄，配對左表資料。"
+    - "內連接（INNER JOIN）：只保留兩表都有配對的記錄。"
+    - "全連接（FULL JOIN）：保留兩表所有記錄，沒有配對的位置顯示空白。"
+    - "交叉連接（CROSS JOIN）：左表每一列配對右表每一列。"
+  source_files: []
+
+character:
+  concept: "可愛 DataBase 萌娘 AI Tutor，手持發光資料表卡片與小型資料庫圖示"
+  outfit: "database-moe"
+  face_reference: "assets/character-reference/realistic-head-pose.png"
+  full_body_reference: "assets/character-reference/realistic-full-body.png"
+  outfit_reference: "assets/character-reference/default-outfit.png"
+  outfit_design: "assets/character-reference/default-outfit-design.png"
+
+visual:
+  aspect_ratio: "2:3"
+  style: "illustration"
+  mood: "cute cute, clear and friendly"
+  palette: "varied-harmonious: lavender, teal, coral, sunshine yellow"
+  density: "medium"
+  layout: "character-plus-four-sections"
+  character_position: "right"
+  character_area_percent: 28
+
+content:
+  language: "zh-Hant"
+  bilingual_terms: true
+  explanation_level: "secondary-school"
+  use_diagrams: true
+  use_examples: true
+
+output:
+  directory: "../../notes/A"
+  filename: "COMIC_A_DB_Access_Joins.png"

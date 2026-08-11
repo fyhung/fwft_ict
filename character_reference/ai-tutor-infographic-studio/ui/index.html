@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Tutor Infographic Studio</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <p class="eyebrow">FWFT ICT · GENERATION CONTROL</p>
+    <h1>AI Tutor<br><span>Infographic Studio</span></h1>
+    <p class="lede">Compose consistent bilingual ICT teaching jobs without rebuilding the prompt each time.</p>
+  </header>
+
+  <main>
+    <form id="studioForm">
+      <section class="panel identity">
+        <div class="section-title"><span>01</span><h2>Lesson identity</h2></div>
+        <div class="grid two">
+          <label>Series · 中文<input name="seriesZh" value="數據庫"></label>
+          <label>Series · English<input name="seriesEn" value="Database"></label>
+          <label>Topic · 中文<input name="topicZh" value="Microsoft Access 資料庫物件"></label>
+          <label>Topic · English<input name="topicEn" value="Microsoft Access Database Objects"></label>
+        </div>
+        <label>Learning objective<textarea name="objective">解釋 Access 的用途，以及資料表、查詢、表單和報表之間的關係。</textarea></label>
+        <label>Required coverage <small>one item per line</small><textarea name="coverage">資料表（Table）
+查詢（Query）
+表單（Form）
+報表（Report）</textarea></label>
+      </section>
+
+      <section class="panel character">
+        <div class="section-title"><span>02</span><h2>Character direction</h2></div>
+        <div class="reference-card">
+          <img id="referencePreview" src="../assets/character-reference/realistic-head-pose.png" alt="Selected AI Tutor reference">
+          <div><strong>Identity lock</strong><p>Face, glasses, hair construction, braid detail and apparent age remain fixed.</p></div>
+        </div>
+        <div class="grid two">
+          <label>Character concept<input name="concept" value="可愛 DataBase 萌娘"></label>
+          <label>Outfit<select name="outfit"><option value="default-lavender">Default lavender</option><option value="black-uniform">Black uniform</option><option value="outdoor-sport">Outdoor sport</option></select></label>
+          <label>Reference set<select name="referenceSet" id="referenceSet"><option value="realistic">Realistic head + body</option><option value="illustrated">Illustrated head + body</option></select></label>
+          <label>Character position<select name="characterPosition"><option>right</option><option>left</option><option>center</option><option>bottom-right</option></select></label>
+        </div>
+        <label>Character area <output id="characterAreaOutput">30%</output><input type="range" name="characterArea" min="15" max="45" value="30"></label>
+      </section>
+
+      <section class="panel visual">
+        <div class="section-title"><span>03</span><h2>Visual system</h2></div>
+        <div class="grid three">
+          <label>Aspect ratio<select name="aspectRatio"><option>2:3</option><option>3:4</option><option>1:1</option></select></label>
+          <label>Style<select name="style"><option value="illustration">Illustration</option><option value="semi-realistic">Semi-realistic</option><option value="realistic">Realistic</option></select></label>
+          <label>Mood<select name="mood"><option value="cute">Cute</option><option value="balanced">Balanced</option><option value="professional">Professional</option></select></label>
+          <label>Palette<select name="palette"><option value="lavender-blue-mint">Lavender / blue / mint</option><option value="warm-academic">Warm academic</option><option value="cyber-purple">Cyber purple</option><option value="green-data">Green data</option><option value="varied-harmonious">Varied harmonious</option></select></label>
+          <label>Density<select name="density"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></label>
+          <label>Layout<select name="layout"><option value="character-plus-four-sections">Character + four sections</option><option value="process-flow">Process flow</option><option value="comparison">Comparison</option><option value="timeline">Timeline</option><option value="hierarchy">Hierarchy</option><option value="concept-map">Concept map</option><option value="table-and-examples">Table + examples</option><option value="comic-sequence">Comic sequence</option></select></label>
+        </div>
+      </section>
+
+      <section class="panel content">
+        <div class="section-title"><span>04</span><h2>Teaching controls</h2></div>
+        <div class="checks">
+          <label><input type="checkbox" name="bilingual" checked> Bilingual key terms</label>
+          <label><input type="checkbox" name="diagrams" checked> Diagrams and arrows</label>
+          <label><input type="checkbox" name="examples" checked> Short examples</label>
+          <label><input type="checkbox" name="strictTraditional" checked> Strict Traditional Chinese</label>
+        </div>
+        <label>Source files <small>one project-relative path per line</small><textarea name="sourceFiles" placeholder="../../source/database/access.pdf"></textarea></label>
+        <div class="grid two">
+          <label>Output directory<input name="outputDirectory" value="../../notes/A"></label>
+          <label>Output filename<input name="outputFilename" value="COMIC_A_DB_Access_Objects.png"></label>
+        </div>
+      </section>
+    </form>
+
+    <aside class="output-panel">
+      <div class="output-head"><div><p class="eyebrow">LIVE OUTPUT</p><h2>Generation job</h2></div><span id="status">Ready</span></div>
+      <div class="tabs"><button class="tab active" data-target="yamlOutput">YAML</button><button class="tab" data-target="promptOutput">Codex request</button></div>
+      <pre id="yamlOutput"></pre>
+      <pre id="promptOutput" hidden></pre>
+      <div class="actions">
+        <button id="downloadButton" class="primary">Download YAML</button>
+        <button id="copyButton">Copy visible output</button>
+        <button id="resetButton">Reset saved settings</button>
+      </div>
+      <p class="hint">Place the YAML in <code>jobs/</code>, then send the short request to Codex.</p>
+    </aside>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
+
