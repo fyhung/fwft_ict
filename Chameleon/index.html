@@ -1,0 +1,1185 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TM變色龍</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.3/dist/teachablemachine-image.min.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f5f7f2;
+      --muted: #98a69c;
+      --panel: rgba(12, 18, 15, 0.91);
+      --solid: #101713;
+      --line: rgba(218, 238, 222, 0.14);
+      --accent: #b7f34a;
+      --danger: #ff866e;
+      --shadow: 0 18px 55px rgba(0, 0, 0, 0.38);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      color: var(--ink);
+      background: #070b08;
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", ui-sans-serif, system-ui, sans-serif;
+    }
+
+    button, input { font: inherit; }
+    button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    #stage {
+      position: fixed;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 44%, rgba(83, 121, 93, 0.2), transparent 52%), #070b08;
+    }
+
+    .topbar {
+      position: fixed;
+      z-index: 20;
+      top: 14px;
+      left: 252px;
+      right: 252px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 54px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(17px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: max-content;
+      margin-right: auto;
+      font-weight: 780;
+      letter-spacing: -0.025em;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 32px;
+      height: 32px;
+      place-items: center;
+      border-radius: 10px;
+      color: #152009;
+      background: var(--accent);
+    }
+
+    .file-button, button {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 7px 12px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.055);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+    }
+
+    .file-button:hover, button:hover:not(:disabled) {
+      border-color: rgba(183, 243, 74, 0.5);
+      background: rgba(183, 243, 74, 0.1);
+    }
+
+    button:active:not(:disabled), .file-button:active { transform: translateY(1px); }
+    button:disabled { cursor: not-allowed; opacity: 0.38; }
+    .file-button { display: inline-flex; align-items: center; }
+    .file-button input { display: none; }
+    .primary { border-color: transparent; color: #121a0a; background: var(--accent); font-weight: 780; }
+    .primary:hover:not(:disabled) { border-color: transparent; background: #caff67; }
+    .danger { color: var(--danger); }
+
+    .model-rail {
+      position: fixed;
+      z-index: 12;
+      top: 14px;
+      bottom: 104px;
+      width: 224px;
+      display: grid;
+      grid-template-rows: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .model-rail.left { left: 14px; }
+    .model-rail.right { right: 14px; }
+
+    .model-card {
+      --model-color: #b7f34a;
+      min-height: 0;
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--model-color) 60%, transparent);
+      border-radius: 13px;
+      background: var(--panel);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(14px);
+    }
+
+    .model-card.inactive { border-color: var(--line); opacity: 0.56; }
+
+    .model-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      height: 28px;
+      padding: 5px 8px;
+      border-bottom: 1px solid var(--line);
+      font-size: 10px;
+      font-weight: 760;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .model-name { display: flex; align-items: center; gap: 6px; }
+    .color-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--model-color); box-shadow: 0 0 9px var(--model-color); }
+    .model-state { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+
+    .model-body {
+      display: grid;
+      grid-template-columns: minmax(76px, 0.82fr) minmax(90px, 1.18fr);
+      height: calc(100% - 28px);
+      min-height: 0;
+    }
+
+    .model-view-wrap {
+      position: relative;
+      align-self: center;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      min-width: 0;
+      overflow: hidden;
+      border-right: 1px solid var(--line);
+      background: #040705;
+    }
+
+    .model-view {
+      display: block;
+      width: 100%;
+      height: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+    }
+
+    .model-view-wrap::after {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border: 1px solid color-mix(in srgb, var(--model-color) 65%, transparent);
+      pointer-events: none;
+    }
+
+    .model-scores {
+      min-width: 0;
+      min-height: 0;
+      overflow: auto;
+      padding: 6px 7px;
+      scrollbar-width: thin;
+    }
+
+    .empty-copy {
+      display: grid;
+      height: 100%;
+      place-items: center;
+      padding: 8px;
+      color: #718077;
+      text-align: center;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    .score-row { display: grid; gap: 2px; margin-bottom: 5px; }
+    .score-meta { display: flex; justify-content: space-between; gap: 5px; font-size: 9px; }
+    .score-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .score-value { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .score-track { height: 3px; overflow: hidden; border-radius: 99px; background: rgba(255, 255, 255, 0.08); }
+    .score-fill { height: 100%; width: 0; border-radius: inherit; background: var(--model-color); transition: width 110ms linear; }
+
+    .hud {
+      position: fixed;
+      z-index: 18;
+      left: 252px;
+      right: 252px;
+      bottom: 14px;
+      padding: 11px 13px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .status-row, .hud-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .status-row { margin-bottom: 8px; }
+    #statusText { font-size: 12px; }
+    #progressText, #estimateText { color: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+    .progress-track { height: 5px; overflow: hidden; border-radius: 99px; background: rgba(255, 255, 255, 0.08); }
+    #progressBar { height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #55dfaa, var(--accent)); transition: width 100ms linear; }
+    .hud-foot { margin-top: 8px; }
+    .speed-control { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 10px; white-space: nowrap; }
+    #speedRange { width: 115px; accent-color: var(--accent); }
+
+    .empty-state {
+      position: fixed;
+      z-index: 2;
+      top: 50%;
+      left: 50%;
+      width: min(440px, calc(100vw - 520px));
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+
+    .empty-state.hidden { opacity: 0; }
+    .empty-icon { display: grid; width: 68px; height: 68px; place-items: center; margin: 0 auto 16px; border: 1px solid rgba(183, 243, 74, 0.25); border-radius: 21px; color: var(--accent); background: rgba(183, 243, 74, 0.06); font-size: 31px; }
+    .empty-state h1 { margin: 0 0 8px; font-size: clamp(26px, 4vw, 46px); letter-spacing: -0.055em; }
+    .empty-state p { margin: 0; color: var(--muted); line-height: 1.55; }
+
+    .overlay {
+      position: fixed;
+      z-index: 40;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(2, 5, 3, 0.76);
+      backdrop-filter: blur(13px);
+    }
+
+    .overlay[hidden] { display: none; }
+    .dialog { width: min(1000px, 100%); max-height: calc(100vh - 48px); overflow: auto; border: 1px solid var(--line); border-radius: 21px; background: var(--solid); box-shadow: var(--shadow); }
+    .dialog-head { position: sticky; z-index: 2; top: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 18px 20px; border-bottom: 1px solid var(--line); background: rgba(16, 23, 19, 0.96); backdrop-filter: blur(12px); }
+    .eyebrow { color: var(--muted); font-size: 10px; font-weight: 760; letter-spacing: 0.13em; text-transform: uppercase; }
+    .dialog h2 { margin: 3px 0 4px; font-size: 24px; letter-spacing: -0.04em; }
+    .dialog p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .dialog-actions { display: flex; gap: 8px; }
+
+    .slot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 16px 20px 20px; }
+    .model-slot { --model-color: #b7f34a; display: grid; grid-template-columns: 92px minmax(0, 1fr); align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--line); border-left: 4px solid var(--model-color); border-radius: 11px; background: rgba(255, 255, 255, 0.025); }
+    .slot-label { min-width: 0; font-size: 12px; font-weight: 730; }
+    .slot-status { display: block; overflow: hidden; margin-top: 2px; color: var(--muted); font-size: 9px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+    .slot-fields { display: grid; grid-template-columns: minmax(86px, .55fr) minmax(160px, 1.45fr); gap: 7px; min-width: 0; }
+    .model-url, .model-name-input { width: 100%; min-width: 0; height: 36px; border: 1px solid var(--line); border-radius: 8px; padding: 0 10px; color: var(--ink); background: rgba(0, 0, 0, 0.25); font-size: 11px; }
+    .background-ready { color: var(--accent); }
+    .project-credit { margin: 0 20px 20px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 11px; color: var(--muted); background: rgba(255,255,255,.025); font-size: 11px; line-height: 1.7; text-align: center; }
+    .project-credit strong { color: var(--ink); }
+
+    .results-dialog { width: min(1180px, 100%); }
+    .background-dialog { width: min(900px, 100%); }
+    #backgroundResultsGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; padding: 16px 20px 22px; }
+    .background-result { --model-color: #b7f34a; overflow: hidden; border: 1px solid color-mix(in srgb, var(--model-color) 60%, transparent); border-radius: 13px; background: rgba(255, 255, 255, 0.025); }
+    .background-result img { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover; background: #050806; }
+    .background-result-copy { padding: 10px 11px 12px; }
+    .background-result-model { color: var(--model-color); font-size: 10px; font-weight: 780; letter-spacing: .07em; text-transform: uppercase; }
+    .background-result-class { margin: 4px 0 3px; font-size: 17px; font-weight: 760; }
+    .background-result-confidence { color: var(--muted); font-size: 11px; }
+    #resultsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; padding: 16px 20px 22px; }
+    .result-item { --model-color: #b7f34a; overflow: hidden; border: 1px solid color-mix(in srgb, var(--model-color) 55%, transparent); border-radius: 13px; background: rgba(255, 255, 255, 0.025); }
+    .result-item img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: #050806; }
+    .result-copy { padding: 9px 10px 11px; }
+    .result-model { color: var(--model-color); font-size: 9px; font-weight: 780; letter-spacing: 0.08em; text-transform: uppercase; }
+    .result-name { display: flex; align-items: baseline; justify-content: space-between; gap: 7px; margin: 3px 0 5px; font-size: 12px; font-weight: 730; }
+    .result-confidence { color: var(--model-color); font-variant-numeric: tabular-nums; }
+    .result-detail { color: var(--muted); font-size: 9px; line-height: 1.45; }
+
+    .toast { position: fixed; z-index: 60; left: 50%; bottom: 20px; max-width: min(520px, calc(100vw - 36px)); transform: translate(-50%, 14px); padding: 10px 14px; border: 1px solid rgba(255, 134, 110, 0.3); border-radius: 10px; color: #ffd7cf; background: rgba(46, 20, 16, 0.95); opacity: 0; pointer-events: none; transition: opacity 160ms ease, transform 160ms ease; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 1150px) {
+      .model-rail { width: 184px; }
+      .model-rail.left { left: 8px; }
+      .model-rail.right { right: 8px; }
+      .topbar, .hud { left: 202px; right: 202px; }
+      .model-body { grid-template-columns: 72px 1fr; }
+      .brand span:last-child { display: none; }
+    }
+
+    @media (max-width: 760px) {
+      .model-rail { top: 132px; bottom: 98px; width: 132px; }
+      .topbar { left: 8px; right: 8px; flex-wrap: wrap; }
+      .hud { left: 148px; right: 148px; }
+      .model-body { grid-template-columns: 1fr; }
+      .model-scores { display: none; }
+      .model-view-wrap { border-right: 0; }
+      .slot-grid { grid-template-columns: 1fr; }
+      .model-slot { grid-template-columns: 78px minmax(0, 1fr); }
+      .slot-fields { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage" aria-label="主圖片及各模型的競賽掃描框"></canvas>
+
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">⌗</div>
+    <h1>八個模型，同場較量。</h1>
+    <p>先設定模型及完成背景測試，再選擇大型合成圖片進行多輪掃描。留空的模型欄位不會參賽。</p>
+  </div>
+
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">TM</span><span>TM變色龍</span></div>
+    <label class="file-button">1 · 背景圖片 <span id="backgroundState">未選擇</span><input id="backgroundInput" type="file" accept="image/*"></label>
+    <label class="file-button">2 · 主圖片<input id="imageInput" type="file" accept="image/*" disabled></label>
+    <button id="configureButton" type="button">模型 <span id="modelCount">0/8</span></button>
+    <button id="startButton" class="primary" type="button" disabled>開始競賽</button>
+    <button id="pauseButton" type="button" disabled>暫停</button>
+    <button id="stopButton" class="danger" type="button" disabled>停止</button>
+  </header>
+
+  <aside class="model-rail left" id="leftRail" aria-label="模型一至四"></aside>
+  <aside class="model-rail right" id="rightRail" aria-label="模型五至八"></aside>
+
+  <section class="hud" aria-live="polite">
+    <div class="status-row">
+      <span id="statusText">請先設定至少一個模型，然後完成背景測試。</span>
+      <span id="progressText">0 / 0</span>
+    </div>
+    <div class="progress-track"><div id="progressBar"></div></div>
+    <div class="hud-foot">
+      <span id="estimateText">七輪相同縮放掃描 · 各模型採用不同斜向路線</span>
+      <label class="speed-control">移動延遲
+        <input id="speedRange" type="range" min="0" max="1500" value="500" step="50">
+        <span id="speedValue">500 毫秒</span>
+      </label>
+    </div>
+  </section>
+
+  <section class="overlay" id="setupPanel" aria-label="設定參賽模型">
+    <div class="dialog">
+      <div class="dialog-head">
+        <div>
+          <span class="eyebrow">競賽設定</span>
+          <h2>參賽模型</h2>
+          <p>為每個模型命名，再貼上最多八個 Teachable Machine 圖像模型連結。留空的欄位會自動略過。</p>
+        </div>
+        <div class="dialog-actions">
+          <button id="closeSetupButton" type="button">關閉</button>
+          <button id="loadModelsButton" class="primary" type="button">載入已填寫的模型</button>
+        </div>
+      </div>
+      <div class="slot-grid" id="slotGrid"></div>
+      <div class="project-credit"><strong>TM變色龍</strong><br>由 fyhung 製作，ChatGPT 5.6 Sol 協助<br>東華三院馮黃鳳亭中學 ·「資訊及通訊科技」課堂 · 2026 年夏季</div>
+    </div>
+  </section>
+
+  <section class="overlay" id="backgroundResultsPanel" hidden aria-label="背景測試結果">
+    <div class="dialog background-dialog">
+      <div class="dialog-head">
+        <div>
+          <span class="eyebrow">第一階段完成</span>
+          <h2>背景測試結果</h2>
+          <p>請查看每個模型最有信心辨認出的分類。主掃描完成後，該模型的結果圖庫不會顯示這個背景分類。</p>
+        </div>
+        <div class="dialog-actions">
+          <button id="changeBackgroundButton" type="button">另選背景圖片</button>
+          <button id="acceptBackgroundButton" class="primary" type="button">接受並繼續</button>
+        </div>
+      </div>
+      <div id="backgroundResultsGrid"></div>
+    </div>
+  </section>
+
+  <section class="overlay" id="resultsPanel" hidden aria-label="競賽最佳掃描畫面">
+    <div class="dialog results-dialog">
+      <div class="dialog-head">
+        <div>
+          <span class="eyebrow">競賽結果</span>
+          <h2>最高信心畫面</h2>
+          <p id="resultsSummary">顯示每個參賽模型在各分類中找到的最高信心區域。</p>
+        </div>
+        <button id="closeResultsButton" type="button">返回競賽畫面</button>
+      </div>
+      <div id="resultsGrid"></div>
+    </div>
+  </section>
+
+  <div class="toast" id="toast" role="alert"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const COLORS = ["#ff5f57", "#ffbd2e", "#4ddf83", "#45a8ff", "#b47cff", "#ff73c7", "#50e3d5", "#ff8c42"];
+      const PASS_SCALES = [0.50, 0.34, 0.22, 0.15, 0.22, 0.34, 0.50];
+      const STEP_RATIO = 0.65;
+      const MODEL_INPUT_SIZE = 224;
+
+      const stage = document.querySelector("#stage");
+      const stageContext = stage.getContext("2d");
+      const imageInput = document.querySelector("#imageInput");
+      const backgroundInput = document.querySelector("#backgroundInput");
+      const backgroundState = document.querySelector("#backgroundState");
+      const configureButton = document.querySelector("#configureButton");
+      const modelCount = document.querySelector("#modelCount");
+      const startButton = document.querySelector("#startButton");
+      const pauseButton = document.querySelector("#pauseButton");
+      const stopButton = document.querySelector("#stopButton");
+      const speedRange = document.querySelector("#speedRange");
+      const speedValue = document.querySelector("#speedValue");
+      const statusText = document.querySelector("#statusText");
+      const progressText = document.querySelector("#progressText");
+      const progressBar = document.querySelector("#progressBar");
+      const estimateText = document.querySelector("#estimateText");
+      const emptyState = document.querySelector("#emptyState");
+      const leftRail = document.querySelector("#leftRail");
+      const rightRail = document.querySelector("#rightRail");
+      const setupPanel = document.querySelector("#setupPanel");
+      const slotGrid = document.querySelector("#slotGrid");
+      const closeSetupButton = document.querySelector("#closeSetupButton");
+      const loadModelsButton = document.querySelector("#loadModelsButton");
+      const backgroundResultsPanel = document.querySelector("#backgroundResultsPanel");
+      const backgroundResultsGrid = document.querySelector("#backgroundResultsGrid");
+      const changeBackgroundButton = document.querySelector("#changeBackgroundButton");
+      const acceptBackgroundButton = document.querySelector("#acceptBackgroundButton");
+      const resultsPanel = document.querySelector("#resultsPanel");
+      const resultsGrid = document.querySelector("#resultsGrid");
+      const resultsSummary = document.querySelector("#resultsSummary");
+      const closeResultsButton = document.querySelector("#closeResultsButton");
+      const toast = document.querySelector("#toast");
+
+      const competitors = [];
+      let sourceImage = null;
+      let sourceName = "";
+      let backgroundImage = null;
+      let backgroundName = "";
+      let calibrating = false;
+      let backgroundConfirmed = false;
+      let running = false;
+      let paused = false;
+      let runToken = 0;
+      let totalSteps = 0;
+      let completedSteps = 0;
+      let scanStartedAt = 0;
+      let toastTimer = 0;
+
+      function createCompetitor(index) {
+        const slot = document.createElement("div");
+        slot.className = "model-slot";
+        slot.style.setProperty("--model-color", COLORS[index]);
+        slot.innerHTML = `
+          <div class="slot-label">模型 ${index + 1}<span class="slot-status">空白</span></div>
+          <div class="slot-fields">
+            <input class="model-name-input" type="text" maxlength="30" value="模型 ${index + 1}" aria-label="模型 ${index + 1} 名稱" placeholder="模型名稱">
+            <input class="model-url" type="url" inputmode="url" autocomplete="url" spellcheck="false" aria-label="模型 ${index + 1} 連結" placeholder="Teachable Machine 模型連結">
+          </div>
+        `;
+        slotGrid.append(slot);
+
+        const card = document.createElement("section");
+        card.className = "model-card inactive";
+        card.style.setProperty("--model-color", COLORS[index]);
+        card.innerHTML = `
+          <div class="model-head">
+            <span class="model-name"><span class="color-dot"></span><span class="model-name-text">模型 ${index + 1}</span></span>
+            <span class="model-state">空白</span>
+          </div>
+          <div class="model-body">
+            <div class="model-view-wrap"><canvas class="model-view" width="224" height="224"></canvas></div>
+            <div class="model-scores"><div class="empty-copy">尚未載入模型</div></div>
+          </div>
+        `;
+        (index < 4 ? leftRail : rightRail).append(card);
+
+        const canvas = card.querySelector(".model-view");
+        return {
+          index,
+          color: COLORS[index],
+          name: `模型 ${index + 1}`,
+          slot,
+          input: slot.querySelector(".model-url"),
+          nameInput: slot.querySelector(".model-name-input"),
+          cardName: card.querySelector(".model-name-text"),
+          slotStatus: slot.querySelector(".slot-status"),
+          card,
+          cardState: card.querySelector(".model-state"),
+          canvas,
+          context: canvas.getContext("2d", { willReadFrequently: true }),
+          scoreBox: card.querySelector(".model-scores"),
+          scoreElements: new Map(),
+          model: null,
+          labels: [],
+          best: new Map(),
+          plan: [],
+          frame: null,
+          url: "",
+          backgroundClass: null,
+          backgroundConfidence: 0,
+          backgroundSnapshot: ""
+        };
+      }
+
+      for (let index = 0; index < 8; index += 1) competitors.push(createCompetitor(index));
+
+      competitors.forEach((competitor) => {
+        competitor.nameInput.addEventListener("input", () => {
+          competitor.name = competitor.nameInput.value.trim() || `模型 ${competitor.index + 1}`;
+          competitor.cardName.textContent = competitor.name;
+          saveArenaSetup();
+        });
+      });
+
+      function normalizeModelBase(value) {
+        let url = value.trim();
+        if (!url) return "";
+        url = url.replace(/\/(model|metadata)\.json(?:\?.*)?$/i, "/");
+        return url.endsWith("/") ? url : `${url}/`;
+      }
+
+      function activeCompetitors() { return competitors.filter((competitor) => competitor.model); }
+
+      function formatDuration(seconds) {
+        if (!Number.isFinite(seconds) || seconds < 0) return "—";
+        const rounded = Math.max(0, Math.round(seconds));
+        const minutes = Math.floor(rounded / 60);
+        const remainder = rounded % 60;
+        return minutes ? `${minutes} 分 ${String(remainder).padStart(2, "0")} 秒` : `${remainder} 秒`;
+      }
+
+      function showToast(message) {
+        clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.classList.add("show");
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 4500);
+      }
+
+      function updateReadyState() {
+        const active = activeCompetitors().length;
+        const calibrated = activeCompetitors().filter((competitor) => competitor.backgroundClass).length;
+        modelCount.textContent = `${active}/8`;
+        imageInput.disabled = running || !backgroundConfirmed;
+        startButton.disabled = running || calibrating || !backgroundConfirmed || !sourceImage || active === 0 || calibrated !== active;
+      }
+
+      function resizeStage() {
+        const ratio = Math.min(devicePixelRatio || 1, 2);
+        stage.width = Math.round(innerWidth * ratio);
+        stage.height = Math.round(innerHeight * ratio);
+        stage.style.width = `${innerWidth}px`;
+        stage.style.height = `${innerHeight}px`;
+        drawStage();
+      }
+
+      function getImagePlacement() {
+        if (!sourceImage) return null;
+        const ratio = Math.min(devicePixelRatio || 1, 2);
+        const sideRoom = (innerWidth > 1150 ? 252 : innerWidth > 760 ? 202 : 148) * ratio;
+        const topRoom = 80 * ratio;
+        const bottomRoom = 106 * ratio;
+        const availableWidth = Math.max(100, stage.width - sideRoom * 2 - 16 * ratio);
+        const availableHeight = Math.max(100, stage.height - topRoom - bottomRoom);
+        const scale = Math.min(availableWidth / sourceImage.naturalWidth, availableHeight / sourceImage.naturalHeight);
+        const width = sourceImage.naturalWidth * scale;
+        const height = sourceImage.naturalHeight * scale;
+        return { x: (stage.width - width) / 2, y: topRoom + (availableHeight - height) / 2, width, height, scale };
+      }
+
+      function drawStage() {
+        stageContext.clearRect(0, 0, stage.width, stage.height);
+        if (!sourceImage) return;
+        const placement = getImagePlacement();
+
+        stageContext.save();
+        stageContext.shadowColor = "rgba(0,0,0,.58)";
+        stageContext.shadowBlur = 34;
+        stageContext.drawImage(sourceImage, placement.x, placement.y, placement.width, placement.height);
+        stageContext.restore();
+
+        const active = activeCompetitors().filter((competitor) => competitor.frame);
+        if (!active.length) return;
+        stageContext.save();
+        stageContext.fillStyle = "rgba(2,7,4,.20)";
+        stageContext.fillRect(placement.x, placement.y, placement.width, placement.height);
+        stageContext.restore();
+
+        active.forEach((competitor) => {
+          const frame = competitor.frame;
+          const x = Math.round(placement.x + frame.x * placement.scale);
+          const y = Math.round(placement.y + frame.y * placement.scale);
+          const squareSize = Math.max(1, Math.round(frame.size * placement.scale));
+          const ratio = Math.min(devicePixelRatio || 1, 2);
+          stageContext.save();
+          stageContext.strokeStyle = competitor.color;
+          stageContext.lineWidth = Math.max(2, 2 * ratio);
+          stageContext.shadowColor = competitor.color;
+          stageContext.shadowBlur = 9;
+          stageContext.strokeRect(x, y, squareSize, squareSize);
+          stageContext.fillStyle = competitor.color;
+          stageContext.font = `700 ${Math.max(10, 10 * ratio)}px system-ui`;
+          const label = competitor.name.length > 14 ? `${competitor.name.slice(0, 13)}…` : competitor.name;
+          stageContext.fillText(label, x + 4 * ratio, y + 12 * ratio);
+          stageContext.restore();
+        });
+      }
+
+      function gridPositions(limit, size, step) {
+        const max = Math.max(0, limit - size);
+        if (max === 0) return [0];
+        const positions = [];
+        for (let value = 0; value < max; value += step) positions.push(Math.round(value));
+        if (positions.at(-1) !== Math.round(max)) positions.push(Math.round(max));
+        return positions;
+      }
+
+      function diagonalRoute(xs, ys, modelIndex, passIndex) {
+        const groups = new Map();
+        ys.forEach((y, row) => xs.forEach((x, column) => {
+          const diagonal = row + column;
+          if (!groups.has(diagonal)) groups.set(diagonal, []);
+          groups.get(diagonal).push({ x, y, row, column });
+        }));
+
+        let diagonalKeys = [...groups.keys()].sort((a, b) => a - b);
+        if ((modelIndex + passIndex) % 2) diagonalKeys.reverse();
+        const offset = diagonalKeys.length ? (modelIndex * 3 + passIndex * 2) % diagonalKeys.length : 0;
+        diagonalKeys = diagonalKeys.slice(offset).concat(diagonalKeys.slice(0, offset));
+
+        const route = [];
+        diagonalKeys.forEach((key, order) => {
+          const group = [...groups.get(key)];
+          group.sort((a, b) => ((modelIndex + order) % 2 ? b.row - a.row : a.row - b.row));
+          route.push(...group);
+        });
+        return route;
+      }
+
+      function createPlan(modelIndex) {
+        if (!sourceImage) return [];
+        const width = sourceImage.naturalWidth;
+        const height = sourceImage.naturalHeight;
+        const shortEdge = Math.min(width, height);
+        const plan = [];
+
+        PASS_SCALES.forEach((scale, passIndex) => {
+          const size = Math.max(32, Math.round(shortEdge * scale));
+          const step = Math.max(16, Math.round(size * STEP_RATIO));
+          const xs = gridPositions(width, size, step);
+          const ys = gridPositions(height, size, step);
+          const route = diagonalRoute(xs, ys, modelIndex, passIndex);
+          const zoomDirection = passIndex < 3 ? "逐步放大" : passIndex === 3 ? "最接近畫面" : "逐步縮小";
+          route.forEach(({ x, y }) => plan.push({ x, y, size, scale, passIndex, passNumber: passIndex + 1, zoomDirection }));
+        });
+        return plan;
+      }
+
+      function updateEstimate() {
+        if (!sourceImage) {
+          estimateText.textContent = "七輪相同縮放掃描 · 各模型採用不同斜向路線";
+          return;
+        }
+        const count = createPlan(0).length;
+        const delay = Number(speedRange.value);
+        estimateText.textContent = `每個模型 ${count} 個掃描畫面 · ${delay === 0 ? "按模型推論速度運行" : `約 ${formatDuration(count * delay / 1000)}，另加模型推論時間`}`;
+      }
+
+      async function loadImage(file) {
+        if (!file) return;
+        if (!file.type.startsWith("image/")) return showToast("請選擇圖像檔案。 ");
+        if (running) stopScan(false);
+        const objectUrl = URL.createObjectURL(file);
+        const image = new Image();
+        image.decoding = "async";
+        image.onload = () => {
+          URL.revokeObjectURL(objectUrl);
+          sourceImage = image;
+          sourceName = file.name;
+          competitors.forEach((competitor) => { competitor.frame = null; });
+          emptyState.classList.add("hidden");
+          statusText.textContent = `主圖片已準備：${file.name}（${image.naturalWidth} × ${image.naturalHeight}）`;
+          progressText.textContent = "0 / 0";
+          progressBar.style.width = "0%";
+          resultsPanel.hidden = true;
+          updateEstimate();
+          updateReadyState();
+          drawStage();
+        };
+        image.onerror = () => { URL.revokeObjectURL(objectUrl); showToast("無法開啟這個圖像檔案。 "); };
+        image.src = objectUrl;
+      }
+
+      function backgroundTestFrames() {
+        if (!backgroundImage) return [];
+        const width = backgroundImage.naturalWidth;
+        const height = backgroundImage.naturalHeight;
+        const size = Math.max(32, Math.round(Math.min(width, height) * 0.58));
+        const maxX = Math.max(0, width - size);
+        const maxY = Math.max(0, height - size);
+        return [
+          { x: 0, y: 0, size },
+          { x: Math.round(maxX / 2), y: Math.round(maxY / 2), size },
+          { x: Math.round(maxX), y: Math.round(maxY), size }
+        ];
+      }
+
+      async function calibrateBackground() {
+        const active = activeCompetitors();
+        if (!backgroundImage || !active.length || calibrating || running) {
+          updateReadyState();
+          return;
+        }
+        calibrating = true;
+        backgroundConfirmed = false;
+        backgroundResultsPanel.hidden = true;
+        active.forEach((competitor) => {
+          competitor.backgroundClass = null;
+          competitor.backgroundConfidence = 0;
+          competitor.backgroundSnapshot = "";
+          competitor.cardState.textContent = "正在測試背景";
+          competitor.slotStatus.textContent = "背景測試中…";
+        });
+        backgroundState.textContent = "測試中…";
+        backgroundState.classList.remove("background-ready");
+        statusText.textContent = `快速背景測試：${active.length} 個模型 × 3 個畫面…`;
+        updateReadyState();
+
+        try {
+          const frames = backgroundTestFrames();
+          for (const frame of frames) {
+            active.forEach((competitor) => {
+              competitor.context.clearRect(0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
+              competitor.context.drawImage(backgroundImage, frame.x, frame.y, frame.size, frame.size, 0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
+            });
+            const predictionsByModel = await Promise.all(active.map((competitor) => competitor.model.predict(competitor.canvas, false)));
+            active.forEach((competitor, modelIndex) => {
+              predictionsByModel[modelIndex].forEach((prediction) => {
+                if (!competitor.backgroundClass || prediction.probability > competitor.backgroundConfidence) {
+                  competitor.backgroundClass = prediction.className;
+                  competitor.backgroundConfidence = prediction.probability;
+                  competitor.backgroundSnapshot = competitor.canvas.toDataURL("image/jpeg", 0.88);
+                }
+              });
+            });
+          }
+
+          active.forEach((competitor) => {
+            const percent = Math.round(competitor.backgroundConfidence * 100);
+            competitor.cardState.textContent = `背景：${competitor.backgroundClass}`;
+            competitor.slotStatus.textContent = `背景分類：${competitor.backgroundClass} ${percent}%`;
+          });
+          backgroundState.textContent = "完成";
+          backgroundState.classList.add("background-ready");
+          statusText.textContent = `已使用 ${backgroundName} 完成背景校準。請先查看並接受結果，才進入第二階段。`;
+          showBackgroundResults();
+        } catch (error) {
+          console.error("背景校準失敗", error);
+          active.forEach((competitor) => {
+            competitor.backgroundClass = null;
+            competitor.backgroundConfidence = 0;
+            competitor.backgroundSnapshot = "";
+            competitor.cardState.textContent = "背景測試失敗";
+            competitor.slotStatus.textContent = "背景測試失敗";
+          });
+          backgroundState.textContent = "失敗";
+          showToast("背景測試失敗。請嘗試重新載入模型，或選擇另一張背景圖片。 ");
+        } finally {
+          calibrating = false;
+          updateReadyState();
+        }
+      }
+
+      async function loadBackgroundImage(file) {
+        if (!file) return;
+        if (!file.type.startsWith("image/")) return showToast("請為背景測試選擇圖像檔案。 ");
+        if (running) stopScan(false);
+        const objectUrl = URL.createObjectURL(file);
+        const image = new Image();
+        image.decoding = "async";
+        image.onload = async () => {
+          URL.revokeObjectURL(objectUrl);
+          backgroundImage = image;
+          backgroundName = file.name;
+          competitors.forEach((competitor) => {
+            competitor.backgroundClass = null;
+            competitor.backgroundConfidence = 0;
+            competitor.backgroundSnapshot = "";
+          });
+          backgroundConfirmed = false;
+          backgroundResultsPanel.hidden = true;
+          backgroundState.textContent = "已載入";
+          backgroundState.classList.remove("background-ready");
+          statusText.textContent = `背景圖片已準備：${file.name}。`;
+          updateReadyState();
+          await calibrateBackground();
+        };
+        image.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          showToast("無法開啟這張背景圖片。 ");
+        };
+        image.src = objectUrl;
+      }
+
+      function showBackgroundResults() {
+        backgroundResultsGrid.replaceChildren();
+        activeCompetitors().forEach((competitor) => {
+          if (!competitor.backgroundClass) return;
+          const item = document.createElement("article");
+          item.className = "background-result";
+          item.style.setProperty("--model-color", competitor.color);
+          const image = document.createElement("img");
+          image.src = competitor.backgroundSnapshot;
+          image.alt = `${competitor.name} 的背景校準裁切畫面`;
+          const copy = document.createElement("div");
+          copy.className = "background-result-copy";
+          const modelName = document.createElement("div");
+          modelName.className = "background-result-model";
+          modelName.textContent = competitor.name;
+          const className = document.createElement("div");
+          className.className = "background-result-class";
+          className.textContent = competitor.backgroundClass;
+          const confidence = document.createElement("div");
+          confidence.className = "background-result-confidence";
+          confidence.textContent = `信心度 ${(competitor.backgroundConfidence * 100).toFixed(1)}% · 主掃描結果將略過此分類`;
+          copy.append(modelName, className, confidence);
+          item.append(image, copy);
+          backgroundResultsGrid.append(item);
+        });
+        backgroundResultsPanel.hidden = false;
+      }
+
+      function acceptBackgroundResults() {
+        backgroundConfirmed = true;
+        backgroundResultsPanel.hidden = true;
+        statusText.textContent = sourceImage
+          ? "已接受第一階段結果。現在可以開始主競賽掃描。"
+          : "已接受第一階段結果。請選擇第二階段使用的主合成圖片。";
+        updateReadyState();
+      }
+
+      function buildScoreRows(competitor) {
+        competitor.scoreElements.clear();
+        competitor.scoreBox.replaceChildren();
+        competitor.labels.forEach((label) => {
+          const row = document.createElement("div");
+          row.className = "score-row";
+          row.innerHTML = `<div class="score-meta"><span class="score-label"></span><span class="score-value">0.0%</span></div><div class="score-track"><div class="score-fill"></div></div>`;
+          row.querySelector(".score-label").textContent = label;
+          competitor.scoreBox.append(row);
+          competitor.scoreElements.set(label, { value: row.querySelector(".score-value"), fill: row.querySelector(".score-fill") });
+        });
+      }
+
+      function markEmpty(competitor) {
+        competitor.model = null;
+        competitor.labels = [];
+        competitor.url = "";
+        competitor.frame = null;
+        competitor.backgroundClass = null;
+        competitor.backgroundConfidence = 0;
+        competitor.backgroundSnapshot = "";
+        competitor.card.classList.add("inactive");
+        competitor.cardState.textContent = "空白";
+        competitor.slotStatus.textContent = "空白";
+        competitor.scoreBox.innerHTML = '<div class="empty-copy">尚未載入模型</div>';
+        competitor.context.clearRect(0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
+      }
+
+      async function loadOneModel(competitor) {
+        const base = normalizeModelBase(competitor.input.value);
+        if (!base) { markEmpty(competitor); return { status: "empty" }; }
+        competitor.input.value = base;
+        competitor.name = competitor.nameInput.value.trim() || `模型 ${competitor.index + 1}`;
+        competitor.cardName.textContent = competitor.name;
+        competitor.slotStatus.textContent = "載入中…";
+        competitor.cardState.textContent = "載入中";
+        try {
+          const model = await window.tmImage.load(`${base}model.json`, `${base}metadata.json`);
+          competitor.model = model;
+          competitor.url = base;
+          competitor.backgroundClass = null;
+          competitor.backgroundConfidence = 0;
+          competitor.backgroundSnapshot = "";
+          competitor.labels = typeof model.getClassLabels === "function"
+            ? model.getClassLabels()
+            : Array.from({ length: model.getTotalClasses() }, (_, index) => `分類 ${index + 1}`);
+          competitor.card.classList.remove("inactive");
+          competitor.cardState.textContent = `${competitor.labels.length} 個分類`;
+          competitor.slotStatus.textContent = `已準備 · ${competitor.labels.length} 個分類`;
+          buildScoreRows(competitor);
+          return { status: "ready" };
+        } catch (error) {
+          console.error(`模型 ${competitor.index + 1} 載入失敗`, error);
+          markEmpty(competitor);
+          competitor.cardState.textContent = "載入失敗";
+          competitor.slotStatus.textContent = "載入失敗";
+          return { status: "failed" };
+        }
+      }
+
+      async function loadModels() {
+        if (!window.tmImage) return showToast("未能載入 Teachable Machine 程式庫。請檢查網絡連線並重新整理頁面。 ");
+        if (running) stopScan(false);
+        const entered = competitors.filter((competitor) => competitor.input.value.trim());
+        if (!entered.length) return showToast("請貼上至少一個模型連結；其他欄位可以留空。 ");
+        backgroundConfirmed = false;
+        backgroundResultsPanel.hidden = true;
+        loadModelsButton.disabled = true;
+        loadModelsButton.textContent = "正在載入競賽模型…";
+        statusText.textContent = `正在載入 ${entered.length} 個模型…`;
+        const outcomes = await Promise.all(competitors.map(loadOneModel));
+        const ready = outcomes.filter((outcome) => outcome.status === "ready").length;
+        const failed = outcomes.filter((outcome) => outcome.status === "failed").length;
+        loadModelsButton.disabled = false;
+        loadModelsButton.textContent = "載入已填寫的模型";
+        statusText.textContent = `${ready} 個參賽模型已準備${failed ? ` · ${failed} 個載入失敗` : ""}。`;
+        saveArenaSetup();
+        updateReadyState();
+        if (ready) setupPanel.hidden = true;
+        if (failed) showToast(`有 ${failed} 個模型連結無法載入。`);
+        if (ready && backgroundImage) await calibrateBackground();
+        else if (ready) statusText.textContent = `${ready} 個參賽模型已準備。請上載背景圖片完成校準，然後才開始掃描。`;
+      }
+
+      function saveArenaSetup() {
+        try {
+          localStorage.setItem("chameleonArenaModels", JSON.stringify(competitors.map((competitor) => ({
+            name: competitor.nameInput.value.trim(),
+            url: competitor.input.value.trim()
+          }))));
+        } catch (_) { /* optional */ }
+      }
+
+      function captureView(competitor, frame) {
+        competitor.context.clearRect(0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
+        competitor.context.drawImage(sourceImage, frame.x, frame.y, frame.size, frame.size, 0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
+      }
+
+      function renderPredictions(competitor, predictions) {
+        let top = null;
+        predictions.forEach((prediction) => {
+          const elements = competitor.scoreElements.get(prediction.className);
+          const percent = prediction.probability * 100;
+          if (elements) {
+            elements.value.textContent = `${percent.toFixed(1)}%`;
+            elements.fill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+          }
+          if (!top || prediction.probability > top.probability) top = prediction;
+        });
+        if (top) competitor.cardState.textContent = `${top.className} ${Math.round(top.probability * 100)}%`;
+      }
+
+      function recordBest(competitor, predictions, frame, stepIndex) {
+        const improvements = predictions.filter((prediction) => {
+          const previous = competitor.best.get(prediction.className);
+          return !previous || prediction.probability > previous.probability;
+        });
+        if (!improvements.length) return;
+        const snapshot = competitor.canvas.toDataURL("image/jpeg", 0.88);
+        improvements.forEach((prediction) => competitor.best.set(prediction.className, {
+          className: prediction.className,
+          probability: prediction.probability,
+          snapshot,
+          x: frame.x,
+          y: frame.y,
+          scale: frame.scale,
+          passNumber: frame.passNumber,
+          stepIndex
+        }));
+      }
+
+      function animateFrames(active, targets, duration, token) {
+        if (duration <= 0) {
+          active.forEach((competitor, index) => { competitor.frame = { ...targets[index] }; });
+          drawStage();
+          return Promise.resolve(token === runToken && running);
+        }
+        const starts = active.map((competitor, index) => competitor.frame ? { ...competitor.frame } : { ...targets[index] });
+        return new Promise((resolve) => {
+          const startTime = performance.now();
+          function tick(now) {
+            if (token !== runToken || !running) return resolve(false);
+            if (paused) return requestAnimationFrame(tick);
+            const progress = Math.min(1, (now - startTime) / duration);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            active.forEach((competitor, index) => {
+              const start = starts[index];
+              const target = targets[index];
+              competitor.frame = { ...target, x: start.x + (target.x - start.x) * eased, y: start.y + (target.y - start.y) * eased, size: start.size + (target.size - start.size) * eased };
+            });
+            drawStage();
+            if (progress >= 1) return resolve(true);
+            requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+        });
+      }
+
+      function updateProgress(frame) {
+        const percent = totalSteps ? completedSteps / totalSteps * 100 : 0;
+        const elapsed = (performance.now() - scanStartedAt) / 1000;
+        const remaining = completedSteps ? elapsed / completedSteps * (totalSteps - completedSteps) : 0;
+        progressText.textContent = `${completedSteps} / ${totalSteps} · ${percent.toFixed(0)}%`;
+        progressBar.style.width = `${percent}%`;
+        statusText.textContent = `第 ${frame.passNumber}/${PASS_SCALES.length} 輪 · ${frame.zoomDirection} · 尚餘 ${formatDuration(remaining)}`;
+      }
+
+      function setRunningControls(isRunning) {
+        running = isRunning;
+        const active = activeCompetitors();
+        const allCalibrated = active.length > 0 && active.every((competitor) => competitor.backgroundClass);
+        imageInput.disabled = isRunning || !backgroundConfirmed;
+        backgroundInput.disabled = isRunning;
+        configureButton.disabled = isRunning;
+        startButton.disabled = isRunning || calibrating || !sourceImage || !allCalibrated;
+        pauseButton.disabled = !isRunning;
+        stopButton.disabled = !isRunning;
+        speedRange.disabled = isRunning;
+      }
+
+      async function startScan() {
+        const active = activeCompetitors();
+        if (!sourceImage || !active.length || running) return;
+        resultsPanel.hidden = true;
+        active.forEach((competitor) => {
+          competitor.best = new Map();
+          competitor.plan = createPlan(competitor.index);
+          competitor.frame = null;
+        });
+        totalSteps = active[0].plan.length;
+        completedSteps = 0;
+        paused = false;
+        pauseButton.textContent = "暫停";
+        runToken += 1;
+        const token = runToken;
+        scanStartedAt = performance.now();
+        setRunningControls(true);
+        progressText.textContent = `0 / ${totalSteps}`;
+        progressBar.style.width = "0%";
+        statusText.textContent = `${active.length} 個模型開始進行各 ${totalSteps} 個相同數量的掃描畫面…`;
+
+        try {
+          for (let stepIndex = 0; stepIndex < totalSteps; stepIndex += 1) {
+            if (token !== runToken || !running) return;
+            while (paused && token === runToken && running) await new Promise((resolve) => setTimeout(resolve, 70));
+            const targets = active.map((competitor) => competitor.plan[stepIndex]);
+            const moved = await animateFrames(active, targets, Number(speedRange.value), token);
+            if (!moved) return;
+            active.forEach((competitor, index) => captureView(competitor, targets[index]));
+            const predictionsByModel = await Promise.all(active.map((competitor) => competitor.model.predict(competitor.canvas, false)));
+            if (token !== runToken || !running) return;
+            active.forEach((competitor, index) => {
+              renderPredictions(competitor, predictionsByModel[index]);
+              recordBest(competitor, predictionsByModel[index], targets[index], stepIndex);
+            });
+            completedSteps = stepIndex + 1;
+            updateProgress(targets[0]);
+          }
+          setRunningControls(false);
+          statusText.textContent = `競賽完成：${active.length} 個模型 × 各 ${totalSteps} 個掃描畫面。`;
+          showResults(false);
+        } catch (error) {
+          console.error(error);
+          setRunningControls(false);
+          statusText.textContent = "模型推論失敗，競賽已停止。";
+          showToast("模型推論失敗。請嘗試減少同時參賽的模型數量，或重新載入失敗的模型。 ");
+        }
+      }
+
+      function togglePause() {
+        if (!running) return;
+        paused = !paused;
+        pauseButton.textContent = paused ? "繼續" : "暫停";
+        statusText.textContent = paused ? "競賽已暫停。" : "正在繼續競賽…";
+      }
+
+      function stopScan(showPartial = true) {
+        if (!running) return;
+        runToken += 1;
+        paused = false;
+        setRunningControls(false);
+        pauseButton.textContent = "暫停";
+        statusText.textContent = `競賽已停止；每個模型完成 ${completedSteps}/${totalSteps} 個掃描畫面。`;
+        if (showPartial && completedSteps) showResults(true);
+      }
+
+      function showResults(partial) {
+        resultsGrid.replaceChildren();
+        let resultCount = 0;
+        activeCompetitors().forEach((competitor) => {
+          competitor.labels
+            .filter((label) => label !== competitor.backgroundClass)
+            .map((label) => competitor.best.get(label))
+            .filter(Boolean)
+            .forEach((moment) => {
+            resultCount += 1;
+            const item = document.createElement("article");
+            item.className = "result-item";
+            item.style.setProperty("--model-color", competitor.color);
+            const image = document.createElement("img");
+            image.src = moment.snapshot;
+            image.alt = `${competitor.name} 在 ${moment.className} 分類的最佳掃描畫面`;
+            const copy = document.createElement("div");
+            copy.className = "result-copy";
+            const modelLabel = document.createElement("div");
+            modelLabel.className = "result-model";
+            modelLabel.textContent = competitor.name;
+            const name = document.createElement("div");
+            name.className = "result-name";
+            const className = document.createElement("span");
+            className.textContent = moment.className;
+            const confidence = document.createElement("span");
+            confidence.className = "result-confidence";
+            confidence.textContent = `${(moment.probability * 100).toFixed(1)}%`;
+            const detail = document.createElement("div");
+            detail.className = "result-detail";
+            detail.textContent = `第 ${moment.passNumber} 輪 · ${Math.round(moment.scale * 100)}% 掃描框 · x ${Math.round(moment.x)}, y ${Math.round(moment.y)}`;
+            name.append(className, confidence);
+            copy.append(modelLabel, name, detail);
+            item.append(image, copy);
+            resultsGrid.append(item);
+          });
+        });
+        resultsSummary.textContent = `${partial ? "部分" : "完整"}競賽結果：${activeCompetitors().length} 個參賽模型共有 ${resultCount} 個分類畫面；已略過每個模型校準所得的背景分類。`;
+        resultsPanel.hidden = false;
+      }
+
+      imageInput.addEventListener("change", () => loadImage(imageInput.files[0]));
+      backgroundInput.addEventListener("change", () => loadBackgroundImage(backgroundInput.files[0]));
+      changeBackgroundButton.addEventListener("click", () => backgroundInput.click());
+      acceptBackgroundButton.addEventListener("click", acceptBackgroundResults);
+      configureButton.addEventListener("click", () => { setupPanel.hidden = false; });
+      closeSetupButton.addEventListener("click", () => { setupPanel.hidden = true; });
+      loadModelsButton.addEventListener("click", loadModels);
+      startButton.addEventListener("click", startScan);
+      pauseButton.addEventListener("click", togglePause);
+      stopButton.addEventListener("click", () => stopScan(true));
+      closeResultsButton.addEventListener("click", () => { resultsPanel.hidden = true; });
+      speedRange.addEventListener("input", () => { speedValue.textContent = `${speedRange.value} 毫秒`; updateEstimate(); });
+      window.addEventListener("resize", resizeStage);
+
+      try {
+        const saved = JSON.parse(localStorage.getItem("chameleonArenaModels") || "[]");
+        saved.slice(0, 8).forEach((entry, index) => {
+          const url = typeof entry === "string" ? entry : entry?.url;
+          let name = typeof entry === "object" ? entry?.name : "";
+          if (name === `Model ${index + 1}`) name = `模型 ${index + 1}`;
+          competitors[index].input.value = url || "";
+          if (name) {
+            competitors[index].nameInput.value = name;
+            competitors[index].name = name;
+            competitors[index].cardName.textContent = name;
+          }
+        });
+      } catch (_) { /* optional */ }
+
+      resizeStage();
+      updateReadyState();
+    })();
+  </script>
+</body>
+</html>
