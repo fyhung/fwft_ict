@@ -50,7 +50,7 @@ if (!configured) {
       if (!allowedEmailDomain) return;
       const domain = String(user?.email || "").split("@")[1]?.toLowerCase();
       if (domain !== allowedEmailDomain.toLowerCase()) {
-        const error = new Error(`Please use your ${allowedEmailDomain} Google account.`);
+        const error = new Error(`請使用你的 ${allowedEmailDomain} Google 帳戶。`);
         error.code = "auth/domain-not-allowed";
         throw error;
       }
@@ -58,7 +58,7 @@ if (!configured) {
 
     const requireUser = () => {
       const user = auth.currentUser;
-      if (!user) throw new Error("Sign in with Google first.");
+      if (!user) throw new Error("請先使用 Google 登入。");
       assertDomain(user);
       return user;
     };
@@ -104,22 +104,22 @@ if (!configured) {
         const user = requireUser();
         const projectRef = doc(firestore, "dbmsUsers", user.uid, "projects", projectId);
         const projectSnapshot = await getDoc(projectRef);
-        if (!projectSnapshot.exists()) throw new Error("That cloud project no longer exists.");
+        if (!projectSnapshot.exists()) throw new Error("此雲端專案已不存在。");
         const metadata = projectSnapshot.data();
         const chunkCount = Number(metadata.chunkCount || 0);
         if (!metadata.snapshotId || !Number.isInteger(chunkCount) || chunkCount < 1 || chunkCount > 16) {
-          throw new Error("This cloud project has an invalid database snapshot.");
+          throw new Error("此雲端專案的 database snapshot 無效。");
         }
         const chunks = await Promise.all(Array.from({ length: chunkCount }, async (_, index) => {
           const chunkSnapshot = await getDoc(chunkRef(user.uid, projectId, metadata.snapshotId, index));
-          if (!chunkSnapshot.exists()) throw new Error(`Database chunk ${index + 1} is missing.`);
+          if (!chunkSnapshot.exists()) throw new Error(`缺少 database chunk ${index + 1}。`);
           const value = chunkSnapshot.data().data;
           const bytes = value?.toUint8Array?.();
-          if (!bytes) throw new Error(`Database chunk ${index + 1} is invalid.`);
+          if (!bytes) throw new Error(`資料庫 chunk ${index + 1} 無效。`);
           return bytes;
         }));
         const totalSize = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
-        if (totalSize > MAX_DATABASE_SIZE) throw new Error("The cloud database exceeds the 10 MB limit.");
+        if (totalSize > MAX_DATABASE_SIZE) throw new Error("雲端資料庫超出 10 MB 上限。");
         const bytes = new Uint8Array(totalSize);
         let offset = 0;
         for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
@@ -129,7 +129,7 @@ if (!configured) {
       async saveProject({ projectId, expectedRevision, name, bytes, ui }) {
         const user = requireUser();
         if (bytes.byteLength > MAX_DATABASE_SIZE) {
-          throw new Error("Cloud saving supports databases up to 10 MB. Download a JSON backup for larger projects.");
+          throw new Error("雲端儲存支援最多 10 MB 的資料庫。較大的專案請下載 JSON 備份。");
         }
         const id = projectId || crypto.randomUUID();
         const snapshotId = crypto.randomUUID();
@@ -162,14 +162,14 @@ if (!configured) {
             const currentRevision = Number(existing?.revision || 0);
             if ((existing && expectedRevision == null) ||
                 (expectedRevision != null && currentRevision !== Number(expectedRevision))) {
-              const conflict = new Error("A newer cloud version exists.");
+              const conflict = new Error("雲端已有較新版本。");
               conflict.code = "dbms/revision-conflict";
               throw conflict;
             }
             const nextRevision = currentRevision + 1;
             const data = {
               ownerId: user.uid,
-              name: String(name || "Untitled database").slice(0, 120),
+              name: String(name || "未命名資料庫").slice(0, 120),
               snapshotId,
               chunkCount,
               revision: nextRevision,

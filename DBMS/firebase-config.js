@@ -1,17 +1,17 @@
-// Copy the Firebase configuration object for the DBMS Studio web app here.
-// Firebase Console > Project settings > Your apps > DBMS Studio > SDK setup.
-// These web-app identifiers are safe to include in client code; access is
-// protected by Firebase Authentication and the Firestore rules.
+// 在此貼上 DBMS Studio Web app 的 Firebase 設定物件。
+// Firebase Console > 專案設定 > 你的應用程式 > DBMS Studio > SDK 設定。
+// 這些 Web app 識別資料可安全地放在前端程式碼中；資料存取權限由
+// Firebase Authentication 及 Firestore rules 保護。
 export const firebaseConfig = {
   apiKey: "AIzaSyBorU1zGErbGgKCFFf6U7PULJqk2kkUYzY",
   authDomain: "fwft-ict.firebaseapp.com",
   projectId: "fwft-ict",
-  storageBucket: "fwft-ict.firebasestorage.app", // Present in Firebase config; not used by DBMS Studio.
+  storageBucket: "fwft-ict.firebasestorage.app", // Firebase 設定會包含此值；DBMS Studio 不會使用 Storage。
   messagingSenderId: "823970283860",
   appId: "1:823970283860:web:fb02b203dd7f96df4188c1"
 };
 
-// Leave blank to accept any Google account. To limit the sign-in UI to a
-// Google Workspace domain, enter only the domain, for example "school.edu.hk".
-// If used, also enforce the same domain in the Firebase security rules.
+// 留空即接受任何 Google 帳戶。如要將登入介面限制於指定的
+// Google Workspace 網域，只輸入網域，例如 "school.edu.hk"。
+// 如有設定，也必須在 Firebase security rules 執行相同網域限制。
 export const allowedEmailDomain = "";
