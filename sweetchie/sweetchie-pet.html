@@ -205,6 +205,10 @@
       ["think", 10], ["wait", 7], ["review", 6], ["oops", 2]
     ];
 
+    const WELCOME_ACTIONS = [
+      ["idle", 78], ["walk", 22]
+    ];
+
     function randomBetween(min, max) {
       return min + Math.floor(Math.random() * (max - min + 1));
     }
@@ -242,6 +246,10 @@
               left: 0;
               bottom: 0;
               will-change: transform;
+            }
+            :host([interactive]) .actor {
+              pointer-events: auto;
+              cursor: pointer;
             }
             .sprite {
               position: absolute;
@@ -313,6 +321,7 @@
       }
 
       get randomEnabled() { return this.getAttribute("random") !== "false"; }
+      get welcomeBehavior() { return this.getAttribute("behavior") === "welcome"; }
 
       play(action = "idle") {
         this._isPaused = false;
@@ -386,7 +395,7 @@
         const delay = randomBetween(520, 1500) / this.speed;
         this._timer = setTimeout(() => {
           if (runId !== this._runId || this._isPaused) return;
-          const next = weightedChoice(RANDOM_ACTIONS);
+          const next = weightedChoice(this.welcomeBehavior ? WELCOME_ACTIONS : RANDOM_ACTIONS);
           this._playAction(next, runId);
         }, delay);
       }
@@ -444,6 +453,24 @@
     if (params.has("scale")) pet.setAttribute("scale", params.get("scale"));
     if (params.has("speed")) pet.setAttribute("speed", params.get("speed"));
     if (params.get("random") === "0") pet.setAttribute("random", "false");
+    if (params.get("behavior") === "welcome") pet.setAttribute("behavior", "welcome");
+
+    if (params.get("click") === "wave") {
+      const actor = pet.shadowRoot.querySelector(".actor");
+      const wave = () => {
+        if (!pet._reduceMotion.matches) pet.play("wave");
+      };
+      pet.setAttribute("interactive", "");
+      actor.tabIndex = 0;
+      actor.setAttribute("role", "button");
+      actor.setAttribute("aria-label", "Wave hello with Sweetchie · 同軟萌甜妹揮揮手");
+      actor.addEventListener("click", wave);
+      actor.addEventListener("keydown", event => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        wave();
+      });
+    }
 
     document.querySelectorAll("[data-action]").forEach(button => {
       button.addEventListener("click", () => pet.play(button.dataset.action));

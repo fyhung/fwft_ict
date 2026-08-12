@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="具備公式、剪貼簿、樞紐分析及圖表功能的本機互動試算表。">
+  <title>ICT Browser Spread Sheet Studio</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="ICT Browser Spread Sheet Studio">
+        <svg viewBox="0 0 40 40" role="img" aria-hidden="true">
+          <rect width="40" height="40" rx="11" fill="currentColor" opacity=".14"/>
+          <path d="M12 12.5h16v15H12zM12 18h16M18 12.5v15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <input id="document-title" class="document-title" value="ICT Browser Spread Sheet Studio" aria-label="文件標題">
+          <p>fyhung 製作 · 東華三院馮黃鳳亭中學 · 資訊及通訊科技</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="split-view-button" class="button button-quiet split-view-button" type="button" aria-expanded="false" aria-controls="split-view-menu">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3" width="15" height="14" rx="2"/><path d="M10 3v14"/></svg>
+          <span>分割畫面</span>
+        </button>
+        <button id="about-button" class="button button-quiet about-button" type="button" aria-expanded="false" aria-controls="about-menu">關於</button>
+        <button id="clear-sheet" class="button button-quiet" type="button" title="清除所有儲存格">清除工作表</button>
+        <button id="download-csv" class="button button-primary" type="button">匯出 CSV</button>
+      </div>
+    </header>
+
+    <section class="workspace" aria-label="試算表編輯器">
+      <div id="view-stage" class="view-stage">
+      <div id="sheet-view" class="sheet-view" data-view="sheet">
+      <div class="toolbar" role="toolbar" aria-label="工作表工具">
+        <button id="undo" class="icon-button" type="button" title="復原 (Ctrl+Z)" aria-label="復原" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5M5 12h8a6 6 0 0 1 6 6"/></svg>
+        </button>
+        <button id="redo" class="icon-button" type="button" title="重做 (Ctrl+Y)" aria-label="重做" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 5 5-5 5M19 12h-8a6 6 0 0 0-6 6"/></svg>
+        </button>
+        <span class="toolbar-divider" aria-hidden="true"></span>
+        <button id="copy" class="icon-button text-button" type="button" title="複製 (Ctrl+C)">複製</button>
+        <button id="paste" class="icon-button text-button" type="button" title="貼上 (Ctrl+V)">貼上</button>
+        <span class="toolbar-divider" aria-hidden="true"></span>
+        <button id="bold" class="icon-button format-button" type="button" title="粗體" aria-label="粗體"><strong>B</strong></button>
+        <button id="italic" class="icon-button format-button" type="button" title="斜體" aria-label="斜體"><em>I</em></button>
+        <select id="align" class="toolbar-select" aria-label="水平對齊" title="水平對齊">
+          <option value="left">靠左對齊</option>
+          <option value="center">置中對齊</option>
+          <option value="right">靠右對齊</option>
+        </select>
+        <span class="toolbar-divider" aria-hidden="true"></span>
+        <label class="header-toggle" title="將第一列設為欄位標題">
+          <input id="header-toggle" type="checkbox">
+          <span class="toggle-track" aria-hidden="true"><span></span></span>
+          <span>標題列</span>
+        </label>
+        <span class="toolbar-divider" aria-hidden="true"></span>
+        <div class="sample-buttons" aria-label="載入範例資料">
+          <span>範例</span>
+          <button class="sample-button" type="button" data-sample="pivot" title="以樞紐分析表範例取代工作表資料">樞紐</button>
+          <button class="sample-button" type="button" data-sample="bar" title="以棒形圖範例取代工作表資料">棒形</button>
+          <button class="sample-button" type="button" data-sample="line" title="以折線圖範例取代工作表資料">折線</button>
+          <button class="sample-button" type="button" data-sample="pie" title="以圓形圖範例取代工作表資料">圓形</button>
+        </div>
+        <span class="toolbar-spacer"></span>
+        <span id="save-status" class="save-status" aria-live="polite">準備就緒</span>
+      </div>
+
+      <div class="formula-row">
+        <label id="cell-reference" class="cell-reference" for="formula-input">A1</label>
+        <span class="formula-symbol" aria-hidden="true">ƒx</span>
+        <input id="formula-input" class="formula-input" autocomplete="off" spellcheck="false" placeholder="輸入數值或公式，例如 =SUM(A1:A5)">
+      </div>
+
+      <div id="sheet-scroll" class="sheet-scroll" tabindex="0" aria-label="試算表格線">
+        <div id="sheet-grid" class="sheet-grid" role="grid" aria-rowcount="100" aria-colcount="26"></div>
+      </div>
+      </div>
+
+      <section id="pivot-view" class="pivot-view" data-view="pivot" aria-label="樞紐分析表設定" hidden>
+        <aside class="pivot-sidebar">
+          <div class="pivot-sidebar-heading">
+            <span class="menu-eyebrow">資料分析</span>
+            <h2>樞紐分析表</h2>
+            <p>選擇欄位的排列方式及計算方法，以彙整「工作表」中的資料。</p>
+          </div>
+
+          <div id="pivot-header-note" class="pivot-note">
+            請在「工作表」開啟<strong>標題列</strong>，以使用自訂欄位名稱。
+          </div>
+
+          <label class="pivot-field">
+            <span><b>列欄位</b><small>沿表格向下分組記錄</small></span>
+            <select id="pivot-row-field" aria-label="樞紐分析表列欄位"></select>
+          </label>
+          <label class="pivot-field">
+            <span><b>欄欄位</b><small>將數值分拆至不同欄</small></span>
+            <select id="pivot-column-field" aria-label="樞紐分析表欄欄位"></select>
+          </label>
+          <label class="pivot-field">
+            <span><b>數值欄位</b><small>要進行計算的欄位</small></span>
+            <select id="pivot-value-field" aria-label="樞紐分析表數值欄位"></select>
+          </label>
+          <label class="pivot-field">
+            <span><b>彙整方式</b><small>每個群組的計算方法</small></span>
+            <select id="pivot-function" aria-label="樞紐分析表數值函數">
+              <option value="sum">總和</option>
+              <option value="count">個數</option>
+              <option value="average">平均值</option>
+              <option value="min">最小值</option>
+              <option value="max">最大值</option>
+            </select>
+          </label>
+        </aside>
+
+        <div class="pivot-canvas">
+          <header class="pivot-canvas-header">
+            <div>
+              <span class="menu-eyebrow">即時摘要</span>
+              <h2 id="pivot-title">樞紐分析表</h2>
+            </div>
+            <span id="pivot-source-count" class="pivot-source-count">0 列來源資料</span>
+          </header>
+          <div id="pivot-table-wrap" class="pivot-table-wrap">
+            <div class="pivot-empty">
+              <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="9" width="34" height="30" rx="4"/><path d="M7 19h34M19 9v30M30 19v20M19 29h22"/></svg>
+              <h3>請在工作表加入資料</h3>
+              <p>當來源工作表包含資料後，樞紐分析表便會顯示在這裡。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="chart-view" class="chart-view" data-view="chart" aria-label="棒形圖設定" hidden>
+        <aside class="chart-sidebar">
+          <div class="pivot-sidebar-heading">
+            <span class="menu-eyebrow">資料視覺化</span>
+            <h2>棒形圖</h2>
+            <p>比較「工作表」中各個項目的一個或多個數值欄。</p>
+          </div>
+
+          <div id="chart-header-note" class="pivot-note">
+            請在「工作表」開啟<strong>標題列</strong>，以使用自訂欄位名稱。
+          </div>
+
+          <label class="pivot-field">
+            <span><b>項目</b><small>顯示於水平軸的標籤</small></span>
+            <select id="chart-object-field" aria-label="棒形圖項目欄位"></select>
+          </label>
+
+          <fieldset class="chart-data-fields">
+            <legend>數據系列</legend>
+            <small>選擇一個或多個數值欄</small>
+            <div id="chart-data-options" class="chart-data-options"></div>
+          </fieldset>
+
+          <fieldset class="chart-layout-fields">
+            <legend>棒形排列</legend>
+            <label>
+              <input type="radio" name="chart-layout" value="grouped" checked>
+              <span><b>並排</b><small>比較每個項目內的數據系列</small></span>
+            </label>
+            <label>
+              <input type="radio" name="chart-layout" value="stacked">
+              <span><b>堆疊</b><small>比較總量及其組成</small></span>
+            </label>
+          </fieldset>
+        </aside>
+
+        <div class="chart-canvas">
+          <header class="chart-canvas-header">
+            <div>
+              <span class="menu-eyebrow">即時圖表</span>
+              <h2 id="chart-title">棒形圖</h2>
+            </div>
+            <span id="chart-source-count" class="pivot-source-count">0 個項目</span>
+          </header>
+          <div id="chart-legend" class="chart-legend" aria-label="圖表圖例"></div>
+          <div id="bar-chart-wrap" class="bar-chart-wrap">
+            <div class="pivot-empty">
+              <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M9 39V9M9 39h32M15 35V24h6v11M26 35V15h6v20M37 35V20h5"/></svg>
+              <h3>請在工作表加入數值資料</h3>
+              <p>請選擇項目欄位及至少一個數值系列。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="line-view" class="chart-view" data-view="line" aria-label="折線圖設定" hidden>
+        <aside class="chart-sidebar">
+          <div class="pivot-sidebar-heading">
+            <span class="menu-eyebrow">資料視覺化</span>
+            <h2>折線圖</h2>
+            <p>按照「工作表」中的項目次序，追蹤多個數值系列的變化。</p>
+          </div>
+          <div id="line-header-note" class="pivot-note">
+            請在「工作表」開啟<strong>標題列</strong>，以使用自訂欄位名稱。
+          </div>
+          <label class="pivot-field">
+            <span><b>項目</b><small>顯示於水平軸的標籤</small></span>
+            <select id="line-object-field" aria-label="折線圖項目欄位"></select>
+          </label>
+          <fieldset class="chart-data-fields">
+            <legend>數據系列</legend>
+            <small>選擇一個或多個數值欄</small>
+            <div id="line-data-options" class="chart-data-options"></div>
+          </fieldset>
+        </aside>
+        <div class="chart-canvas">
+          <header class="chart-canvas-header">
+            <div>
+              <span class="menu-eyebrow">即時圖表</span>
+              <h2 id="line-title">折線圖</h2>
+            </div>
+            <span id="line-source-count" class="pivot-source-count">0 個項目</span>
+          </header>
+          <div id="line-legend" class="chart-legend" aria-label="折線圖圖例"></div>
+          <div id="line-chart-wrap" class="bar-chart-wrap"></div>
+        </div>
+      </section>
+
+      <section id="pie-view" class="chart-view" data-view="pie" aria-label="圓形圖設定" hidden>
+        <aside class="chart-sidebar">
+          <div class="pivot-sidebar-heading">
+            <span class="menu-eyebrow">資料視覺化</span>
+            <h2>圓形圖</h2>
+            <p>把每個已選數值欄製成圓形圖，並以一致顏色代表各項目。</p>
+          </div>
+          <div id="pie-header-note" class="pivot-note">
+            請在「工作表」開啟<strong>標題列</strong>，以使用自訂欄位名稱。
+          </div>
+          <label class="pivot-field">
+            <span><b>項目</b><small>由圓形圖扇區代表的類別</small></span>
+            <select id="pie-object-field" aria-label="圓形圖項目欄位"></select>
+          </label>
+          <fieldset class="chart-data-fields">
+            <legend>圓形圖數據</legend>
+            <small>每個已勾選的數值欄會建立一個圓形圖</small>
+            <div id="pie-data-options" class="chart-data-options"></div>
+          </fieldset>
+        </aside>
+        <div class="chart-canvas">
+          <header class="chart-canvas-header">
+            <div>
+              <span class="menu-eyebrow">即時圖表</span>
+              <h2 id="pie-title">圓形圖</h2>
+            </div>
+            <span id="pie-source-count" class="pivot-source-count">0 個項目</span>
+          </header>
+          <div id="pie-legend" class="chart-legend pie-legend" aria-label="圓形圖項目圖例"></div>
+          <div id="pie-chart-wrap" class="pie-chart-wrap"></div>
+        </div>
+      </section>
+
+      <section id="scenario-view" class="chart-view analysis-tool-view" data-view="scenario" aria-label="情境管理員" hidden>
+        <aside class="chart-sidebar">
+          <div class="pivot-sidebar-heading">
+            <span class="menu-eyebrow">假設分析</span>
+            <h2>情境管理員</h2>
+            <p>把指定儲存格的目前內容儲存為不同情境，然後快速套用及比較。</p>
+          </div>
+          <label class="analysis-field">
+            <span><b>情境名稱</b><small>例如：樂觀、基本或保守</small></span>
+            <input id="scenario-name" type="text" maxlength="40" placeholder="輸入情境名稱" autocomplete="off">
+          </label>
+          <label class="analysis-field">
+            <span><b>可變儲存格</b><small>以逗號分隔，例如 B2,B3,D5</small></span>
+            <input id="scenario-cells" type="text" placeholder="B2,B3" autocomplete="off" spellcheck="false">
+          </label>
+          <button id="scenario-use-selection" class="analysis-link-button" type="button">以目前選取範圍作為可變儲存格</button>
+          <label class="analysis-field scenario-result-field">
+            <span><b>結果儲存格</b><small>選填；顯示各情境計算後的結果，例如 C2,F8</small></span>
+            <input id="scenario-result-cells" type="text" placeholder="C2" autocomplete="off" spellcheck="false">
+          </label>
+          <button id="scenario-use-result-selection" class="analysis-link-button" type="button">以目前選取範圍作為結果儲存格</button>
+          <button id="save-scenario" class="button button-primary analysis-primary-button" type="button">儲存目前情境</button>
+          <p class="analysis-help">系統只會套用可變儲存格；結果儲存格不會被改寫，而會按每個情境即時計算並顯示於比較表。</p>
+        </aside>
+        <div class="chart-canvas analysis-canvas">
+          <header class="chart-canvas-header">
+            <div>
+              <span class="menu-eyebrow">已儲存情境</span>
+              <h2>情境比較</h2>
+            </div>
+            <span id="scenario-count" class="pivot-source-count">0 個情境</span>
+          </header>
+          <div id="scenario-list" class="scenario-list"></div>
+          <div id="scenario-comparison" class="scenario-comparison"></div>
+        </div>
+      </section>
+
+      <section id="goal-view" class="chart-view analysis-tool-view" data-view="goal" aria-label="目標搜尋" hidden>
+        <aside class="chart-sidebar">
+          <div class="pivot-sidebar-heading">
+            <span class="menu-eyebrow">假設分析</span>
+            <h2>目標搜尋</h2>
+            <p>調整一個數值儲存格，令另一個公式儲存格盡量達到指定目標值。</p>
+          </div>
+          <label class="analysis-field">
+            <span><b>設定公式儲存格</b><small>必須包含以 = 開始的公式</small></span>
+            <div class="analysis-input-row">
+              <input id="goal-formula-cell" type="text" placeholder="例如 C5" autocomplete="off" spellcheck="false">
+              <button id="goal-use-formula-cell" type="button">使用所選</button>
+            </div>
+          </label>
+          <label class="analysis-field">
+            <span><b>目標值</b><small>公式計算結果要達到的數值</small></span>
+            <input id="goal-target-value" type="number" step="any" placeholder="例如 1000">
+          </label>
+          <label class="analysis-field">
+            <span><b>變更儲存格</b><small>目標搜尋會調整此儲存格的數值</small></span>
+            <div class="analysis-input-row">
+              <input id="goal-changing-cell" type="text" placeholder="例如 B2" autocomplete="off" spellcheck="false">
+              <button id="goal-use-changing-cell" type="button">使用所選</button>
+            </div>
+          </label>
+          <button id="run-goal-seek" class="button button-primary analysis-primary-button" type="button">開始目標搜尋</button>
+          <p class="analysis-help">成功求解後，結果會直接寫入變更儲存格；可使用「復原」回復原來數值。</p>
+        </aside>
+        <div class="chart-canvas analysis-canvas goal-canvas">
+          <header class="chart-canvas-header">
+            <div>
+              <span class="menu-eyebrow">求解狀態</span>
+              <h2>目標搜尋結果</h2>
+            </div>
+          </header>
+          <div id="goal-status" class="goal-status" aria-live="polite"></div>
+          <div class="goal-explanation">
+            <h3>運作方式</h3>
+            <ol>
+              <li>在工作表建立一個引用其他儲存格的公式。</li>
+              <li>指定公式結果要達到的目標值。</li>
+              <li>選擇一個可供調整的數值儲存格，然後開始搜尋。</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+      </div>
+
+      <footer class="sheet-footer">
+        <div class="sheet-tabs" role="tablist" aria-label="工作簿檢視">
+          <button id="sheet-tab" class="sheet-tab active" type="button" role="tab" aria-selected="true">工作表</button>
+          <button id="pivot-tab" class="sheet-tab" type="button" role="tab" aria-selected="false">樞紐分析表</button>
+          <button id="chart-tab" class="sheet-tab" type="button" role="tab" aria-selected="false">棒形圖</button>
+          <button id="line-tab" class="sheet-tab" type="button" role="tab" aria-selected="false">折線圖</button>
+          <button id="pie-tab" class="sheet-tab" type="button" role="tab" aria-selected="false">圓形圖</button>
+          <button id="scenario-tab" class="sheet-tab" type="button" role="tab" aria-selected="false">情境管理員</button>
+          <button id="goal-tab" class="sheet-tab" type="button" role="tab" aria-selected="false">目標搜尋</button>
+        </div>
+        <details class="shortcut-help">
+          <summary aria-label="顯示快捷鍵說明">快捷鍵</summary>
+          <div class="shortcut-popover">
+            <strong>工作表快捷鍵</strong>
+            <div><kbd>Enter</kbd><span>編輯儲存格</span></div>
+            <div><kbd>Tab</kbd><span>移至下一個儲存格</span></div>
+            <div><span><kbd>Ctrl</kbd> + <kbd>C</kbd>／<kbd>V</kbd></span><span>複製及貼上</span></div>
+            <div><kbd>=</kbd><span>開始輸入公式</span></div>
+          </div>
+        </details>
+        <p id="selection-summary" class="selection-summary">已選取 1 個儲存格</p>
+      </footer>
+    </section>
+  </main>
+
+  <section id="about-menu" class="about-menu" aria-label="關於本專案" hidden>
+    <header>
+      <div>
+        <span class="menu-eyebrow">專案資訊</span>
+        <strong>ICT Browser Spread Sheet Studio</strong>
+      </div>
+      <button id="close-about-menu" class="menu-close" type="button" aria-label="關閉專案資訊">×</button>
+    </header>
+    <div class="about-content">
+      <p>本專案由 <strong>fyhung</strong> 製作，並由 <strong>ChatGPT 5.6 sol</strong> 協助完成。</p>
+      <dl>
+        <div><dt>學校</dt><dd>東華三院馮黃鳳亭中學</dd></div>
+        <div><dt>課程</dt><dd>資訊及通訊科技</dd></div>
+        <div><dt>時間</dt><dd>2026 年夏季</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section id="split-view-menu" class="split-view-menu" aria-label="分割畫面設定" hidden>
+    <header>
+      <div>
+        <span class="menu-eyebrow">工作區版面</span>
+        <strong>同時檢視兩個分頁</strong>
+      </div>
+      <button id="close-split-view-menu" class="menu-close" type="button" aria-label="關閉分割畫面設定">×</button>
+    </header>
+    <div class="split-view-fields">
+      <label>
+        <span>左側</span>
+        <select id="split-left-view" aria-label="分割畫面左側檢視">
+          <option value="sheet">工作表</option>
+          <option value="pivot">樞紐分析表</option>
+          <option value="chart">棒形圖</option>
+          <option value="line">折線圖</option>
+          <option value="pie">圓形圖</option>
+          <option value="scenario">情境管理員</option>
+          <option value="goal">目標搜尋</option>
+        </select>
+      </label>
+      <button id="swap-split-views" class="swap-split-views" type="button" aria-label="交換左右檢視" title="交換左右兩側">⇄</button>
+      <label>
+        <span>右側</span>
+        <select id="split-right-view" aria-label="分割畫面右側檢視">
+          <option value="sheet">工作表</option>
+          <option value="pivot">樞紐分析表</option>
+          <option value="chart" selected>棒形圖</option>
+          <option value="line">折線圖</option>
+          <option value="pie">圓形圖</option>
+          <option value="scenario">情境管理員</option>
+          <option value="goal">目標搜尋</option>
+        </select>
+      </label>
+    </div>
+    <div class="split-view-actions">
+      <button id="single-view-button" class="button button-quiet" type="button">單一檢視</button>
+      <button id="apply-split-view" class="button button-primary" type="button">套用分割畫面</button>
+    </div>
+  </section>
+
+  <section id="column-menu" class="column-menu" aria-label="欄選項" hidden>
+    <header class="column-menu-header">
+      <div>
+        <span class="menu-eyebrow">欄選項</span>
+        <strong id="column-menu-title">A 欄</strong>
+      </div>
+      <button id="close-column-menu" class="menu-close" type="button" aria-label="關閉欄選項">×</button>
+    </header>
+    <div class="sort-actions" aria-label="欄排序">
+      <button id="sort-ascending" type="button"><span aria-hidden="true">A→Z</span> 遞增排序</button>
+      <button id="sort-descending" type="button"><span aria-hidden="true">Z→A</span> 遞減排序</button>
+    </div>
+    <div class="filter-section">
+      <div class="filter-heading">
+        <strong>篩選數值</strong>
+        <button id="clear-column-filter" class="text-action" type="button">清除篩選條件</button>
+      </div>
+      <input id="filter-search" class="filter-search" type="search" placeholder="搜尋數值…" autocomplete="off">
+      <div class="filter-shortcuts">
+        <button id="select-all-values" class="text-action" type="button">全選</button>
+        <span aria-hidden="true">·</span>
+        <button id="clear-all-values" class="text-action" type="button">全部取消</button>
+      </div>
+      <div id="filter-values" class="filter-values"></div>
+      <div class="filter-footer">
+        <span id="filter-count">所有數值</span>
+        <button id="apply-filter" class="button button-primary" type="button">套用</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>

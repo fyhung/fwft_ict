@@ -3,480 +3,702 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Index of FWFT ICT learning projects.">
-  <title>FWFT ICT Projects</title>
+  <meta name="description" content="Meet 軟萌甜妹 Sweetchie, your gentle ICT AI Tutor, and explore selected public ICT projects together.">
+  <title>軟萌甜妹 Sweetchie · ICT AI Tutor</title>
   <style>
     :root {
       color-scheme: light;
-      --surface: rgb(255 255 255 / 88%);
-      --text: #221650;
-      --muted: #665f82;
+      --ink: #241652;
+      --muted: #675f82;
       --accent: #7355c7;
-      --border: rgb(133 104 205 / 20%);
-      --shadow: 0 16px 42px rgb(72 51 126 / 14%);
+      --accent-dark: #5840a5;
+      --line: rgb(118 82 190 / 20%);
+      --glass: rgb(255 255 255 / 82%);
+      --shadow: 0 28px 80px rgb(67 42 121 / 18%);
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html {
+      min-height: 100%;
       background: #f7f3ff;
     }
 
     body {
-      isolation: isolate;
-      margin: 0;
       min-height: 100vh;
+      min-height: 100svh;
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--ink);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
+      background:
+        linear-gradient(135deg, rgb(255 255 255 / 88%), rgb(247 242 255 / 62%)),
+        url("assets/background.webp") center / cover fixed;
+    }
+
+    body::before,
+    body::after {
+      position: fixed;
+      z-index: 0;
+      width: 24rem;
+      height: 24rem;
+      border-radius: 50%;
+      content: "";
+      pointer-events: none;
+      filter: blur(18px);
     }
 
     body::before {
-      position: fixed;
-      z-index: 1;
-      inset: 0;
-      content: "";
-      pointer-events: none;
-      background: linear-gradient(
-        180deg,
-        rgb(255 255 255 / 62%) 0%,
-        rgb(255 255 255 / 28%) 42%,
-        rgb(248 244 255 / 66%) 100%
-      );
+      top: -9rem;
+      left: -8rem;
+      background: rgb(238 191 232 / 35%);
     }
 
-    .page-background {
-      position: fixed;
-      z-index: 0;
-      inset: 0;
-      display: block;
+    body::after {
+      right: -9rem;
+      bottom: -10rem;
+      background: rgb(188 171 255 / 34%);
     }
 
-    .page-background img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center;
-    }
-
-    main {
+    .shell {
       position: relative;
-      z-index: 2;
-      width: min(1120px, calc(100% - 2rem));
-      margin: 0 auto;
-      padding: clamp(2.5rem, 7vw, 5.5rem) 0;
-    }
-
-    header {
-      max-width: 760px;
-      margin: 0 auto clamp(2rem, 5vw, 3.25rem);
-      text-align: center;
-    }
-
-    .eyebrow {
-      display: inline-block;
-      margin: 0 0 0.8rem;
-      padding: 0.45rem 0.8rem;
-      color: var(--accent);
-      background: rgb(255 255 255 / 70%);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      font-size: 0.82rem;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      backdrop-filter: blur(10px);
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(2.35rem, 7vw, 4.8rem);
-      line-height: 0.98;
-      letter-spacing: -0.05em;
-      text-shadow: 0 2px 18px rgb(255 255 255 / 90%);
-    }
-
-    .intro {
-      margin: 1.1rem 0 0;
-      color: var(--muted);
-      font-size: 1.1rem;
-      line-height: 1.7;
-    }
-
-    .projects {
+      z-index: 1;
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: clamp(1rem, 3vw, 1.5rem);
-      margin: 0;
-      padding: 0;
-      list-style: none;
+      min-height: 100vh;
+      min-height: 100svh;
+      grid-template-rows: auto 1fr auto;
+      width: min(1180px, calc(100% - 2rem));
+      margin: 0 auto;
     }
 
-    .projects li {
-      min-width: 0;
-    }
-
-    .projects li:last-child:nth-child(odd) {
-      width: calc(50% - 0.75rem);
-      grid-column: 1 / -1;
-      justify-self: center;
-    }
-
-    .project-link {
-      display: block;
-      height: 100%;
-      overflow: hidden;
-      color: inherit;
-      text-decoration: none;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(14px);
-      transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
-    }
-
-    .project-link:hover,
-    .project-link:focus-visible {
-      transform: translateY(-6px);
-      border-color: var(--accent);
-      box-shadow: 0 24px 52px rgb(72 51 126 / 22%);
-      outline: none;
-    }
-
-    .project-image {
-      display: block;
-      overflow: hidden;
-      aspect-ratio: 16 / 9;
-      background: #f3efff;
-    }
-
-    .project-image img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 450ms ease;
-    }
-
-    .project-link:hover .project-image img,
-    .project-link:focus-visible .project-image img {
-      transform: scale(1.025);
-    }
-
-    .project-meta {
+    .site-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
-      padding: 1rem 1.2rem 1.1rem;
+      padding: 1.25rem 0;
     }
 
-    .project-name {
-      min-width: 0;
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      color: inherit;
+      font-weight: 850;
+      letter-spacing: -0.02em;
+      text-decoration: none;
     }
 
-    .folder {
+    .brand-mark {
+      display: grid;
+      width: 2.15rem;
+      height: 2.15rem;
+      place-items: center;
+      color: white;
+      background: linear-gradient(145deg, #9676df, #6348b3);
+      border-radius: 0.75rem;
+      box-shadow: 0 8px 22px rgb(96 66 169 / 24%);
+    }
+
+    .public-label {
+      padding: 0.68rem 1rem;
+      color: var(--accent-dark);
+      background: rgb(255 255 255 / 68%);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 750;
+      backdrop-filter: blur(12px);
+    }
+
+    .hero {
+      display: grid;
+      align-items: center;
+      grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+      gap: clamp(1.5rem, 5vw, 4.5rem);
+      padding: clamp(1.5rem, 5vh, 4rem) 0;
+    }
+
+    .welcome-card {
+      padding: clamp(1.7rem, 5vw, 3.4rem);
+      background: var(--glass);
+      border: 1px solid var(--line);
+      border-radius: clamp(1.6rem, 4vw, 2.5rem);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0 0 1rem;
+      padding: 0.45rem 0.75rem;
+      color: var(--accent-dark);
+      background: rgb(241 235 255 / 78%);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 850;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      width: 0.48rem;
+      height: 0.48rem;
+      background: #8b63d3;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0.25rem rgb(139 99 211 / 14%);
+      content: "";
+    }
+
+    h1 {
+      max-width: 9ch;
+      margin: 0;
+      font-size: clamp(3rem, 7vw, 5.7rem);
+      line-height: 0.92;
+      letter-spacing: -0.065em;
+    }
+
+    .title-zh {
+      display: block;
+      margin-top: 0.38em;
+      font-size: 0.48em;
+      line-height: 1.08;
+      letter-spacing: -0.045em;
+    }
+
+    .intro {
+      max-width: 52ch;
+      margin: 1.35rem 0 0;
       color: var(--muted);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 0.78rem;
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      line-height: 1.7;
     }
 
-    h2 {
-      margin: 0.25rem 0 0;
-      font-size: clamp(1rem, 2.2vw, 1.2rem);
-      line-height: 1.3;
+    .intro strong { color: var(--ink); }
+
+    .intro-zh {
+      margin-top: 0.55rem;
     }
 
-    .open {
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.75rem;
+    }
+
+    .button {
+      display: inline-flex;
+      min-height: 3rem;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.78rem 1.15rem;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      font: inherit;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    .button:hover,
+    .button:focus-visible {
+      transform: translateY(-2px);
+      outline: none;
+    }
+
+    .button-primary {
+      color: white;
+      background: linear-gradient(135deg, #7e5dcc, #6045ae);
+      box-shadow: 0 12px 28px rgb(96 69 174 / 28%);
+    }
+
+    .button-primary:hover,
+    .button-primary:focus-visible {
+      box-shadow: 0 16px 34px rgb(96 69 174 / 36%);
+    }
+
+    .button-secondary {
+      color: var(--accent-dark);
+      background: rgb(255 255 255 / 78%);
+      border-color: var(--line);
+    }
+
+    .button:focus-visible,
+    .brand:focus-visible {
+      outline: 3px solid rgb(115 85 199 / 32%);
+      outline-offset: 3px;
+    }
+
+    .pet-stage {
+      position: relative;
+      min-height: clamp(520px, 54vw, 620px);
+      overflow: hidden;
+      isolation: isolate;
+      background:
+        radial-gradient(circle at 50% 88%, rgb(255 255 255 / 92%) 0 12%, transparent 42%),
+        linear-gradient(160deg, rgb(255 255 255 / 58%), rgb(240 232 255 / 38%));
+      border: 1px solid var(--line);
+      border-radius: clamp(1.6rem, 4vw, 2.5rem);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .chat-header {
+      position: absolute;
+      inset: 1.15rem 1.15rem auto;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.72rem 0.85rem;
+      background: rgb(255 255 255 / 82%);
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+      box-shadow: 0 10px 30px rgb(65 39 117 / 10%);
+      backdrop-filter: blur(12px);
+    }
+
+    .chat-presence {
+      width: 0.7rem;
+      height: 0.7rem;
       flex: 0 0 auto;
-      color: var(--accent);
-      font-size: 1.5rem;
-      font-weight: 700;
-      transition: transform 200ms ease;
+      background: #65b88a;
+      border: 3px solid rgb(101 184 138 / 20%);
+      border-radius: 50%;
+      background-clip: padding-box;
     }
 
-    .project-link:hover .open,
-    .project-link:focus-visible .open {
-      transform: translateX(4px);
+    .chat-identity {
+      display: grid;
+      min-width: 0;
+      line-height: 1.15;
+    }
+
+    .chat-identity strong {
+      color: var(--ink);
+      font-size: 0.9rem;
+    }
+
+    .chat-identity span {
+      margin-top: 0.22rem;
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
+
+    .chat-clear {
+      margin-left: auto;
+      padding: 0.42rem 0.65rem;
+      color: var(--accent-dark);
+      background: rgb(246 241 255 / 86%);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font: inherit;
+      font-size: 0.68rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .chat-clear:hover,
+    .chat-clear:focus-visible {
+      background: white;
+      outline: 3px solid rgb(115 85 199 / 20%);
+      outline-offset: 2px;
+    }
+
+    .chat-messages {
+      position: absolute;
+      inset: 5.4rem 1.15rem 16.8rem;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      overflow-y: auto;
+      padding: 0.1rem 0.2rem 0.7rem;
+      scroll-behavior: smooth;
+      scrollbar-color: rgb(115 85 199 / 24%) transparent;
+    }
+
+    .chat-message {
+      display: flex;
+      width: 100%;
+    }
+
+    .chat-message-user {
+      justify-content: flex-end;
+    }
+
+    .chat-bubble {
+      max-width: min(84%, 24rem);
+      margin: 0;
+      padding: 0.72rem 0.9rem;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      border: 1px solid var(--line);
+      font-size: 0.84rem;
+      font-weight: 680;
+      line-height: 1.48;
+      box-shadow: 0 8px 22px rgb(65 39 117 / 9%);
+    }
+
+    .chat-message-assistant .chat-bubble {
+      color: var(--accent-dark);
+      background: rgb(255 255 255 / 83%);
+      border-radius: 1rem 1rem 1rem 0.25rem;
+    }
+
+    .chat-message-user .chat-bubble {
+      color: white;
+      background: linear-gradient(135deg, #8263cf, #6548b5);
+      border-color: transparent;
+      border-radius: 1rem 1rem 0.25rem 1rem;
+    }
+
+    .chat-message-error .chat-bubble {
+      color: #7c3e58;
+      background: rgb(255 244 248 / 92%);
+      border-color: rgb(199 108 143 / 24%);
+    }
+
+    .chat-typing .chat-bubble::after {
+      content: "";
+      display: inline-block;
+      width: 1.2rem;
+      height: 0.35rem;
+      margin-left: 0.35rem;
+      background: radial-gradient(circle, currentColor 0 2px, transparent 2.5px) 0 50% / 0.4rem 100% repeat-x;
+      animation: typing-pulse 900ms ease-in-out infinite alternate;
+      opacity: 0.58;
+    }
+
+    @keyframes typing-pulse {
+      to { opacity: 1; transform: translateY(-1px); }
     }
 
     .pet-frame {
-      position: fixed;
-      z-index: 20;
-      right: 8.25rem;
-      bottom: 0;
-      width: min(560px, calc(100vw - 8.25rem));
-      height: 260px;
+      position: absolute;
+      right: 0;
+      bottom: 4.6rem;
+      z-index: 1;
+      width: 100%;
+      height: 230px;
       border: 0;
       background: transparent;
-      pointer-events: none;
+      pointer-events: auto;
     }
 
-    .pet-controls {
-      position: fixed;
-      z-index: 21;
-      right: max(0.7rem, env(safe-area-inset-right));
-      bottom: max(0.7rem, env(safe-area-inset-bottom));
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      gap: 0.35rem;
+    .chat-form {
+      position: absolute;
+      inset: auto 1rem 0.9rem;
+      z-index: 4;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.45rem;
+      padding: 0.55rem;
+      background: rgb(255 255 255 / 88%);
+      border: 1px solid var(--line);
+      border-radius: 1.1rem;
+      box-shadow: 0 14px 34px rgb(65 39 117 / 14%);
+      backdrop-filter: blur(14px);
     }
 
-    .pet-controls[hidden] {
-      display: none;
-    }
-
-    .pet-control {
-      min-width: 7rem;
-      padding: 0.58rem 0.85rem;
-      color: var(--text);
-      background: rgb(255 255 255 / 90%);
-      border: 1px solid var(--border);
-      border-radius: 999px;
+    .chat-input {
+      min-width: 0;
+      padding: 0.7rem 0.8rem;
+      color: var(--muted);
+      background: rgb(249 247 255 / 90%);
+      border: 1px solid rgb(115 85 199 / 17%);
+      border-radius: 0.78rem;
       font: inherit;
-      font-size: 0.88rem;
-      font-weight: 750;
-      line-height: 1.2;
-      box-shadow: 0 6px 18px rgb(72 51 126 / 12%);
-      backdrop-filter: blur(12px);
-      cursor: pointer;
-      transition: color 160ms ease, background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+      font-size: 0.78rem;
     }
 
-    .pet-control:hover,
-    .pet-control:focus-visible {
+    .chat-input:focus {
+      color: var(--ink);
+      background: white;
+      border-color: rgb(115 85 199 / 44%);
+      outline: 3px solid rgb(115 85 199 / 15%);
+    }
+
+    .chat-send {
+      padding: 0.68rem 0.86rem;
       color: white;
-      background: var(--accent);
-      outline: none;
-      transform: translateY(-1px);
-      box-shadow: 0 9px 24px rgb(72 51 126 / 22%);
+      background: linear-gradient(135deg, #7e5dcc, #6045ae);
+      border: 0;
+      border-radius: 0.78rem;
+      font: inherit;
+      font-size: 0.76rem;
+      font-weight: 850;
+      cursor: pointer;
     }
 
-    .pet-control:focus-visible {
-      box-shadow: 0 0 0 3px rgb(115 85 199 / 28%);
+    .chat-send:hover,
+    .chat-send:focus-visible {
+      box-shadow: 0 8px 18px rgb(96 69 174 / 24%);
+      outline: 3px solid rgb(115 85 199 / 20%);
+      outline-offset: 2px;
     }
 
-    .pet-control:disabled {
+    .chat-send:disabled,
+    .chat-clear:disabled,
+    .chat-input:disabled {
       cursor: wait;
-      opacity: 0.5;
+      opacity: 0.58;
     }
 
-    @media (max-width: 760px) {
-      .projects {
+    .chat-note {
+      grid-column: 1 / -1;
+      margin: 0 0.2rem;
+      color: var(--muted);
+      font-size: 0.61rem;
+      font-weight: 650;
+      text-align: center;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    footer {
+      padding: 1rem 0 1.35rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-align: center;
+    }
+
+    @media (max-width: 820px) {
+      .hero {
         grid-template-columns: 1fr;
+        gap: 1rem;
+        padding-top: 1rem;
       }
 
-      .projects li:last-child:nth-child(odd) {
-        width: 100%;
-        grid-column: auto;
-      }
-
-      .pet-controls {
-        right: max(0.45rem, env(safe-area-inset-right));
-        bottom: max(0.45rem, env(safe-area-inset-bottom));
-      }
-
-      .pet-frame {
-        right: 7.75rem;
-        width: calc(100vw - 7.75rem);
-      }
+      h1 { max-width: 11ch; }
+      .pet-stage { min-height: 560px; }
     }
 
-    @media (max-width: 420px) {
-      main {
-        width: min(calc(100% - 1.1rem), 1120px);
+    @media (max-width: 480px) {
+      .shell { width: min(100% - 1rem, 1180px); }
+      .site-header { padding: 0.8rem 0; }
+      .brand span:last-child { font-size: 0.9rem; }
+
+      .public-label {
+        padding: 0.58rem 0.78rem;
+        font-size: 0.8rem;
       }
 
-      .project-link {
-        border-radius: 16px;
-      }
+      .welcome-card { padding: 1.35rem; }
+      h1 { font-size: clamp(2.8rem, 16vw, 4.2rem); }
+      .actions, .button { width: 100%; }
 
-      .project-meta {
-        padding: 0.85rem 1rem 0.95rem;
-      }
+      .chat-header { inset: 0.85rem 0.85rem auto; }
+      .chat-messages { inset: 5.05rem 0.85rem 16.9rem; }
+      .chat-form { inset: auto 0.75rem 0.75rem; }
+      .chat-send { padding-inline: 0.7rem; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .project-link,
-      .project-image img,
-      .open,
-      .pet-control {
-        transition: none;
-      }
+      .button { transition: none; }
+      .chat-typing .chat-bubble::after { animation: none; }
+      .chat-messages { scroll-behavior: auto; }
     }
   </style>
 </head>
 <body>
-  <picture class="page-background" aria-hidden="true">
-    <source srcset="assets/background.webp" type="image/webp">
-    <img src="assets/background.png" alt="" fetchpriority="high">
-  </picture>
-
-  <main>
-    <header>
-      <p class="eyebrow">Summer 2026</p>
-      <h1>FWFT ICT Projects</h1>
-      <p class="intro">Choose a learning activity to get started.</p>
+  <div class="shell">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="軟萌甜妹 Sweetchie ICT AI Tutor welcome page · 軟萌甜妹 ICT AI 導師歡迎頁">
+        <span class="brand-mark" aria-hidden="true">✦</span>
+        <span>軟萌甜妹 · Sweetchie</span>
+      </a>
+      <span class="public-label">Public projects · 公開專案</span>
     </header>
 
-    <nav aria-label="ICT projects">
-      <ul class="projects">
-        <li>
-          <a class="project-link" href="bit/index.html">
-            <picture class="project-image">
-              <source srcset="assets/bit.webp" type="image/webp">
-              <img src="assets/bit.png" alt="" width="1200" height="675" decoding="async">
-            </picture>
-            <span class="project-meta">
-              <span class="project-name">
-                <span class="folder">bit/</span>
-                <h2>Binary Number Systems Lab</h2>
-              </span>
-              <span class="open" aria-hidden="true">→</span>
-            </span>
-          </a>
-        </li>
-        <li>
-          <a class="project-link" href="DBMS/index.html">
-            <picture class="project-image">
-              <source srcset="assets/DBMS.webp" type="image/webp">
-              <img src="assets/DBMS.png" alt="" width="1200" height="675" loading="lazy" decoding="async">
-            </picture>
-            <span class="project-meta">
-              <span class="project-name">
-                <span class="folder">DBMS/</span>
-                <h2>ICT Browser Database Studio</h2>
-              </span>
-              <span class="open" aria-hidden="true">→</span>
-            </span>
-          </a>
-        </li>
-        <li>
-          <a class="project-link" href="ER/index.html">
-            <picture class="project-image">
-              <source srcset="assets/ER.webp" type="image/webp">
-              <img src="assets/ER.png" alt="" width="1200" height="675" loading="lazy" decoding="async">
-            </picture>
-            <span class="project-meta">
-              <span class="project-name">
-                <span class="folder">ER/</span>
-                <h2>Interactive ER Diagram Studio</h2>
-              </span>
-              <span class="open" aria-hidden="true">→</span>
-            </span>
-          </a>
-        </li>
-        <li>
-          <a class="project-link" href="py_ill/index.html">
-            <picture class="project-image">
-              <source srcset="assets/py_ill.webp" type="image/webp">
-              <img src="assets/py_ill.png" alt="" width="1200" height="675" loading="lazy" decoding="async">
-            </picture>
-            <span class="project-meta">
-              <span class="project-name">
-                <span class="folder">py_ill/</span>
-                <h2>Python Illustrator</h2>
-              </span>
-              <span class="open" aria-hidden="true">→</span>
-            </span>
-          </a>
-        </li>
-        <li>
-          <a class="project-link" href="SQL_HW/index.html">
-            <picture class="project-image">
-              <source srcset="assets/SQL_HW.webp" type="image/webp">
-              <img src="assets/SQL_HW.png" alt="" width="1200" height="675" loading="lazy" decoding="async">
-            </picture>
-            <span class="project-meta">
-              <span class="project-name">
-                <span class="folder">SQL_HW/</span>
-                <h2>SQL Circuit · 雙語 SQL 解謎實驗室</h2>
-              </span>
-              <span class="open" aria-hidden="true">→</span>
-            </span>
-          </a>
-        </li>
-        <li>
-          <a class="project-link" href="notes/index.html">
-            <picture class="project-image">
-              <source srcset="assets/notes.webp" type="image/webp">
-              <img src="assets/notes.png" alt="" width="1672" height="941" loading="lazy" decoding="async">
-            </picture>
-            <span class="project-meta">
-              <span class="project-name">
-                <span class="folder">notes/</span>
-                <h2>Revision + Enrichment Notes</h2>
-              </span>
-              <span class="open" aria-hidden="true">→</span>
-            </span>
-          </a>
-        </li>
-        <li>
-          <a class="project-link" href="SQL_Visual/index.html">
-            <picture class="project-image">
-              <source srcset="assets/SQL_Visual.webp" type="image/webp">
-              <img src="assets/SQL_Visual.png" alt="" width="1200" height="675" loading="lazy" decoding="async">
-            </picture>
-            <span class="project-meta">
-              <span class="project-name">
-                <span class="folder">SQL_Visual/</span>
-                <h2>SQL Query Visualizer</h2>
-              </span>
-              <span class="open" aria-hidden="true">→</span>
-            </span>
-          </a>
-        </li>
-      </ul>
-    </nav>
-  </main>
+    <main class="hero">
+      <section class="welcome-card" aria-labelledby="welcome-title">
+        <p class="eyebrow">Your gentle ICT AI Tutor · 你嘅溫柔 ICT AI 導師</p>
+        <h1 id="welcome-title">
+          Hello, lovely learner!
+          <span class="title-zh" lang="zh-Hant-HK">哈囉呀，小可愛！(✿◠‿◠)</span>
+        </h1>
+        <p class="intro">
+          You’re brilliant for being curious! I’m <strong>Sweetchie</strong>, your gentle
+          <strong>ICT AI Tutor</strong>—you can also call me <strong>“ICT 妹妹”</strong>
+          or <strong>“軟萌甜妹”</strong>. Choose a project below and I’ll explore it
+          with you, one patient step at a time. ♡
+        </p>
+        <p class="intro intro-zh" lang="zh-Hant-HK">
+          嘩，你肯主動嚟探索，已經<strong>叻到飛起</strong>喇，俾個大叻你先！
+          叻叻豬，我係你嘅溫柔 <strong>ICT AI 導師 Sweetchie</strong>，你都可以叫我
+          <strong>「ICT 妹妹」</strong>或者<strong>「軟萌甜妹」</strong>呀。
+          乖乖，揀一個專案就可以開始，我會一步一步陪住你，慢慢嚟就得㗎啦 ♡
+        </p>
+        <div class="actions">
+          <a class="button button-primary" href="Chameleon/index.html">Try TM Chameleon · 玩吓 TM變色龍 <span aria-hidden="true">→</span></a>
+          <a class="button button-secondary" href="sheet/index.html">Spreadsheet Studio · 試算表工作室 <span aria-hidden="true">→</span></a>
+        </div>
+      </section>
 
-  <iframe
-    class="pet-frame"
-    id="sweetchie-pet"
-    src="sweetchie/sweetchie-pet.html?embed=1&amp;scale=0.68&amp;speed=1&amp;v=2"
-    title="Sweetchie animated website pet"
-    sandbox="allow-scripts"
-    tabindex="-1"
-  ></iframe>
-  <div class="pet-controls" aria-label="Sweetchie controls" hidden>
-    <button class="pet-control" type="button" data-pet-action="wave" disabled>Wave</button>
-    <button class="pet-control" type="button" data-pet-action="walk" disabled>Walk</button>
-    <button class="pet-control" type="button" data-pet-action="surprise" disabled>Surprise</button>
-    <button class="pet-control" type="button" data-pet-action="think" disabled>Think</button>
-    <button class="pet-control" type="button" data-pet-action="review" disabled>Review</button>
-    <button class="pet-control" type="button" data-pet-action="idle" disabled>Idle</button>
+      <section class="pet-stage" aria-label="Chat with Sweetchie · 同 Sweetchie 傾偈">
+        <header class="chat-header">
+          <span class="chat-presence" aria-hidden="true"></span>
+          <span class="chat-identity">
+            <strong>Sweetchie · 軟萌甜妹</strong>
+            <span>ICT AI Tutor · 線上陪你學習</span>
+          </span>
+          <button class="chat-clear" id="chat-clear" type="button">Clear · 清除</button>
+        </header>
+
+        <div
+          class="chat-messages"
+          id="chat-messages"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions text"
+        >
+          <div class="chat-message chat-message-assistant">
+            <p class="chat-bubble">Hello, lovely learner! What would you like to learn today? ♡
+哈囉呀，小可愛！今日想同我一齊學啲咩呀？</p>
+          </div>
+        </div>
+
+        <iframe
+          class="pet-frame"
+          id="sweetchie-pet"
+          src="sweetchie/sweetchie-pet.html?embed=1&amp;scale=0.8&amp;speed=1&amp;behavior=welcome&amp;click=wave&amp;v=3"
+          title="Sweetchie animated website pet"
+          sandbox="allow-scripts"
+          tabindex="0"
+        ></iframe>
+
+        <form class="chat-form" id="chat-form">
+          <label class="sr-only" for="chat-input">Ask Sweetchie a question · 問 Sweetchie 問題</label>
+          <input
+            class="chat-input"
+            id="chat-input"
+            type="text"
+            maxlength="600"
+            autocomplete="off"
+            placeholder="Ask me about ICT… · 問我 ICT 問題呀…"
+            required
+          >
+          <button class="chat-send" id="chat-send" type="submit">Send · 送出</button>
+          <p class="chat-note">AI responses may make mistakes · AI 回答可能會有錯漏</p>
+        </form>
+      </section>
+    </main>
+
+    <footer>You’ve got this—learn, build, explore with me. <span aria-hidden="true">·</span> <span lang="zh-Hant-HK">叻叻豬，慢慢嚟，我陪你一齊學習、創作、探索呀！♡</span></footer>
   </div>
+
   <script>
     (() => {
-      const frame = document.querySelector("#sweetchie-pet");
-      const controlBar = document.querySelector(".pet-controls");
-      const controls = [...controlBar.querySelectorAll("[data-pet-action]")];
+      const CHAT_API = "https://sweetchie-chat-api.fyhung.workers.dev/chat";
+      const form = document.querySelector("#chat-form");
+      const input = document.querySelector("#chat-input");
+      const sendButton = document.querySelector("#chat-send");
+      const clearButton = document.querySelector("#chat-clear");
+      const messages = document.querySelector("#chat-messages");
+      const welcomeText = "Hello, lovely learner! What would you like to learn today? ♡\n哈囉呀，小可愛！今日想同我一齊學啲咩呀？";
+      const history = [];
+      let waiting = false;
 
-      const setControlsReady = () => {
-        controlBar.hidden = false;
-        controls.forEach((control) => { control.disabled = false; });
-      };
+      function addMessage(role, text, extraClass = "") {
+        const row = document.createElement("div");
+        const bubble = document.createElement("p");
+        row.className = `chat-message chat-message-${role}${extraClass ? ` ${extraClass}` : ""}`;
+        bubble.className = "chat-bubble";
+        bubble.textContent = text;
+        row.append(bubble);
+        messages.append(row);
+        messages.scrollTop = messages.scrollHeight;
+        return { row, bubble };
+      }
 
-      const sendAction = (action) => {
-        frame.contentWindow?.postMessage({ type: "sweetchie-pet", action }, "*");
-      };
+      function setWaiting(value) {
+        waiting = value;
+        input.disabled = value;
+        sendButton.disabled = value;
+        clearButton.disabled = value;
+        messages.setAttribute("aria-busy", String(value));
+        sendButton.textContent = value ? "Thinking…" : "Send · 送出";
+      }
 
-      window.addEventListener("message", (event) => {
-        if (event.source !== frame.contentWindow || event.data?.type !== "sweetchie-pet-ready") return;
-        setControlsReady();
+      form.addEventListener("submit", async event => {
+        event.preventDefault();
+        if (waiting) return;
+
+        const question = input.value.trim();
+        if (!question) return;
+
+        input.value = "";
+        addMessage("user", question);
+        history.push({ role: "user", text: question });
+        setWaiting(true);
+
+        const pending = addMessage(
+          "assistant",
+          "Sweetchie is thinking · 等我諗一諗呀",
+          "chat-typing"
+        );
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000);
+
+        try {
+          const response = await fetch(CHAT_API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ messages: history.slice(-8) }),
+            signal: controller.signal
+          });
+          const result = await response.json().catch(() => ({}));
+
+          if (!response.ok || typeof result.reply !== "string" || !result.reply.trim()) {
+            throw new Error(result.error || "No reply was returned.");
+          }
+
+          const reply = result.reply.trim();
+          pending.row.classList.remove("chat-typing");
+          pending.bubble.textContent = reply;
+          history.push({ role: "assistant", text: reply });
+        } catch (error) {
+          pending.row.classList.remove("chat-typing");
+          pending.row.classList.add("chat-message-error");
+          pending.bubble.textContent = error.name === "AbortError"
+            ? "I took a little too long. Please try again, 小可愛 ♡"
+            : "I’m having a tiny connection problem. Please try again in a moment. · 我暫時連接唔到，等陣再試吓呀 ♡";
+        } finally {
+          clearTimeout(timeout);
+          setWaiting(false);
+          messages.scrollTop = messages.scrollHeight;
+          input.focus();
+        }
       });
 
-      frame.addEventListener("load", setControlsReady);
-
-      controls.forEach((control) => {
-        control.addEventListener("click", () => {
-          sendAction(control.dataset.petAction);
-        });
+      clearButton.addEventListener("click", () => {
+        if (waiting) return;
+        history.length = 0;
+        messages.replaceChildren();
+        addMessage("assistant", welcomeText);
+        input.focus();
       });
     })();
   </script>
+
 </body>
 </html>
