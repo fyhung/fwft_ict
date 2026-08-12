@@ -206,7 +206,7 @@
     ];
 
     const WELCOME_ACTIONS = [
-      ["idle", 78], ["walk", 22]
+      ["idle", 28], ["walk", 72]
     ];
 
     function randomBetween(min, max) {
@@ -431,6 +431,14 @@
 
       _renderPosition() {
         this._actor.style.transform = `translate3d(${this._x}px, 0, 0)`;
+        if (this.hasAttribute("report-position") && window.parent !== window) {
+          window.parent.postMessage({
+            type: "sweetchie-pet-position",
+            x: this._x,
+            width: this._displayWidth(),
+            height: this._displayHeight()
+          }, "*");
+        }
       }
 
       _announce() {
@@ -454,6 +462,10 @@
     if (params.has("speed")) pet.setAttribute("speed", params.get("speed"));
     if (params.get("random") === "0") pet.setAttribute("random", "false");
     if (params.get("behavior") === "welcome") pet.setAttribute("behavior", "welcome");
+    if (params.get("float") === "1") {
+      pet.setAttribute("report-position", "");
+      pet._renderPosition();
+    }
 
     if (params.get("click") === "wave") {
       const actor = pet.shadowRoot.querySelector(".actor");
