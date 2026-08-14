@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A private, browser-based chat client for OpenAI and Google Gemini."
+    />
+    <title>Local AI Chat</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Chat settings and history">
+        <div class="brand-row">
+          <div class="brand-mark" aria-hidden="true">AI</div>
+          <div>
+            <p class="eyebrow">PERSONAL WORKSPACE</p>
+            <h1>Local AI Chat</h1>
+          </div>
+        </div>
+
+        <button class="new-chat-button" id="new-chat-button" type="button">
+          <span aria-hidden="true">＋</span>
+          New chat
+        </button>
+
+        <section class="settings-card" aria-labelledby="connection-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">CONNECTION</p>
+              <h2 id="connection-title">API settings</h2>
+            </div>
+            <span class="status-pill" id="connection-status">Not connected</span>
+          </div>
+
+          <label for="provider-select">Provider</label>
+          <select id="provider-select">
+            <option value="gemini">Google Gemini</option>
+            <option value="openai">OpenAI</option>
+          </select>
+
+          <label for="api-key" id="api-key-label">Gemini API key</label>
+          <div class="input-with-action">
+            <input
+              id="api-key"
+              type="password"
+              placeholder="AIza…"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button class="field-action" id="toggle-key" type="button" aria-label="Show API key">
+              Show
+            </button>
+          </div>
+          <p class="field-note">Kept only in this browser tab. Never stored with your chats.</p>
+
+          <label for="model-input">Model</label>
+          <div class="input-with-action model-row">
+            <select id="model-input">
+              <option value="gemini-3.6-flash"></option>
+              <option value="gemini-3.5-flash"></option>
+              <option value="gemini-3.5-flash-lite"></option>
+              <option value="gemini-3.1-pro-preview"></option>
+              <option value="gemini-3.1-flash-lite"></option>
+              <option value="gemini-3-flash-preview"></option>
+              <option value="gemini-2.5-pro"></option>
+              <option value="gemini-2.5-flash"></option>
+              <option value="gemini-2.5-flash-lite"></option>
+              <option value="gemini-pro-latest"></option>
+              <option value="gemini-flash-latest"></option>
+              <option value="gemini-flash-lite-latest"></option>
+            </select>
+            <button class="field-action" id="load-models" type="button" title="Load models available to this API key">
+              Refresh
+            </button>
+          </div>
+
+          <details class="advanced-settings">
+            <summary>Assistant instructions</summary>
+            <label class="sr-only" for="system-prompt">Assistant instructions</label>
+            <textarea
+              id="system-prompt"
+              rows="4"
+              placeholder="You are a helpful assistant."
+            ></textarea>
+          </details>
+
+          <div class="privacy-note">
+            <span aria-hidden="true">⌁</span>
+            <p><strong>Local-use only.</strong> Do not publish this page: browser-based API keys can be exposed.</p>
+          </div>
+        </section>
+
+        <section class="history-section" aria-labelledby="history-title">
+          <div class="history-heading">
+            <h2 id="history-title">Recent chats</h2>
+            <button class="text-button" id="clear-history" type="button">Clear all</button>
+          </div>
+          <div class="history-list" id="history-list"></div>
+        </section>
+
+        <p class="storage-note">Chats stay in this browser until you clear them.</p>
+      </aside>
+
+      <main class="chat-panel">
+        <header class="chat-header">
+          <div>
+            <p class="eyebrow">CURRENT CHAT</p>
+            <h2 id="chat-title">New conversation</h2>
+          </div>
+          <button class="icon-button" id="delete-chat" type="button" aria-label="Delete this chat" title="Delete this chat">
+            Delete
+          </button>
+        </header>
+
+        <section class="messages" id="messages" aria-live="polite" aria-label="Conversation">
+          <div class="empty-state" id="empty-state">
+            <div class="orb" aria-hidden="true"><span></span></div>
+            <p class="eyebrow">READY WHEN YOU ARE</p>
+            <h2>What would you like to explore?</h2>
+            <p>Paste your key, choose a model, and start a private conversation.</p>
+            <div class="prompt-chips" aria-label="Example prompts">
+              <button type="button" data-prompt="Explain a difficult idea to me in simple terms.">Explain an idea</button>
+              <button type="button" data-prompt="Help me draft a clear and friendly email.">Draft an email</button>
+              <button type="button" data-prompt="Brainstorm five creative approaches to my problem.">Brainstorm ideas</button>
+            </div>
+          </div>
+        </section>
+
+        <div class="error-banner" id="error-banner" role="alert" hidden></div>
+
+        <footer class="composer-wrap">
+          <form class="composer" id="chat-form">
+            <label class="sr-only" for="message-input">Message</label>
+            <textarea
+              id="message-input"
+              rows="1"
+              placeholder="Message the assistant…"
+              aria-describedby="composer-hint"
+            ></textarea>
+            <button class="send-button" id="send-button" type="submit" aria-label="Send message">
+              <span class="send-label">Send</span>
+              <span class="send-arrow" aria-hidden="true">↑</span>
+            </button>
+          </form>
+          <p id="composer-hint">Enter to send · Shift + Enter for a new line</p>
+        </footer>
+      </main>
+    </div>
+
+    <template id="message-template">
+      <article class="message">
+        <div class="message-meta">
+          <span class="message-role"></span>
+          <span class="message-time"></span>
+        </div>
+        <div class="message-body"></div>
+        <button class="copy-button" type="button">Copy</button>
+      </article>
+    </template>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>

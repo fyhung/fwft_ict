@@ -120,12 +120,26 @@
     }
 
     .welcome-card {
-      padding: clamp(1.7rem, 5vw, 3.4rem);
+      --welcome-card-padding: clamp(1.7rem, 5vw, 3.4rem);
+
+      overflow: hidden;
+      padding: var(--welcome-card-padding);
       background: var(--glass);
       border: 1px solid var(--line);
       border-radius: clamp(1.6rem, 4vw, 2.5rem);
       box-shadow: var(--shadow);
       backdrop-filter: blur(18px);
+    }
+
+    .welcome-banner {
+      display: block;
+      width: calc(100% + var(--welcome-card-padding) + var(--welcome-card-padding));
+      max-width: none;
+      height: auto;
+      margin: calc(0px - var(--welcome-card-padding))
+        calc(0px - var(--welcome-card-padding))
+        clamp(1.25rem, 2.5vw, 1.7rem);
+      box-shadow: 0 12px 32px rgb(69 43 126 / 12%);
     }
 
     .eyebrow {
@@ -154,11 +168,12 @@
     }
 
     h1 {
-      max-width: 9ch;
+      max-width: none;
       margin: 0;
-      font-size: clamp(3rem, 7vw, 5.7rem);
-      line-height: 0.92;
-      letter-spacing: -0.065em;
+      font-size: clamp(1.85rem, 3.1vw, 2.65rem);
+      line-height: 1;
+      letter-spacing: -0.045em;
+      white-space: nowrap;
     }
 
     .title-zh {
@@ -167,6 +182,7 @@
       font-size: 0.48em;
       line-height: 1.08;
       letter-spacing: -0.045em;
+      white-space: normal;
     }
 
     .intro {
@@ -233,6 +249,12 @@
     .brand:focus-visible {
       outline: 3px solid rgb(115 85 199 / 32%);
       outline-offset: 3px;
+    }
+
+    .right-column {
+      display: grid;
+      min-width: 0;
+      gap: 1rem;
     }
 
     .pet-stage {
@@ -466,6 +488,123 @@
       text-align: center;
     }
 
+    .ai-tip-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 190px;
+      padding: clamp(1.1rem, 2.5vw, 1.4rem);
+      background:
+        radial-gradient(circle at 94% 10%, rgb(226 192 255 / 42%), transparent 32%),
+        linear-gradient(145deg, rgb(255 255 255 / 82%), rgb(246 239 255 / 70%));
+      border: 1px solid var(--line);
+      border-radius: clamp(1.25rem, 3vw, 1.8rem);
+      box-shadow: 0 18px 44px rgb(65 39 117 / 13%);
+      backdrop-filter: blur(16px);
+    }
+
+    .ai-tip-card::after {
+      position: absolute;
+      right: -1.25rem;
+      bottom: -2.2rem;
+      color: rgb(126 93 204 / 8%);
+      font-size: 8rem;
+      line-height: 1;
+      content: "✦";
+      pointer-events: none;
+    }
+
+    .ai-tip-header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .ai-tip-icon {
+      display: grid;
+      width: 2.55rem;
+      height: 2.55rem;
+      flex: 0 0 auto;
+      place-items: center;
+      color: white;
+      background: linear-gradient(145deg, #9676df, #6348b3);
+      border-radius: 0.85rem;
+      box-shadow: 0 8px 20px rgb(96 66 169 / 22%);
+    }
+
+    .ai-tip-heading {
+      min-width: 0;
+    }
+
+    .ai-tip-heading h2,
+    .ai-tip-heading p {
+      margin: 0;
+    }
+
+    .ai-tip-heading h2 {
+      color: var(--ink);
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .ai-tip-heading p {
+      margin-top: 0.18rem;
+      color: var(--muted);
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .ai-tip-next {
+      position: relative;
+      z-index: 1;
+      min-height: 2.45rem;
+      margin-left: auto;
+      padding: 0.5rem 0.75rem;
+      color: var(--accent-dark);
+      background: rgb(255 255 255 / 76%);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font: inherit;
+      font-size: 0.7rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .ai-tip-next:hover,
+    .ai-tip-next:focus-visible {
+      background: white;
+      outline: 3px solid rgb(115 85 199 / 20%);
+      outline-offset: 2px;
+    }
+
+    .ai-tip-content {
+      position: relative;
+      z-index: 1;
+      margin-top: 0.9rem;
+      padding-left: 3.3rem;
+    }
+
+    .ai-tip-en,
+    .ai-tip-zh {
+      max-width: 54ch;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .ai-tip-en {
+      color: var(--accent-dark);
+      font-size: 0.84rem;
+      font-weight: 760;
+    }
+
+    .ai-tip-zh {
+      margin-top: 0.32rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 650;
+    }
+
     .sr-only {
       position: absolute;
       width: 1px;
@@ -492,7 +631,7 @@
         padding-top: 1rem;
       }
 
-      h1 { max-width: 11ch; }
+      h1 { max-width: none; }
       .pet-stage { min-height: 560px; }
     }
 
@@ -506,9 +645,13 @@
         font-size: 0.8rem;
       }
 
-      .welcome-card { padding: 1.35rem; }
-      h1 { font-size: clamp(2.8rem, 16vw, 4.2rem); }
+      .welcome-card { --welcome-card-padding: 1.35rem; }
+      h1 { font-size: clamp(1.55rem, 7vw, 2rem); }
       .actions, .button { width: 100%; }
+
+      .ai-tip-header { align-items: flex-start; }
+      .ai-tip-next { padding-inline: 0.62rem; }
+      .ai-tip-content { padding-left: 0; }
 
       .chat-header { inset: 0.85rem 0.85rem auto; }
       .chat-messages { inset: 5.05rem 0.85rem 6.15rem; }
@@ -535,6 +678,14 @@
 
     <main class="hero">
       <section class="welcome-card" aria-labelledby="welcome-title">
+        <img
+          class="welcome-banner"
+          src="assets/index_banner.png"
+          alt="軟萌甜妹 ICT 妹妹，你的溫柔 AI 導師：慢慢嚟，我會一步一步陪住你。耐心教學、循序漸進、實用易明、陪你成長。"
+          width="1672"
+          height="941"
+          fetchpriority="high"
+        >
         <p class="eyebrow">Your gentle ICT AI Tutor · 你嘅溫柔 ICT AI 導師</p>
         <h1 id="welcome-title">
           Hello, lovely learner!
@@ -558,7 +709,8 @@
         </div>
       </section>
 
-      <section class="pet-stage" aria-label="Chat with Sweetchie · 同 Sweetchie 傾偈">
+      <div class="right-column">
+        <section class="pet-stage" aria-label="Chat with Sweetchie · 同 Sweetchie 傾偈">
         <header class="chat-header">
           <span class="chat-presence" aria-hidden="true"></span>
           <span class="chat-identity">
@@ -604,7 +756,23 @@
           <button class="chat-send" id="chat-send" type="submit">Send · 送出</button>
           <p class="chat-note">AI responses may make mistakes · AI 回答可能會有錯漏</p>
         </form>
-      </section>
+        </section>
+
+        <aside class="ai-tip-card" aria-labelledby="ai-tip-title">
+          <div class="ai-tip-header">
+            <span class="ai-tip-icon" aria-hidden="true">✦</span>
+            <div class="ai-tip-heading">
+              <h2 id="ai-tip-title">AI Tip of the Day</h2>
+              <p lang="zh-Hant-HK">今日 AI 小貼士</p>
+            </div>
+            <button class="ai-tip-next" id="ai-tip-next" type="button">Another tip · 下一則</button>
+          </div>
+          <div class="ai-tip-content" aria-live="polite" aria-atomic="true">
+            <p class="ai-tip-en" id="ai-tip-en"></p>
+            <p class="ai-tip-zh" id="ai-tip-zh" lang="zh-Hant-HK"></p>
+          </div>
+        </aside>
+      </div>
     </main>
 
     <footer>You’ve got this—learn, build, explore with me. <span aria-hidden="true">·</span> <span lang="zh-Hant-HK">叻叻豬，慢慢嚟，我陪你一齊學習、創作、探索呀！♡</span></footer>
@@ -613,15 +781,244 @@
   <script>
     (() => {
       const CHAT_API = "https://sweetchie-chat-api.fyhung.workers.dev/chat";
+      const aiTips = [
+        {
+          en: "AI is very good at finding patterns, but it does not understand the world exactly as a person does.",
+          zh: "AI 好擅長搵規律，但佢理解世界嘅方式，同人類並唔一樣。"
+        },
+        {
+          en: "Generative AI creates new text, images or sounds from learned patterns—it is not simply copying one stored answer.",
+          zh: "生成式 AI 會根據學過嘅規律創作文字、圖片或聲音，唔係淨係抄低一個現成答案。"
+        },
+        {
+          en: "A chatbot usually builds its reply by predicting suitable pieces of text one after another.",
+          zh: "聊天機械人通常係逐小段預測下一段合適文字，再砌成完整回答。"
+        },
+        {
+          en: "AI can confidently invent incorrect information. This kind of mistake is often called a hallucination.",
+          zh: "AI 有時會好有自信咁講錯資料，呢類錯誤通常叫做「幻覺」。"
+        },
+        {
+          en: "A useful prompt gives the AI a clear goal, enough context and the format you want.",
+          zh: "好嘅提示詞會清楚講出目標、足夠背景，同埋你想要嘅答案格式。"
+        },
+        {
+          en: "Tell AI who the explanation is for, such as: “Explain this to a Form 2 student.”",
+          zh: "話俾 AI 知要解釋俾邊個聽，例如：「請用中二學生明白嘅方式解釋。」"
+        },
+        {
+          en: "Showing one good example can help AI understand the style or structure you expect.",
+          zh: "俾 AI 睇一個好例子，可以幫佢掌握你想要嘅風格同結構。"
+        },
+        {
+          en: "Set helpful limits in your prompt, such as word count, difficulty level or number of examples.",
+          zh: "提示詞可以加上實用限制，例如字數、難度，或者例子數量。"
+        },
+        {
+          en: "For a difficult task, ask AI to break it into small steps that you can check one by one.",
+          zh: "遇到複雜任務，可以叫 AI 拆成細步驟，等你逐步檢查。"
+        },
+        {
+          en: "Ask for a short explanation or checklist, not just a final answer, so you can understand the result.",
+          zh: "唔好淨係要最終答案；叫 AI 加埋簡短解釋或清單，你先容易真正明白。"
+        },
+        {
+          en: "Your first prompt does not need to be perfect. Use follow-up questions to improve the answer.",
+          zh: "第一個提示詞唔使完美，可以用追問慢慢改善個答案。"
+        },
+        {
+          en: "Try asking the same question in two different ways and compare how the answers change.",
+          zh: "試吓用兩種唔同講法問同一問題，再比較答案有咩變化。"
+        },
+        {
+          en: "Check important AI claims against trustworthy sources such as textbooks, schools or official websites.",
+          zh: "重要資料要用可靠來源核實，例如課本、學校資料或官方網站。"
+        },
+        {
+          en: "For news, prices or rules, check the publication date—AI may be using information that is out of date.",
+          zh: "查新聞、價錢或規則時要睇日期，因為 AI 用嘅資料可能已經過時。"
+        },
+        {
+          en: "Ask yourself whether an AI statement is a fact, an opinion or a prediction. They need different kinds of checking.",
+          zh: "諗清楚 AI 講緊嘅係事實、意見，定係預測；三者需要唔同嘅核實方法。"
+        },
+        {
+          en: "AI can repeat unfair bias found in its training data, so look for missing viewpoints and stereotypes.",
+          zh: "AI 可能會重複訓練資料入面嘅偏見，所以要留意有冇忽略其他觀點或製造定型。"
+        },
+        {
+          en: "Better training data usually leads to better AI. Incorrect or unbalanced data can produce poor results.",
+          zh: "訓練資料質素越好，AI 通常表現越好；錯誤或唔平衡嘅資料會影響結果。"
+        },
+        {
+          en: "Developers keep some data aside as test data to see how well an AI works on unfamiliar examples.",
+          zh: "開發者會留起部分資料做測試，睇吓 AI 面對未見過嘅例子時表現點樣。"
+        },
+        {
+          en: "A label is the correct category attached to a training example, such as marking an email as spam or not spam.",
+          zh: "標籤係訓練例子嘅正確分類，例如將電郵標做垃圾郵件或正常郵件。"
+        },
+        {
+          en: "Supervised learning uses labelled examples to teach an AI how to make predictions.",
+          zh: "監督式學習會用有標籤嘅例子，教 AI 點樣作出預測。"
+        },
+        {
+          en: "Unsupervised learning searches for groups or patterns in data that has no ready-made labels.",
+          zh: "非監督式學習會喺冇現成標籤嘅資料入面，自行尋找群組或規律。"
+        },
+        {
+          en: "In reinforcement learning, an AI learns from rewards and penalties while trying different actions.",
+          zh: "強化學習會透過獎勵同懲罰，令 AI 喺嘗試唔同行動時逐漸學習。"
+        },
+        {
+          en: "A neural network is made of connected mathematical units that learn to detect increasingly complex patterns.",
+          zh: "神經網絡由互相連接嘅數學單元組成，可以逐層學識辨認更複雜嘅規律。"
+        },
+        {
+          en: "Computer vision helps machines examine images and video, such as recognising objects or reading handwriting.",
+          zh: "電腦視覺幫機器分析圖片同影片，例如辨認物件或讀取手寫字。"
+        },
+        {
+          en: "Speech recognition changes spoken sound into text; background noise and accents can affect its accuracy.",
+          zh: "語音辨識會將說話轉成文字，但背景噪音同口音都可能影響準確度。"
+        },
+        {
+          en: "Recommendation systems suggest videos, music or products using patterns from behaviour and preferences.",
+          zh: "推薦系統會根據行為同喜好規律，建議影片、音樂或產品。"
+        },
+        {
+          en: "AI translation can miss jokes, tone and local expressions, so a fluent speaker should check important messages.",
+          zh: "AI 翻譯可能捉唔到笑話、語氣同地道講法，重要訊息最好搵熟悉該語言嘅人覆核。"
+        },
+        {
+          en: "AI-generated captions can improve accessibility, but names and technical words often need human correction.",
+          zh: "AI 字幕可以提升無障礙體驗，但人名同專有名詞通常仍要人手修正。"
+        },
+        {
+          en: "Use AI for brainstorming, then choose, combine and improve the ideas with your own judgement.",
+          zh: "可以用 AI 腦震盪，再由你自己判斷、揀選、組合同改善啲點子。"
+        },
+        {
+          en: "Turn AI into a study partner by asking it to quiz you one question at a time and explain mistakes.",
+          zh: "叫 AI 每次出一題，再解釋你答錯嘅地方，就可以變成溫習拍檔。"
+        },
+        {
+          en: "When debugging code, share the error message and expected result—but remove passwords and private information first.",
+          zh: "除錯時可以提供錯誤訊息同預期結果，但記得先刪走密碼同私人資料。"
+        },
+        {
+          en: "Never use code you cannot explain. Ask AI what each important section does before running it.",
+          zh: "唔好使用自己解釋唔到嘅程式碼；執行之前，先叫 AI 講解每個重要部分。"
+        },
+        {
+          en: "Write pseudocode in plain language before coding. AI can help turn those clear steps into a program.",
+          zh: "寫程式前先用日常語言寫偽代碼，AI 可以幫你將清楚步驟轉成程式。"
+        },
+        {
+          en: "AI can help spot patterns in a table, but you should still check the original data and chart labels.",
+          zh: "AI 可以幫手搵表格規律，但你仍然要檢查原始數據同圖表標籤。"
+        },
+        {
+          en: "AI-generated work may still involve copyright rules. Do not assume everything it produces is free to reuse.",
+          zh: "AI 生成作品仍可能涉及版權，唔好假設所有內容都可以任意重用。"
+        },
+        {
+          en: "Submitting an AI answer as entirely your own work can be plagiarism. Follow your teacher’s rules.",
+          zh: "將 AI 答案當成完全由自己完成，可能構成抄襲；記得遵守老師嘅規則。"
+        },
+        {
+          en: "Keep a note of how AI helped your project. Being honest about your process builds trust.",
+          zh: "記低 AI 點樣協助你完成專題；誠實交代創作過程，可以建立信任。"
+        },
+        {
+          en: "Do not enter your full name, address, phone number, school account or other private details into a public AI tool.",
+          zh: "唔好將全名、地址、電話、學校帳戶或其他私人資料輸入公開 AI 工具。"
+        },
+        {
+          en: "Before uploading a photo to AI, check whether uniforms, faces, locations or documents reveal personal information.",
+          zh: "上載相片俾 AI 前，要檢查校服、人臉、位置或文件會唔會洩露個人資料。"
+        },
+        {
+          en: "Never give an AI chatbot your password, verification code or recovery phrase—even if it asks.",
+          zh: "永遠唔好將密碼、驗證碼或復原詞交俾 AI 聊天機械人，就算佢開口問都唔可以。"
+        },
+        {
+          en: "Deepfakes use AI to imitate a person’s face or voice. Confirm surprising clips through another trusted source.",
+          zh: "深度偽造會用 AI 模仿真人樣貌或聲音；見到驚人片段，要用另一個可靠來源核實。"
+        },
+        {
+          en: "AI-content detectors are not perfect and can accuse human work by mistake. Treat their scores as clues, not proof.",
+          zh: "AI 內容偵測器並唔完美，可能誤判真人作品；分數只係線索，唔係證據。"
+        },
+        {
+          en: "Scammers can use AI to write convincing messages. Pause and verify urgent requests for money or information.",
+          zh: "騙徒可以用 AI 寫出逼真訊息；遇到緊急索取金錢或資料嘅要求，要停一停再核實。"
+        },
+        {
+          en: "A friendly chatbot can sound caring, but it does not have feelings or personal experiences.",
+          zh: "聊天機械人可以講得好親切，但佢並冇感受或個人經歷。"
+        },
+        {
+          en: "People should review AI decisions that could seriously affect someone’s education, health, safety or opportunities.",
+          zh: "涉及教育、健康、安全或個人機會嘅重要 AI 決定，應該由人類覆核。"
+        },
+        {
+          en: "Ask who benefits, who might be harmed and who is responsible when judging whether an AI use is fair.",
+          zh: "判斷 AI 用法公唔公平時，可以問：邊個得益、邊個可能受害、邊個負責？"
+        },
+        {
+          en: "Large AI systems use electricity and computing resources, so use them purposefully instead of generating endlessly.",
+          zh: "大型 AI 系統會用電力同運算資源，所以應該有目的咁使用，避免無限生成。"
+        },
+        {
+          en: "AI will change many jobs, but communication, creativity, teamwork and careful judgement remain valuable human skills.",
+          zh: "AI 會改變好多工作，但溝通、創意、合作同審慎判斷，仍然係重要人類能力。"
+        },
+        {
+          en: "Run a small experiment: change one part of a prompt, compare the results and record what improved.",
+          zh: "做個小實驗：每次改提示詞一個部分，比較結果，再記低有咩改善。"
+        },
+        {
+          en: "The strongest AI projects combine machine speed with human curiosity, values and original ideas.",
+          zh: "最好嘅 AI 專題，會將機器速度同人類好奇心、價值判斷及原創想法結合。"
+        }
+      ];
       const form = document.querySelector("#chat-form");
       const input = document.querySelector("#chat-input");
       const sendButton = document.querySelector("#chat-send");
       const clearButton = document.querySelector("#chat-clear");
       const messages = document.querySelector("#chat-messages");
       const petFrame = document.querySelector("#sweetchie-pet");
+      const tipEnglish = document.querySelector("#ai-tip-en");
+      const tipChinese = document.querySelector("#ai-tip-zh");
+      const nextTipButton = document.querySelector("#ai-tip-next");
       const welcomeText = "Hello, lovely learner! What would you like to learn today? ♡\n哈囉呀，小可愛！今日想同我一齊學啲咩呀？";
       const history = [];
+      let currentTip = -1;
       let waiting = false;
+
+      function showTip(index) {
+        const tip = aiTips[index];
+        tipEnglish.textContent = tip.en;
+        tipChinese.textContent = tip.zh;
+      }
+
+      function showRandomTip() {
+        let nextTip = Math.floor(Math.random() * aiTips.length);
+
+        while (aiTips.length > 1 && nextTip === currentTip) {
+          nextTip = Math.floor(Math.random() * aiTips.length);
+        }
+
+        currentTip = nextTip;
+        showTip(currentTip);
+      }
+
+      showRandomTip();
+
+      nextTipButton.addEventListener("click", () => {
+        showRandomTip();
+      });
 
       window.addEventListener("message", event => {
         if (event.source !== petFrame.contentWindow || event.data?.type !== "sweetchie-pet-position") return;
