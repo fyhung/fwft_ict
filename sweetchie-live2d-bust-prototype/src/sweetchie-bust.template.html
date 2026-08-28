@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sweetchie — Live2D-style Bust Prototype</title>
+  <style>
+    :root { color-scheme: light; --ink:#3f2c48; --muted:#78677f; --purple:#7f58c8; --line:rgba(79,52,91,.14); }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); font-family:Inter,ui-rounded,"Segoe UI",sans-serif; background:radial-gradient(circle at 50% 8%,#fff 0,#f8eef8 34%,#eadff1 100%); }
+    main { width:min(1080px,calc(100% - 28px)); margin:auto; padding:24px 0 34px; }
+    header { display:flex; align-items:end; justify-content:space-between; gap:18px; margin-bottom:14px; }
+    h1 { margin:0; font-size:clamp(1.5rem,4vw,2.35rem); letter-spacing:-.035em; }
+    header p { margin:.35rem 0 0; color:var(--muted); }
+    .badge { padding:8px 11px; border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,.7); font-size:.78rem; font-weight:750; white-space:nowrap; }
+    .layout { display:grid; grid-template-columns:minmax(0,1fr) 285px; gap:14px; }
+    .stage,.panel { border:1px solid var(--line); border-radius:22px; background:rgba(255,255,255,.72); box-shadow:0 18px 55px rgba(68,42,78,.11); backdrop-filter:blur(16px); }
+    .stage { position:relative; overflow:hidden; min-height:650px; background:radial-gradient(circle at 50% 36%,#fff 0,#f5e8f7 48%,#e5d4eb 100%); }
+    .stage::before { content:""; position:absolute; inset:0; opacity:.28; background-image:linear-gradient(rgba(122,84,143,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(122,84,143,.07) 1px,transparent 1px); background-size:30px 30px; }
+    canvas { position:absolute; inset:0; width:100%; height:100%; touch-action:none; }
+    .hint { position:absolute; left:16px; bottom:14px; padding:8px 11px; border-radius:12px; color:var(--muted); background:rgba(255,255,255,.78); font-size:.78rem; pointer-events:none; }
+    .panel { padding:15px; }
+    .panel h2 { margin:0 0 10px; font-size:.95rem; }
+    .controls { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    button { min-height:39px; border:1px solid var(--line); border-radius:11px; color:var(--ink); background:#fff; font-family:inherit; font-size:.82rem; font-weight:700; cursor:pointer; }
+    button:hover { border-color:rgba(126,83,158,.38); background:#fdfaff; }
+    button.primary { color:#fff; border-color:#6e49b3; background:linear-gradient(#956fdb,#7650bd); }
+    button[aria-pressed="true"] { box-shadow:0 0 0 3px rgba(133,88,198,.18); border-color:#8157c3; }
+    .divider { height:1px; margin:15px 0; background:var(--line); }
+    label.row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px; margin:11px 0; color:var(--muted); font-size:.8rem; }
+    input[type="range"] { width:120px; accent-color:var(--purple); }
+    input[type="checkbox"] { width:18px; height:18px; accent-color:var(--purple); }
+    .meters { display:grid; gap:9px; }
+    .meter { display:grid; grid-template-columns:75px 1fr 42px; align-items:center; gap:7px; font-size:.72rem; color:var(--muted); }
+    .track { height:7px; border-radius:99px; overflow:hidden; background:#eee4f1; }
+    .fill { height:100%; width:50%; transform-origin:left; background:linear-gradient(90deg,#b589e4,#7650bd); }
+    .value { text-align:right; font-variant-numeric:tabular-nums; }
+    .note { margin:14px 2px 0; color:var(--muted); font-size:.78rem; line-height:1.5; }
+    @media(max-width:800px){ .layout{grid-template-columns:1fr}.stage{min-height:590px}.panel{order:-1} header{align-items:start}.badge{display:none} }
+  </style>
+</head>
+<body>
+<main>
+  <header><div><h1>Sweetchie Bust Lab</h1><p>A lightweight Live2D-style interaction prototype.</p></div><div class="badge">Offline · Single HTML</div></header>
+  <div class="layout">
+    <section class="stage" aria-label="Animated Sweetchie bust">
+      <canvas id="stage" width="760" height="680"></canvas>
+      <div class="hint">Move the pointer around her face · tap Sweetchie for a happy reaction</div>
+    </section>
+    <aside class="panel">
+      <h2>Performance controls</h2>
+      <div class="controls">
+        <button class="primary" data-action="talk" aria-pressed="false">Talk</button>
+        <button data-action="blink">Blink</button>
+        <button data-expression="neutral" aria-pressed="true">Neutral</button>
+        <button data-expression="happy" aria-pressed="false">Happy</button>
+        <button data-expression="surprised" aria-pressed="false">Surprised</button>
+        <button data-action="demo">Auto demo</button>
+      </div>
+      <div class="divider"></div>
+      <label class="row">Pointer tracking <input type="checkbox" data-tracking checked></label>
+      <label class="row">Motion amount <input type="range" data-motion min="0" max="1.6" value="1" step="0.1"></label>
+      <div class="divider"></div>
+      <h2>Live2D-style parameters</h2>
+      <div class="meters">
+        <div class="meter"><span>Angle X</span><div class="track"><div class="fill" data-meter="x"></div></div><span class="value" data-value="x">0.00</span></div>
+        <div class="meter"><span>Angle Y</span><div class="track"><div class="fill" data-meter="y"></div></div><span class="value" data-value="y">0.00</span></div>
+        <div class="meter"><span>Mouth</span><div class="track"><div class="fill" data-meter="mouth"></div></div><span class="value" data-value="mouth">0.00</span></div>
+        <div class="meter"><span>Eye open</span><div class="track"><div class="fill" data-meter="eye"></div></div><span class="value" data-value="eye">1.00</span></div>
+        <div class="meter"><span>Breath</span><div class="track"><div class="fill" data-meter="breath"></div></div><span class="value" data-value="breath">0.50</span></div>
+      </div>
+      <p class="note"><strong>Prototype boundary:</strong> this uses a generated six-state bust atlas plus canvas transforms. It demonstrates interaction design before producing a layered PSD and genuine Cubism rig.</p>
+    </aside>
+  </div>
+</main>
+<script>
+(() => {
+  "use strict";
+  const ATLAS_URL = "__BUST_ATLAS__";
+  const CELL_W = 440, CELL_H = 560;
+  const FRAMES = Object.freeze({ neutral:0, blink:1, talkSmall:2, talkWide:3, happy:4, surprised:5 });
+  const canvas = document.querySelector("#stage");
+  const ctx = canvas.getContext("2d");
+  const image = new Image();
+  const state = { expression:"neutral", talking:false, blinkUntil:0, nextBlink:performance.now()+1800, lookX:0, lookY:0, targetX:0, targetY:0, motion:1, tracking:true, demoTimers:[] };
+  let last=performance.now(), previousFrame=0, frameChanged=last;
+
+  const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+  const scheduleBlink=now=>{ state.nextBlink=now+1800+Math.random()*3600; };
+  function setExpression(name){
+    state.expression=name;
+    document.querySelectorAll("[data-expression]").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.expression===name)));
+  }
+  function setTalking(value){
+    state.talking=value;
+    document.querySelector("[data-action='talk']").setAttribute("aria-pressed",String(value));
+  }
+  function blink(){ state.blinkUntil=performance.now()+145; scheduleBlink(performance.now()); }
+  function currentFrame(now){
+    if(now<state.blinkUntil && state.expression!=="happy") return FRAMES.blink;
+    if(state.talking && state.expression==="neutral") return Math.floor(now/125)%2 ? FRAMES.talkSmall : FRAMES.talkWide;
+    return FRAMES[state.expression];
+  }
+  function updateMeter(name,value,signed=false){
+    const normalized=signed ? (value+1)/2 : value;
+    document.querySelector(`[data-meter='${name}']`).style.transform=`scaleX(${clamp(normalized,0,1)})`;
+    document.querySelector(`[data-value='${name}']`).textContent=value.toFixed(2);
+  }
+  function render(now){
+    const dt=Math.min(40,now-last); last=now;
+    state.lookX+=(state.targetX-state.lookX)*Math.min(1,dt*.008);
+    state.lookY+=(state.targetY-state.lookY)*Math.min(1,dt*.008);
+    if(now>=state.nextBlink && !state.talking) blink();
+    const frame=currentFrame(now);
+    if(frame!==previousFrame){ previousFrame=frame; frameChanged=now; }
+    const breath=(Math.sin(now/760)+1)/2;
+    const mouth = frame === FRAMES.talkWide ? 1
+      : frame === FRAMES.talkSmall ? .42
+      : frame === FRAMES.surprised ? .34
+      : 0;
+    const eye=frame===FRAMES.blink||frame===FRAMES.happy?0:frame===FRAMES.surprised?1.15:1;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const amount=state.motion;
+    const drawW=480, drawH=drawW*CELL_H/CELL_W;
+    const x=canvas.width/2+state.lookX*14*amount;
+    const y=canvas.height*.98+state.lookY*7*amount+breath*2.6*amount;
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(state.lookX*.035*amount);
+    ctx.transform(1,state.lookY*.012*amount,-state.lookX*.016*amount,1,0,0);
+    ctx.scale(1+breath*.004*amount,1+breath*.009*amount);
+    ctx.drawImage(image,frame*CELL_W,0,CELL_W,CELL_H,-drawW/2,-drawH,drawW,drawH);
+    ctx.restore();
+    updateMeter("x",state.lookX,true); updateMeter("y",state.lookY,true); updateMeter("mouth",mouth); updateMeter("eye",eye/1.15); updateMeter("breath",breath);
+    requestAnimationFrame(render);
+  }
+  function pointer(event){
+    if(!state.tracking) return;
+    const rect=canvas.getBoundingClientRect();
+    state.targetX=clamp(((event.clientX-rect.left)/rect.width-.5)*2,-1,1);
+    state.targetY=clamp(((event.clientY-rect.top)/rect.height-.46)*2,-1,1);
+  }
+  canvas.addEventListener("pointermove",pointer);
+  canvas.addEventListener("pointerleave",()=>{ state.targetX=0; state.targetY=0; });
+  canvas.addEventListener("pointerdown",()=>{ setTalking(false); setExpression("happy"); setTimeout(()=>setExpression("neutral"),1200); });
+  document.querySelectorAll("[data-expression]").forEach(button=>button.addEventListener("click",()=>{ setTalking(false); setExpression(button.dataset.expression); }));
+  document.querySelector("[data-action='talk']").addEventListener("click",()=>{ setExpression("neutral"); setTalking(!state.talking); });
+  document.querySelector("[data-action='blink']").addEventListener("click",blink);
+  document.querySelector("[data-tracking]").addEventListener("change",event=>{ state.tracking=event.currentTarget.checked; if(!state.tracking){state.targetX=0;state.targetY=0;} });
+  document.querySelector("[data-motion]").addEventListener("input",event=>{ state.motion=Number(event.currentTarget.value); });
+  document.querySelector("[data-action='demo']").addEventListener("click",()=>{
+    state.demoTimers.forEach(clearTimeout); state.demoTimers=[]; setExpression("neutral"); setTalking(true);
+    const later=(delay,fn)=>state.demoTimers.push(setTimeout(fn,delay));
+    later(2600,()=>{setTalking(false);setExpression("happy")}); later(4100,()=>setExpression("surprised")); later(5400,()=>setExpression("neutral"));
+  });
+  addEventListener("keydown",event=>{ if(event.code==="Space"){event.preventDefault();setExpression("neutral");setTalking(!state.talking);} });
+  image.onload=()=>requestAnimationFrame(render);
+  image.src=ATLAS_URL;
+})();
+</script>
+</body>
+</html>

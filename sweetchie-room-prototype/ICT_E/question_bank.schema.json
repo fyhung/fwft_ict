@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/ict-topic-e-mcq-bank.schema.json",
+  "title": "ICT Topic E Traditional Chinese MCQ Bank",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "bank", "questions"],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "bank": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "topic", "language", "questionType", "version", "updatedAt"],
+      "properties": {
+        "id": {"const": "ict-topic-e-mcq-zh-hk"},
+        "title": {"type": "string", "minLength": 1},
+        "topic": {"const": "E. 資訊及通訊科技對社會的影響"},
+        "language": {"const": "zh-Hant-HK"},
+        "questionType": {"const": "mcq"},
+        "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "updatedAt": {"type": "string", "format": "date"}
+      }
+    },
+    "questions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/question"}
+    }
+  },
+  "$defs": {
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text"],
+      "properties": {
+        "id": {"enum": ["A", "B", "C", "D"]},
+        "text": {"type": "string", "minLength": 1, "maxLength": 300}
+      }
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "src", "alt"],
+      "properties": {
+        "type": {"enum": ["image", "diagram", "table"]},
+        "src": {"type": "string", "minLength": 1},
+        "alt": {"type": "string", "minLength": 1},
+        "caption": {"type": "string"}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scopeReference", "styleReference", "adaptedFromQuestion", "officialQuestion"],
+      "properties": {
+        "scopeReference": {"const": "ICT_C&A Guide_c_final.pdf, PDF pages 35-37"},
+        "styleReference": {"const": "C-SP-ICT-1A.pdf"},
+        "adaptedFromQuestion": {"type": ["string", "null"]},
+        "officialQuestion": {"const": false}
+      }
+    },
+    "control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "learningObjectiveId",
+        "reasoningPattern",
+        "distractorPattern",
+        "semanticKeywords",
+        "familyKey",
+        "batchId",
+        "reviewStatus"
+      ],
+      "properties": {
+        "learningObjectiveId": {"type": "string", "minLength": 3},
+        "reasoningPattern": {"type": "string", "minLength": 3},
+        "distractorPattern": {"type": "string", "minLength": 3},
+        "semanticKeywords": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "familyKey": {"type": "string", "minLength": 5},
+        "batchId": {"type": "string", "pattern": "^B[0-9]{3}$"},
+        "reviewStatus": {"enum": ["draft", "reviewed", "accepted", "rejected"]}
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "language",
+        "subtopic",
+        "conceptId",
+        "difficulty",
+        "cognitiveOperation",
+        "questionArchetype",
+        "scenarioDomain",
+        "stem",
+        "options",
+        "correctOptionId",
+        "explanation",
+        "optionRationales",
+        "tags",
+        "originalQuestion",
+        "provenance",
+        "control"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^ICT-E-[ABC]-MCQ-[0-9]{4}$"},
+        "type": {"const": "mcq"},
+        "language": {"const": "zh-Hant-HK"},
+        "subtopic": {
+          "enum": [
+            "E-a-technology-innovation",
+            "E-b-health-and-ethical-issues",
+            "E-c-intellectual-property"
+          ]
+        },
+        "conceptId": {"type": "string", "minLength": 3},
+        "difficulty": {"enum": ["basic", "intermediate", "advanced"]},
+        "cognitiveOperation": {"enum": ["recognise", "apply", "compare", "analyse", "evaluate"]},
+        "questionArchetype": {
+          "enum": [
+            "direct_concept",
+            "scenario_application",
+            "statement_combination",
+            "best_reason_or_measure",
+            "comparison",
+            "diagram_or_data_interpretation"
+          ]
+        },
+        "scenarioDomain": {
+          "enum": [
+            "none",
+            "school",
+            "home",
+            "workplace",
+            "retail",
+            "healthcare",
+            "public-service",
+            "creative-media",
+            "software-development",
+            "community"
+          ]
+        },
+        "stem": {"type": "string", "minLength": 8, "maxLength": 500},
+        "statements": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "media": {"$ref": "#/$defs/media"},
+        "options": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {"$ref": "#/$defs/option"}
+        },
+        "correctOptionId": {"enum": ["A", "B", "C", "D"]},
+        "explanation": {"type": "string", "minLength": 10, "maxLength": 800},
+        "optionRationales": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["A", "B", "C", "D"],
+          "properties": {
+            "A": {"type": "string", "minLength": 3},
+            "B": {"type": "string", "minLength": 3},
+            "C": {"type": "string", "minLength": 3},
+            "D": {"type": "string", "minLength": 3}
+          }
+        },
+        "tags": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "originalQuestion": {"const": true},
+        "provenance": {"$ref": "#/$defs/provenance"},
+        "control": {"$ref": "#/$defs/control"}
+      }
+    }
+  }
+}

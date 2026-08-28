@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "chroma_key": {
+    "hex": "#00FF2A",
+    "rgb": [
+      0,
+      255,
+      42
+    ],
+    "threshold": 105.0
+  },
+  "rows": [
+    {
+      "state": "running-right",
+      "frames": [
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\assets\\backwalk-frames\\running-right\\00.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\assets\\backwalk-frames\\running-right\\01.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\assets\\backwalk-frames\\running-right\\02.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\assets\\backwalk-frames\\running-right\\03.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\assets\\backwalk-frames\\running-right\\04.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\assets\\backwalk-frames\\running-right\\05.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\assets\\backwalk-frames\\running-right\\06.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\assets\\backwalk-frames\\running-right\\07.png"
+      ],
+      "method": "components"
+    },
+    {
+      "state": "running-left",
+      "frames": [
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\assets\\backwalk-frames\\running-left\\00.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\assets\\backwalk-frames\\running-left\\01.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\assets\\backwalk-frames\\running-left\\02.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\assets\\backwalk-frames\\running-left\\03.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\assets\\backwalk-frames\\running-left\\04.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\assets\\backwalk-frames\\running-left\\05.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\assets\\backwalk-frames\\running-left\\06.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\assets\\backwalk-frames\\running-left\\07.png"
+      ],
+      "method": "components"
+    }
+  ]
+}

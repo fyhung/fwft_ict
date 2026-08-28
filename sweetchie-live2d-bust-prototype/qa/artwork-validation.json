@@ -1,0 +1,121 @@
+{
+  "ok": true,
+  "source_size": [
+    2152,
+    731
+  ],
+  "atlas_size": [
+    2640,
+    560
+  ],
+  "cell_size": [
+    440,
+    560
+  ],
+  "frame_count": 6,
+  "real_alpha": true,
+  "states": [
+    {
+      "index": 0,
+      "state": "Neutral",
+      "source_bbox": [
+        4,
+        181,
+        338,
+        567
+      ],
+      "normalized_bbox": [
+        18,
+        87,
+        421,
+        552
+      ],
+      "edge_touch": false
+    },
+    {
+      "index": 1,
+      "state": "Blink",
+      "source_bbox": [
+        3,
+        182,
+        342,
+        567
+      ],
+      "normalized_bbox": [
+        15,
+        88,
+        424,
+        552
+      ],
+      "edge_touch": false
+    },
+    {
+      "index": 2,
+      "state": "Talk small",
+      "source_bbox": [
+        9,
+        184,
+        347,
+        568
+      ],
+      "normalized_bbox": [
+        16,
+        89,
+        424,
+        552
+      ],
+      "edge_touch": false
+    },
+    {
+      "index": 3,
+      "state": "Talk wide",
+      "source_bbox": [
+        0,
+        183,
+        340,
+        567
+      ],
+      "normalized_bbox": [
+        15,
+        89,
+        425,
+        552
+      ],
+      "edge_touch": false
+    },
+    {
+      "index": 4,
+      "state": "Happy",
+      "source_bbox": [
+        0,
+        183,
+        331,
+        567
+      ],
+      "normalized_bbox": [
+        20,
+        89,
+        419,
+        552
+      ],
+      "edge_touch": false
+    },
+    {
+      "index": 5,
+      "state": "Surprised",
+      "source_bbox": [
+        0,
+        183,
+        325,
+        566
+      ],
+      "normalized_bbox": [
+        24,
+        90,
+        416,
+        552
+      ],
+      "edge_touch": false
+    }
+  ]
+}

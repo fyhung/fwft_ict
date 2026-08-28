@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+const html=fs.readFileSync('sweetchie-live2d-preview.html','utf8');
+if(/https?:\/\//i.test(html)) throw new Error('Preview contains an external URL');
+const refs=[...new Set([...html.matchAll(/\['(\d{2}_[^']+)'/g)].map(m=>m[1]))];
+if(refs.length!==36) throw new Error(`Expected 36 layer references, got ${refs.length}`);
+for(const name of refs) if(!fs.existsSync(`layers/${name}.png`)) throw new Error(`Missing ${name}.png`);
+for(const name of ['neutral','blink','talk-small','talk-wide','happy','surprised']) if(!fs.existsSync(`bustlab-exact/${name}.png`)) throw new Error(`Missing Bust Lab frame ${name}.png`);
+const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+for(const source of scripts) new vm.Script(source);
+for(const token of ['pointermove','mouth-wide','eye-closed','Motion strength','Layer inspector','Bust Lab exact','Separated cut art']) if(!html.includes(token)) throw new Error(`Missing ${token}`);
+console.log('PASS: offline separated-layer motion preview verified');

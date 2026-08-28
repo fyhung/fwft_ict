@@ -1,0 +1,95 @@
+{
+  "ok": true,
+  "prototype": "sweetchie-room.html",
+  "offline_single_file": true,
+  "build_variants": {
+    "production": "sweetchie-room.html",
+    "production_animation_test_buttons": 0,
+    "animation_test": "sweetchie-room-test.html",
+    "animation_test_buttons": 27,
+    "shared_template": true
+  },
+  "responsive_ui": {
+    "desktop": "single-row command bar",
+    "tablet_breakpoint_px": 1024,
+    "mobile_breakpoint_px": 700,
+    "mobile_quiz_surface": "scrollable bottom sheet",
+    "mobile_landscape": "room and side control rail",
+    "safe_area_insets": true,
+    "touch_targets": true,
+    "canvas_logical_resolution_preserved": "1152x832"
+  },
+  "stage_1_quiz": {
+    "question_bank_embedded": true,
+    "question_count": 1000,
+    "runtime_network_requests": 0,
+    "local_progress": true,
+    "dashboard": true,
+    "wrong_answer_review": true,
+    "progress_export": true,
+    "quiz_room_has_bed": false,
+    "quiz_pet_scale_multiplier": 1.52,
+    "correct_reactions": ["clap", "cheer", "dance", "heartHands", "twirl"],
+    "wrong_reactions": ["oops", "read", "write", "review"],
+    "idle_reactions": ["think", "wait", "yawn", "stretch"]
+  },
+  "canvas": {
+    "width": 1152,
+    "height": 832
+  },
+  "sprite_cell": {
+    "width": 192,
+    "height": 208
+  },
+  "movement_mapping": {
+    "southwest": "existing front-facing walk-left",
+    "southeast": "existing front-facing walk-right",
+    "northwest": "new rear-facing walk-left",
+    "northeast": "new rear-facing walk-right"
+  },
+  "backwalk": {
+    "rows": 2,
+    "frames_per_row": 8,
+    "northeast_full_body_screen_right_repair": "pass",
+    "northeast_head_covered_direction_test": "pass",
+    "northwest_rear_three_quarter_repair": "pass",
+    "northeast_northwest_silhouette_difference": "pass",
+    "deterministic_frame_review": "pass",
+    "edge_pixels": 0,
+    "chroma_despill": "pass"
+  },
+  "animation_test_panel": {
+    "file": "sweetchie-room-test.html",
+    "buttons": 27,
+    "movement_previews": 4,
+    "original_actions": 7,
+    "extra_actions": 16,
+    "stationary_preview": true
+  },
+  "browser_qa": {
+    "room_layout": "pending-stage-1-user-refresh",
+    "rear_walk_visible": "pass",
+    "object_navigation": "pass",
+    "extra_action_rendering": "pass",
+    "console_errors": 0
+  },
+  "twirl_timing": {
+    "source_frames": 6,
+    "frame_ms": 155,
+    "minimum_rotations": 4,
+    "minimum_duration_ms": 3720,
+    "artwork_changed": true,
+    "visual_rotation_sequence": [
+      "front",
+      "front-right",
+      "back-right",
+      "back",
+      "back-left",
+      "front-left"
+    ],
+    "complete_360_degree_cycle": "pass",
+    "frame_extraction": "pass",
+    "chroma_despill": "pass"
+  },
+  "static_qa": "pass"
+}

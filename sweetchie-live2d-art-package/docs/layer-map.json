@@ -1,0 +1,97 @@
+{
+  "canvas": [
+    1024,
+    1024
+  ],
+  "coordinate_policy": "Every PNG is full-canvas and registration-aligned.",
+  "default_visible": [
+    "01_Back_Hair",
+    "02_Hair_Shadow",
+    "04_Skirt",
+    "05_Blouse",
+    "06_Sailor_Collar",
+    "07_Clothing_Shadow",
+    "08_Neck",
+    "09_Left_Ear",
+    "10_Right_Ear",
+    "11_Face_Base",
+    "12_Face_Shadow",
+    "13_Left_Eye_White",
+    "14_Right_Eye_White",
+    "15_Left_Iris",
+    "16_Right_Iris",
+    "17_Left_Upper_Lid",
+    "18_Right_Upper_Lid",
+    "21_Left_Eyebrow",
+    "22_Right_Eyebrow",
+    "23_Mouth_Closed",
+    "30_Front_Hair_Bangs",
+    "32_Glasses",
+    "33_Left_Earring",
+    "34_Right_Earring",
+    "35_Bow",
+    "36_Star_Brooch"
+  ],
+  "alternate_hidden": [
+    "03_Torso_Underlay",
+    "19_Left_Closed_Lid",
+    "20_Right_Closed_Lid",
+    "24_Mouth_Small_Open",
+    "25_Mouth_Wide_Open",
+    "26_Mouth_Surprised_O",
+    "27_Mouth_Happy",
+    "28_Left_Side_Hair",
+    "29_Right_Side_Hair",
+    "31_Hair_Highlights"
+  ],
+  "groups": {
+    "Hair Back": [
+      "01_Back_Hair",
+      "02_Hair_Shadow",
+      "28_Left_Side_Hair",
+      "29_Right_Side_Hair"
+    ],
+    "Clothing": [
+      "03_Torso_Underlay",
+      "04_Skirt",
+      "05_Blouse",
+      "06_Sailor_Collar",
+      "07_Clothing_Shadow"
+    ],
+    "Face Base": [
+      "08_Neck",
+      "09_Left_Ear",
+      "10_Right_Ear",
+      "11_Face_Base",
+      "12_Face_Shadow"
+    ],
+    "Face Controls": [
+      "13_Left_Eye_White",
+      "14_Right_Eye_White",
+      "15_Left_Iris",
+      "16_Right_Iris",
+      "17_Left_Upper_Lid",
+      "18_Right_Upper_Lid",
+      "19_Left_Closed_Lid",
+      "20_Right_Closed_Lid",
+      "21_Left_Eyebrow",
+      "22_Right_Eyebrow",
+      "23_Mouth_Closed",
+      "24_Mouth_Small_Open",
+      "25_Mouth_Wide_Open",
+      "26_Mouth_Surprised_O",
+      "27_Mouth_Happy"
+    ],
+    "Hair Front": [
+      "30_Front_Hair_Bangs",
+      "31_Hair_Highlights"
+    ],
+    "Accessories": [
+      "32_Glasses",
+      "33_Left_Earring",
+      "34_Right_Earring",
+      "36_Star_Brooch",
+      "35_Bow"
+    ]
+  }
+}

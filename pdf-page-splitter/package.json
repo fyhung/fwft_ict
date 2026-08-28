@@ -1,0 +1,15 @@
+{
+  "name": "pdf-page-splitter",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node --check src/app.js && node tests/check-build.mjs",
+    "verify-pipeline": "node tests/verify-pipeline.mjs"
+  },
+  "dependencies": {
+    "jszip": "3.10.1",
+    "pdf-lib": "1.17.1"
+  }
+}

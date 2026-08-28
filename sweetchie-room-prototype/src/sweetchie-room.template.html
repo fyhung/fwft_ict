@@ -1,0 +1,1944 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f8e9f3">
+  <title>Sweetchie's ICT Quiz Room</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-rounded, "Segoe UI", system-ui, sans-serif;
+      --ink: #47374d;
+      --muted: #7b697f;
+      --panel: rgba(255, 252, 255, .86);
+      --line: rgba(103, 73, 112, .16);
+      --purple: #8b61d9;
+      --purple-dark: #6843ae;
+      --pink: #e992bd;
+      --gold: #f3b75f;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 12%, rgba(255, 255, 255, .96), transparent 34%),
+        radial-gradient(circle at 86% 3%, rgba(231, 208, 255, .76), transparent 30%),
+        linear-gradient(145deg, #f9edf5, #e8dcf6 62%, #f7e9f2);
+    }
+
+    button, select { font: inherit; }
+
+    .page {
+      width: min(1220px, 100%);
+      margin: 0 auto;
+      padding: clamp(12px, 2.2vw, 24px) clamp(12px, 2.6vw, 30px) max(22px, env(safe-area-inset-bottom));
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 12px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+
+    .brand-mark {
+      display: grid;
+      flex: 0 0 44px;
+      width: 44px;
+      height: 44px;
+      place-items: center;
+      border: 1px solid rgba(107, 71, 132, .18);
+      border-radius: 14px;
+      color: white;
+      background: linear-gradient(145deg, #a780e2, #7148b7);
+      box-shadow: 0 8px 20px rgba(104, 69, 150, .22);
+      font-family: Georgia, serif;
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.25rem, 2.2vw, 1.8rem);
+      letter-spacing: -.025em;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: .91rem;
+    }
+
+    .badge {
+      flex: none;
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .66);
+      color: var(--purple-dark);
+      font-size: .78rem;
+      font-weight: 700;
+    }
+
+    .room-shell {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(104, 71, 116, .18);
+      border-radius: 22px;
+      background: #f7eaf2;
+      box-shadow: 0 24px 70px rgba(74, 45, 85, .17), 0 3px 10px rgba(72, 42, 80, .08);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1152 / 832;
+      cursor: crosshair;
+      touch-action: manipulation;
+    }
+
+    .loading {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #faeef5, #eadcf6);
+      color: var(--purple-dark);
+      font-weight: 750;
+      letter-spacing: .01em;
+      transition: opacity .25s ease;
+    }
+
+    .loading[hidden] { display: none; }
+
+    .controls {
+      display: grid;
+      grid-template-columns: auto minmax(350px, 1fr) auto minmax(190px, auto);
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 30px rgba(70, 44, 82, .08);
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding-right: 8px;
+      margin-right: 2px;
+      border-right: 1px solid var(--line);
+    }
+
+    .control-group:last-of-type { border-right: 0; }
+
+    .learning-controls { min-width: 0; }
+    .learning-controls button { flex: 1 1 0; }
+
+    .control-icon {
+      display: inline-grid;
+      width: 20px;
+      height: 20px;
+      margin-right: 4px;
+      place-items: center;
+      border-radius: 7px;
+      color: var(--purple-dark);
+      background: rgba(139, 97, 217, .1);
+      font-size: .78rem;
+      line-height: 1;
+    }
+
+    button.primary .control-icon { color: white; background: rgba(255, 255, 255, .18); }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 720;
+    }
+
+    button, select {
+      min-height: 38px;
+      border: 1px solid rgba(101, 68, 116, .18);
+      border-radius: 11px;
+      padding: 7px 12px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, .86);
+      box-shadow: 0 2px 5px rgba(75, 48, 86, .05);
+    }
+
+    button { cursor: pointer; font-weight: 680; }
+    button:hover { background: #fff; border-color: rgba(112, 73, 137, .35); }
+    button:active { transform: translateY(1px); }
+    button.primary { color: white; border-color: var(--purple-dark); background: linear-gradient(180deg, #9870df, #7752c0); }
+    button.primary:hover { background: linear-gradient(180deg, #a37ce5, #805bc8); }
+
+    .status-text {
+      min-width: 190px;
+      margin-left: auto;
+      color: var(--muted);
+      font-size: .84rem;
+      text-align: right;
+      line-height: 1.35;
+    }
+
+    .notes {
+      margin: 12px 4px 0;
+      color: var(--muted);
+      font-size: .82rem;
+      line-height: 1.5;
+    }
+
+    .action-lab {
+      margin-top: 12px;
+      padding: 11px 13px 13px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: 0 8px 30px rgba(70, 44, 82, .08);
+    }
+
+    .action-lab summary {
+      cursor: pointer;
+      color: var(--purple-dark);
+      font-weight: 780;
+      user-select: none;
+    }
+
+    .action-groups {
+      display: grid;
+      gap: 11px;
+      margin-top: 11px;
+    }
+
+    .action-group {
+      display: grid;
+      grid-template-columns: 118px 1fr;
+      align-items: start;
+      gap: 9px;
+    }
+
+    .action-group h2 {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: .76rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .action-buttons button {
+      min-height: 34px;
+      padding: 5px 10px;
+      font-size: .8rem;
+    }
+
+    [hidden] { display: none !important; }
+
+    .room-panel-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      display: grid;
+      grid-template-columns: minmax(245px, 31%) minmax(0, 1fr);
+      align-items: center;
+      padding: clamp(12px, 2.2vw, 28px);
+      background: linear-gradient(90deg, rgba(47, 31, 57, .04) 0 30%, rgba(47, 31, 57, .24) 46%, rgba(47, 31, 57, .38));
+      pointer-events: none;
+    }
+
+    .room-panel {
+      grid-column: 2;
+      max-height: calc(100% - 12px);
+      overflow: auto;
+      padding: clamp(16px, 2.2vw, 25px);
+      border: 1px solid rgba(94, 65, 109, .23);
+      border-radius: 22px;
+      background: rgba(255, 253, 255, .97);
+      box-shadow: 0 24px 70px rgba(46, 29, 55, .34);
+      pointer-events: auto;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .panel-eyebrow {
+      margin: 0 0 4px;
+      color: var(--purple-dark);
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .room-panel h2 {
+      margin: 0;
+      font-size: clamp(1.05rem, 2vw, 1.42rem);
+      line-height: 1.25;
+    }
+
+    .icon-button {
+      width: 38px;
+      min-width: 38px;
+      padding: 5px;
+      font-size: 1.05rem;
+    }
+
+    .quiz-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .quiz-chip {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #f0e7fb;
+      color: #6843ae;
+      font-size: .7rem;
+      font-weight: 760;
+    }
+
+    .question-stem {
+      margin: 0 0 12px;
+      color: #33243a;
+      font-size: clamp(.96rem, 1.75vw, 1.18rem);
+      font-weight: 720;
+      line-height: 1.55;
+    }
+
+    .question-statements {
+      margin: -2px 0 12px;
+      padding: 10px 14px 10px 34px;
+      border-radius: 12px;
+      background: #faf5fc;
+      color: #514056;
+      font-size: .86rem;
+      line-height: 1.5;
+    }
+
+    .answer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+    }
+
+    .answer-button {
+      display: grid;
+      grid-template-columns: 30px 1fr;
+      align-items: center;
+      gap: 9px;
+      min-height: 58px;
+      padding: 9px 11px;
+      text-align: left;
+      line-height: 1.35;
+    }
+
+    .answer-letter {
+      display: grid;
+      place-items: center;
+      width: 29px;
+      height: 29px;
+      border-radius: 9px;
+      background: #eee3fb;
+      color: var(--purple-dark);
+      font-weight: 850;
+    }
+
+    .answer-button.correct {
+      border-color: #4f9f70;
+      background: #eaf8ef;
+    }
+
+    .answer-button.correct .answer-letter { color: white; background: #4f9f70; }
+    .answer-button.wrong { border-color: #c66d84; background: #fff0f4; }
+    .answer-button.wrong .answer-letter { color: white; background: #c66d84; }
+    .answer-button:disabled { cursor: default; opacity: 1; }
+
+    .quiz-feedback {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-left: 4px solid var(--purple);
+      border-radius: 11px;
+      background: #f8f2fc;
+      color: #514056;
+      font-size: .82rem;
+      line-height: 1.48;
+    }
+
+    .quiz-feedback[data-result="correct"] { border-left-color: #4f9f70; background: #edf9f1; }
+    .quiz-feedback[data-result="wrong"] { border-left-color: #c66d84; background: #fff2f5; }
+    .feedback-title { margin: 0 0 5px; font-weight: 850; }
+    .feedback-copy { margin: 0; }
+
+    .panel-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 13px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .stat-card {
+      padding: 11px 9px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: linear-gradient(145deg, #fff, #f7f0fb);
+      text-align: center;
+    }
+
+    .stat-value { display: block; color: var(--purple-dark); font-size: 1.32rem; font-weight: 850; }
+    .stat-label { color: var(--muted); font-size: .68rem; font-weight: 700; }
+
+    .progress-row {
+      display: grid;
+      grid-template-columns: minmax(90px, 1.2fr) 2fr 48px;
+      align-items: center;
+      gap: 9px;
+      margin: 8px 0;
+      font-size: .76rem;
+    }
+
+    .progress-track { height: 8px; overflow: hidden; border-radius: 999px; background: #eadff0; }
+    .progress-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #9367dd, #e58fbd); }
+    .wrong-list { display: grid; gap: 7px; max-height: 205px; overflow: auto; margin-top: 10px; }
+    .wrong-item { display: grid; grid-template-columns: 1fr auto; gap: 9px; align-items: center; padding: 9px 10px; border-radius: 11px; background: #fff3f6; }
+    .wrong-item p { margin: 0; font-size: .75rem; line-height: 1.35; }
+    .wrong-item small { display: block; margin-top: 3px; color: var(--muted); }
+    .empty-state { margin: 10px 0; padding: 18px; border-radius: 12px; background: #f5eff9; color: var(--muted); text-align: center; }
+
+    body.embed { overflow: hidden; background: transparent; }
+    body.embed .page { width: 100vw; height: 100vh; padding: 0; }
+    body.embed .topbar, body.embed .controls, body.embed .action-lab, body.embed .notes { display: none; }
+    body.embed .room-shell { width: 100vw; height: 100vh; border: 0; border-radius: 0; box-shadow: none; }
+    body.embed canvas { width: 100%; height: 100%; object-fit: contain; background: #f4e5ee; }
+
+    @media (max-width: 1024px) {
+      .page { padding-inline: clamp(10px, 2vw, 20px); }
+      .controls {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-areas:
+          "motion learning speed"
+          "status status status";
+      }
+      .motion-controls { grid-area: motion; }
+      .learning-controls { grid-area: learning; border-right: 0; }
+      .speed-control { grid-area: speed; }
+      .status-text {
+        grid-area: status;
+        width: 100%;
+        min-width: 0;
+        margin: 3px 0 0;
+        padding-top: 8px;
+        border-top: 1px solid var(--line);
+        text-align: left;
+      }
+      .room-panel-layer { grid-template-columns: minmax(220px, 29%) minmax(0, 1fr); }
+      .room-panel { max-height: calc(100% - 6px); }
+    }
+
+    @media (max-width: 700px) {
+      body.production { background: linear-gradient(180deg, #f5eafa, #fff8fc 45%, #eee5f7); }
+      .page { width: 100%; padding: 10px 0 max(14px, env(safe-area-inset-bottom)); }
+      .topbar { align-items: center; margin: 0 12px 9px; }
+      .brand { gap: 9px; }
+      .brand-mark { flex-basis: 38px; width: 38px; height: 38px; border-radius: 12px; font-size: 1.12rem; }
+      h1 { overflow: hidden; font-size: clamp(1.02rem, 5vw, 1.22rem); white-space: nowrap; text-overflow: ellipsis; }
+      .subtitle { margin-top: 2px; font-size: .72rem; white-space: nowrap; }
+      .badge { display: none; }
+      .room-shell { border-inline: 0; border-radius: 0; box-shadow: 0 12px 34px rgba(74, 45, 85, .15); }
+      canvas { cursor: default; }
+      .controls {
+        position: sticky;
+        bottom: max(8px, env(safe-area-inset-bottom));
+        z-index: 3;
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "status"
+          "learning"
+          "motion";
+        gap: 7px;
+        margin: 9px 8px 0;
+        padding: 8px;
+        border-radius: 18px;
+        background: rgba(255, 253, 255, .94);
+        box-shadow: 0 12px 36px rgba(59, 37, 69, .19);
+      }
+      .control-group { width: 100%; margin: 0; padding: 0; border: 0; }
+      .learning-controls { display: grid; grid-template-columns: 1.15fr 1fr .86fr; gap: 6px; }
+      .learning-controls button {
+        display: grid;
+        min-width: 0;
+        min-height: 53px;
+        place-items: center;
+        align-content: center;
+        gap: 2px;
+        padding: 6px 4px;
+        font-size: .72rem;
+        line-height: 1.1;
+      }
+      .learning-controls .control-icon { margin: 0; }
+      .motion-controls { justify-content: center; gap: 6px; }
+      .motion-controls button { flex: 1; min-height: 34px; padding: 5px 9px; font-size: .74rem; }
+      .speed-control { display: none; }
+      .status-text {
+        overflow: hidden;
+        margin: 0;
+        padding: 0 4px 6px;
+        border-top: 0;
+        border-bottom: 1px solid var(--line);
+        font-size: .72rem;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .notes { display: none; }
+      .action-group { grid-template-columns: 1fr; gap: 4px; }
+      .action-group h2 { margin-top: 3px; }
+      .room-panel-layer {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        grid-template-columns: 1fr;
+        align-items: end;
+        padding: 24dvh 0 0;
+        background: linear-gradient(180deg, rgba(46, 29, 55, .2), rgba(46, 29, 55, .56));
+        pointer-events: none;
+      }
+      .room-panel {
+        grid-column: 1;
+        width: 100%;
+        max-height: 76dvh;
+        padding: 15px max(14px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+        border-width: 1px 0 0;
+        border-radius: 22px 22px 0 0;
+        overscroll-behavior: contain;
+      }
+      .panel-head { position: sticky; top: -15px; z-index: 2; margin: -15px -14px 12px; padding: 15px 14px 10px; background: rgba(255,253,255,.97); }
+      .icon-button { min-height: 42px; }
+      .answer-grid { grid-template-columns: 1fr; }
+      .answer-button { min-height: 52px; padding-block: 8px; }
+      .dashboard-grid { grid-template-columns: 1fr 1fr; }
+      .panel-actions { position: sticky; bottom: 0; margin-inline: -4px; padding: 9px 4px 0; background: linear-gradient(transparent, rgba(255,253,255,.98) 26%); }
+      .panel-actions button { flex: 1 1 42%; min-height: 44px; }
+    }
+
+    @media (max-width: 380px) {
+      .subtitle { display: none; }
+      .learning-controls { grid-template-columns: repeat(3, 1fr); }
+      .room-panel-layer { padding-top: 18dvh; }
+      .room-panel { max-height: 82dvh; }
+      .progress-row { grid-template-columns: minmax(74px, 1fr) 1.3fr 42px; gap: 6px; }
+    }
+
+    @media (orientation: landscape) and (max-height: 560px) {
+      body.production .topbar { display: none; }
+      body.production .page { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 8px; padding: 8px; }
+      body.production .room-shell { border: 1px solid var(--line); border-radius: 16px; }
+      body.production .controls {
+        position: static;
+        align-self: start;
+        margin: 0;
+        grid-template-areas: "status" "learning" "motion";
+      }
+      body.production .learning-controls { grid-template-columns: 1fr; }
+      body.production .learning-controls button { min-height: 45px; grid-template-columns: 22px 1fr; justify-items: start; padding-inline: 10px; }
+      body.production .notes { display: none; }
+      .room-panel-layer { padding-top: 8dvh; }
+      .room-panel { max-height: 92dvh; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .loading { transition: none; }
+    }
+  </style>
+</head>
+<body class="__ROOM_VARIANT__">
+  <main class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">S</div>
+        <div>
+          <h1>Sweetchie's ICT Quiz Room</h1>
+          <p class="subtitle">Practise Topic E with 1,000 questions and a study companion.</p>
+        </div>
+      </div>
+      <div class="badge">Offline · Single HTML</div>
+    </header>
+
+    <section class="room-shell" aria-label="Sweetchie's interactive ICT quiz room">
+      <canvas id="room" width="1152" height="832" aria-label="Sweetchie walking and studying inside an ICT quiz room"></canvas>
+      <div class="room-panel-layer" data-quiz-layer hidden>
+        <section class="room-panel" role="dialog" aria-modal="true" aria-labelledby="quiz-title" lang="zh-Hant-HK">
+          <header class="panel-head">
+            <div>
+              <p class="panel-eyebrow">Sweetchie's Quiz Desk</p>
+              <h2 id="quiz-title" data-question-title>隨機練習題</h2>
+            </div>
+            <button class="icon-button" type="button" data-quiz-close aria-label="Close quiz">×</button>
+          </header>
+          <div class="quiz-meta" data-quiz-meta></div>
+          <p class="question-stem" data-question-stem></p>
+          <ol class="question-statements" data-question-statements hidden></ol>
+          <div class="answer-grid" data-answer-grid></div>
+          <div class="quiz-feedback" data-quiz-feedback hidden>
+            <p class="feedback-title" data-feedback-title></p>
+            <p class="feedback-copy" data-feedback-copy></p>
+          </div>
+          <div class="panel-actions">
+            <button class="primary" type="button" data-quiz-next hidden>下一題</button>
+            <button type="button" data-quiz-dashboard>學習紀錄</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="room-panel-layer" data-dashboard-layer hidden>
+        <section class="room-panel" role="dialog" aria-modal="true" aria-labelledby="dashboard-title">
+          <header class="panel-head">
+            <div>
+              <p class="panel-eyebrow">Local progress · This device</p>
+              <h2 id="dashboard-title">Learning dashboard</h2>
+            </div>
+            <button class="icon-button" type="button" data-dashboard-close aria-label="Close dashboard">×</button>
+          </header>
+          <div class="dashboard-grid" data-dashboard-stats></div>
+          <div data-topic-progress></div>
+          <h3>Questions to review</h3>
+          <div class="wrong-list" data-wrong-list></div>
+          <div class="panel-actions">
+            <button class="primary" type="button" data-dashboard-action="quiz">Random question</button>
+            <button type="button" data-dashboard-action="review">Review a mistake</button>
+            <button type="button" data-dashboard-action="export">Export progress</button>
+            <button type="button" data-dashboard-action="reset">Reset progress</button>
+          </div>
+        </section>
+      </div>
+      <div class="loading" data-loading>Waking Sweetchie…</div>
+    </section>
+
+    <nav class="controls" aria-label="Sweetchie room controls">
+      <div class="control-group motion-controls">
+        <button type="button" data-control="pause"><span class="control-icon" aria-hidden="true">Ⅱ</span><span>Pause</span></button>
+        <button type="button" data-go="roam"><span class="control-icon" aria-hidden="true">↗</span><span>Roam</span></button>
+      </div>
+      <div class="control-group learning-controls">
+        <button class="primary" type="button" data-go="quizDesk"><span class="control-icon" aria-hidden="true">✦</span><span>Start quiz</span></button>
+        <button type="button" data-go="dashboard"><span class="control-icon" aria-hidden="true">▥</span><span>Dashboard</span></button>
+        <button type="button" data-go="reviewShelf"><span class="control-icon" aria-hidden="true">↻</span><span>Review</span></button>
+      </div>
+      <label class="speed-control">
+        <span>Speed</span>
+        <select data-speed aria-label="Animation speed">
+          <option value="0.65">Relaxed</option>
+          <option value="1" selected>Normal</option>
+          <option value="1.35">Lively</option>
+          <option value="1.7">Quick</option>
+        </select>
+      </label>
+      <span class="status-text" data-status>Sweetchie is getting ready.</span>
+    </nav>
+
+    <!-- __TEST_PANEL_START__ -->
+    <details class="action-lab" open>
+      <summary>Animation test buttons</summary>
+      <div class="action-groups">
+        <section class="action-group" aria-labelledby="movement-actions">
+          <h2 id="movement-actions">Movement</h2>
+          <div class="action-buttons">
+            <button type="button" data-animation="walkSouthWest">Walk south-west</button>
+            <button type="button" data-animation="walkSouthEast">Walk south-east</button>
+            <button type="button" data-animation="walkNorthWest">Walk north-west</button>
+            <button type="button" data-animation="walkNorthEast">Walk north-east</button>
+          </div>
+        </section>
+        <section class="action-group" aria-labelledby="original-actions">
+          <h2 id="original-actions">Original</h2>
+          <div class="action-buttons">
+            <button type="button" data-animation="idle">Idle</button>
+            <button type="button" data-animation="wave">Wave</button>
+            <button type="button" data-animation="surprise">Surprise</button>
+            <button type="button" data-animation="oops">Oops</button>
+            <button type="button" data-animation="wait">Wait</button>
+            <button type="button" data-animation="think">Think</button>
+            <button type="button" data-animation="review">Review</button>
+          </div>
+        </section>
+        <section class="action-group" aria-labelledby="extra-actions">
+          <h2 id="extra-actions">Extra</h2>
+          <div class="action-buttons">
+            <button type="button" data-animation="clap">Clap</button>
+            <button type="button" data-animation="cheer">Cheer</button>
+            <button type="button" data-animation="dance">Dance</button>
+            <button type="button" data-animation="twirl">Twirl</button>
+            <button type="button" data-animation="bow">Bow</button>
+            <button type="button" data-animation="giggle">Giggle</button>
+            <button type="button" data-animation="yawn">Yawn</button>
+            <button type="button" data-animation="stretch">Stretch</button>
+            <button type="button" data-animation="read">Read</button>
+            <button type="button" data-animation="write">Write</button>
+            <button type="button" data-animation="teach">Teach</button>
+            <button type="button" data-animation="idea">Idea</button>
+            <button type="button" data-animation="heartHands">Heart hands</button>
+            <button type="button" data-animation="peek">Peek</button>
+            <button type="button" data-animation="listen">Listen</button>
+            <button type="button" data-animation="curtsy">Curtsy</button>
+          </div>
+        </section>
+      </div>
+    </details>
+    <!-- __TEST_PANEL_END__ -->
+
+    <p class="notes">Click the quiz desk for a random Topic E question, the wall dashboard for your saved progress, or the review shelf to revisit mistakes. Progress stays on this browser and device.</p>
+  </main>
+
+  <script>
+  __ICT_TOPIC_E_BANK_SCRIPT__
+  </script>
+
+  <script>
+  (() => {
+    "use strict";
+
+    const ASSET_URLS = Object.freeze({
+      atlas: "__SWEETCHIE_ATLAS__",
+      extras: "__SWEETCHIE_EXTRA_ACTIONS__",
+      backWalk: "__SWEETCHIE_BACK_WALK__"
+    });
+
+    const WIDTH = 1152;
+    const HEIGHT = 832;
+    const CELL_WIDTH = 192;
+    const CELL_HEIGHT = 208;
+    const GRID = 32;
+    const PET_SCALE = 0.76;
+    const WALK_SPEED = 102;
+
+    const BASE_ACTIONS = Object.freeze({
+      idle:     { source: "atlas", row: 0, frames: 6, frameMs: 220 },
+      wave:     { source: "atlas", row: 3, frames: 4, frameMs: 170 },
+      surprise: { source: "atlas", row: 4, frames: 5, frameMs: 145 },
+      oops:     { source: "atlas", row: 5, frames: 8, frameMs: 185 },
+      wait:     { source: "atlas", row: 6, frames: 6, frameMs: 205 },
+      think:    { source: "atlas", row: 7, frames: 6, frameMs: 190 },
+      review:   { source: "atlas", row: 8, frames: 6, frameMs: 190 }
+    });
+
+    const EXTRA_NAMES = [
+      "clap", "cheer", "dance", "twirl", "bow", "giggle", "yawn", "stretch",
+      "read", "write", "teach", "idea", "heartHands", "peek", "listen", "curtsy"
+    ];
+
+    const EXTRA_ACTIONS = Object.freeze(Object.fromEntries(EXTRA_NAMES.map((name, row) => [
+      name,
+      {
+        source: "extras",
+        row,
+        frames: 6,
+        frameMs: name === "yawn" ? 205 : name === "twirl" ? 155 : 180
+      }
+    ])));
+
+    const WALK_PREVIEWS = Object.freeze({
+      walkSouthWest: { source: "atlas", row: 2, frames: 8, frameMs: 112 },
+      walkSouthEast: { source: "atlas", row: 1, frames: 8, frameMs: 112 },
+      walkNorthWest: { source: "backWalk", row: 1, frames: 8, frameMs: 112 },
+      walkNorthEast: { source: "backWalk", row: 0, frames: 8, frameMs: 112 }
+    });
+
+    const ACTIONS = Object.freeze({ ...BASE_ACTIONS, ...EXTRA_ACTIONS, ...WALK_PREVIEWS });
+
+    const objects = [
+      {
+        id: "reviewShelf", label: "checking the review shelf", baseline: 415,
+        hit: { x: 42, y: 130, w: 250, h: 286 },
+        collision: { x: 54, y: 226, w: 224, h: 174 },
+        point: { x: 314, y: 438 },
+        actions: [["read", 2], ["idea", 1]]
+      },
+      {
+        id: "dashboard", label: "opening the learning dashboard", baseline: 292,
+        hit: { x: 834, y: 58, w: 274, h: 224 },
+        collision: { x: 850, y: 214, w: 242, h: 70 },
+        point: { x: 936, y: 342 },
+        actions: [["review", 1]]
+      },
+      {
+        id: "quizDesk", label: "starting a quiz", baseline: 548,
+        hit: { x: 350, y: 292, w: 452, h: 258 },
+        collision: { x: 365, y: 394, w: 422, h: 142 },
+        point: { x: 576, y: 604 },
+        actions: [["teach", 1]]
+      }
+    ];
+
+    const canvas = document.querySelector("#room");
+    const ctx = canvas.getContext("2d", { alpha: false });
+    const loading = document.querySelector("[data-loading]");
+    const statusNode = document.querySelector("[data-status]");
+    const pauseButton = document.querySelector("[data-control='pause']");
+    const speedSelect = document.querySelector("[data-speed]");
+    const quizLayer = document.querySelector("[data-quiz-layer]");
+    const dashboardLayer = document.querySelector("[data-dashboard-layer]");
+    const questionBank = window.ICT_TOPIC_E_BANK;
+    const params = new URLSearchParams(location.search);
+
+    if (params.get("embed") === "1") document.body.classList.add("embed");
+
+    function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+    function choice(values) { return values[Math.floor(Math.random() * values.length)]; }
+    function random(min, max) { return min + Math.random() * (max - min); }
+
+    function weightedChoice(entries) {
+      const total = entries.reduce((sum, entry) => sum + entry[1], 0);
+      let cursor = Math.random() * total;
+      for (const [value, weight] of entries) {
+        cursor -= weight;
+        if (cursor <= 0) return value;
+      }
+      return entries[0][0];
+    }
+
+    function roundedRect(context, x, y, w, h, radius, fill, stroke) {
+      context.beginPath();
+      context.roundRect(x, y, w, h, radius);
+      if (fill) { context.fillStyle = fill; context.fill(); }
+      if (stroke) { context.strokeStyle = stroke; context.stroke(); }
+    }
+
+    function loadImage(url) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error("Unable to load an embedded Sweetchie image."));
+        image.src = url;
+      });
+    }
+
+    function inflate(rect, amount) {
+      return { x: rect.x - amount, y: rect.y - amount, w: rect.w + amount * 2, h: rect.h + amount * 2 };
+    }
+
+    function pointInRect(x, y, rect) {
+      return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
+    }
+
+    class QuizController {
+      constructor(engine, bank) {
+        if (!bank || !Array.isArray(bank.questions) || bank.questions.length === 0) {
+          throw new Error("The embedded ICT Topic E question bank is unavailable.");
+        }
+        this.engine = engine;
+        this.bank = bank;
+        this.questions = bank.questions;
+        this.questionById = new Map(this.questions.map(question => [question.id, question]));
+        this.storageKey = "sweetchie-ict-quiz-progress-v1";
+        this.progress = this.loadProgress();
+        this.current = null;
+        this.answered = false;
+        this.idleCount = 0;
+        this.idleTimer = null;
+        this.bind();
+        this.renderDashboard();
+      }
+
+      bind() {
+        document.querySelector("[data-quiz-close]")?.addEventListener("click", () => this.closePanels());
+        document.querySelector("[data-dashboard-close]")?.addEventListener("click", () => this.closePanels());
+        document.querySelector("[data-quiz-next]")?.addEventListener("click", () => this.openQuiz());
+        document.querySelector("[data-quiz-dashboard]")?.addEventListener("click", () => this.openDashboard());
+        document.querySelector("[data-answer-grid]")?.addEventListener("click", event => {
+          const button = event.target.closest("[data-option-id]");
+          if (button) this.answer(button.dataset.optionId);
+        });
+        quizLayer?.addEventListener("pointerdown", () => this.touchQuestion());
+        quizLayer?.addEventListener("keydown", () => this.touchQuestion());
+        document.querySelector("[data-dashboard-action='quiz']")?.addEventListener("click", () => this.openQuiz());
+        document.querySelector("[data-dashboard-action='review']")?.addEventListener("click", () => this.openReviewQuestion());
+        document.querySelector("[data-dashboard-action='export']")?.addEventListener("click", () => this.exportProgress());
+        document.querySelector("[data-dashboard-action='reset']")?.addEventListener("click", () => this.resetProgress());
+        document.querySelector("[data-wrong-list]")?.addEventListener("click", event => {
+          const button = event.target.closest("[data-review-id]");
+          if (button) this.openQuiz(button.dataset.reviewId);
+        });
+        addEventListener("keydown", event => {
+          if (event.key === "Escape" && this.isPanelOpen()) this.closePanels();
+        });
+      }
+
+      loadProgress() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(this.storageKey) || "null");
+          if (parsed?.version === 1 && Array.isArray(parsed.attempts)) return parsed;
+        } catch { /* use an empty local profile */ }
+        return { version: 1, bankVersion: this.bank.bank?.version || "unknown", attempts: [] };
+      }
+
+      saveProgress() {
+        this.progress.bankVersion = this.bank.bank?.version || "unknown";
+        this.progress.attempts = this.progress.attempts.slice(-5000);
+        try { localStorage.setItem(this.storageKey, JSON.stringify(this.progress)); }
+        catch { this.engine.setStatus("unable to save progress in this browser"); }
+      }
+
+      getStats() {
+        const attempts = this.progress.attempts;
+        const unique = new Set(attempts.map(attempt => attempt.questionId));
+        const correct = attempts.filter(attempt => attempt.correct).length;
+        const latestByQuestion = new Map();
+        for (const attempt of attempts) latestByQuestion.set(attempt.questionId, attempt);
+        const unresolved = [...latestByQuestion.values()].filter(attempt => !attempt.correct).reverse();
+        let streak = 0;
+        for (let index = attempts.length - 1; index >= 0 && attempts[index].correct; index -= 1) streak += 1;
+        return {
+          attempts: attempts.length,
+          unique: unique.size,
+          correct,
+          accuracy: attempts.length ? Math.round(correct / attempts.length * 100) : 0,
+          unresolved,
+          streak
+        };
+      }
+
+      pickQuestion(questionId = null, wrongOnly = false) {
+        if (questionId && this.questionById.has(questionId)) return this.questionById.get(questionId);
+        const stats = this.getStats();
+        const attempted = new Set(this.progress.attempts.map(attempt => attempt.questionId));
+        const unseen = this.questions.filter(question => !attempted.has(question.id));
+        const wrong = stats.unresolved.map(attempt => this.questionById.get(attempt.questionId)).filter(Boolean);
+        let pool;
+        if (wrongOnly) pool = wrong;
+        else if (unseen.length && (wrong.length === 0 || Math.random() < .74)) pool = unseen;
+        else if (wrong.length && Math.random() < .58) pool = wrong;
+        else pool = this.questions;
+        const recentIds = new Set(this.progress.attempts.slice(-5).map(attempt => attempt.questionId));
+        const filtered = pool.filter(question => question.id !== this.current?.id && !recentIds.has(question.id));
+        return choice(filtered.length ? filtered : pool.length ? pool : this.questions);
+      }
+
+      openQuiz(questionId = null) {
+        this.current = this.pickQuestion(questionId);
+        this.answered = false;
+        this.idleCount = 0;
+        dashboardLayer.hidden = true;
+        quizLayer.hidden = false;
+        this.engine.enterQuizMode();
+        this.renderQuestion();
+        this.armIdleTimer();
+        this.engine.setStatus("helping with a quiz question");
+        requestAnimationFrame(() => document.querySelector("[data-option-id]")?.focus());
+      }
+
+      openReviewQuestion() {
+        const wrong = this.getStats().unresolved;
+        if (!wrong.length) {
+          this.engine.playAction("cheer", 1, null, "celebrating a clear review list");
+          this.openQuiz();
+          return;
+        }
+        this.current = null;
+        const selected = choice(wrong);
+        this.openQuiz(selected.questionId);
+      }
+
+      renderQuestion() {
+        const question = this.current;
+        document.querySelector("[data-question-title]").textContent = `題目 ${question.id}`;
+        document.querySelector("[data-question-stem]").textContent = question.stem;
+        const topicLabels = {
+          "E-a-technology-innovation": "科技創新",
+          "E-b-health-and-ethical-issues": "健康與道德議題",
+          "E-c-intellectual-property": "知識產權"
+        };
+        const difficultyLabels = { basic: "基礎", intermediate: "中階", advanced: "進階" };
+        const meta = document.querySelector("[data-quiz-meta]");
+        meta.replaceChildren();
+        for (const text of [topicLabels[question.subtopic] || question.subtopic, difficultyLabels[question.difficulty] || question.difficulty, `${this.getStats().unique}/1000 已完成`]) {
+          const chip = document.createElement("span");
+          chip.className = "quiz-chip";
+          chip.textContent = text;
+          meta.append(chip);
+        }
+        const statements = document.querySelector("[data-question-statements]");
+        statements.replaceChildren();
+        statements.hidden = !Array.isArray(question.statements) || question.statements.length === 0;
+        for (const statement of question.statements || []) {
+          const item = document.createElement("li");
+          item.textContent = statement;
+          statements.append(item);
+        }
+        const answers = document.querySelector("[data-answer-grid]");
+        answers.replaceChildren();
+        for (const option of question.options) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "answer-button";
+          button.dataset.optionId = option.id;
+          const letter = document.createElement("span");
+          letter.className = "answer-letter";
+          letter.textContent = option.id;
+          const text = document.createElement("span");
+          text.textContent = option.text;
+          button.append(letter, text);
+          answers.append(button);
+        }
+        const feedback = document.querySelector("[data-quiz-feedback]");
+        feedback.hidden = true;
+        feedback.dataset.result = "";
+        document.querySelector("[data-quiz-next]").hidden = true;
+      }
+
+      answer(optionId) {
+        if (this.answered || !this.current) return;
+        this.answered = true;
+        clearTimeout(this.idleTimer);
+        const correct = optionId === this.current.correctOptionId;
+        const attempt = {
+          attemptId: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          questionId: this.current.id,
+          selectedOptionId: optionId,
+          correctOptionId: this.current.correctOptionId,
+          correct,
+          answeredAt: new Date().toISOString(),
+          subtopic: this.current.subtopic,
+          difficulty: this.current.difficulty
+        };
+        this.progress.attempts.push(attempt);
+        this.saveProgress();
+        document.querySelectorAll("[data-option-id]").forEach(button => {
+          button.disabled = true;
+          if (button.dataset.optionId === this.current.correctOptionId) button.classList.add("correct");
+          else if (button.dataset.optionId === optionId) button.classList.add("wrong");
+        });
+        const feedback = document.querySelector("[data-quiz-feedback]");
+        feedback.hidden = false;
+        feedback.dataset.result = correct ? "correct" : "wrong";
+        document.querySelector("[data-feedback-title]").textContent = correct ? "答對了！" : `再想一想：正確答案是 ${this.current.correctOptionId}`;
+        const rationale = this.current.optionRationales?.[optionId];
+        document.querySelector("[data-feedback-copy]").textContent = [this.current.explanation, rationale].filter(Boolean).join(" ");
+        document.querySelector("[data-quiz-next]").hidden = false;
+        this.renderDashboard();
+        this.engine.reactToQuizAnswer(correct, this.getStats());
+      }
+
+      touchQuestion() {
+        if (this.answered || quizLayer.hidden) return;
+        const feedback = document.querySelector("[data-quiz-feedback]");
+        if (feedback.dataset.result === "idle") feedback.hidden = true;
+        this.armIdleTimer();
+      }
+
+      armIdleTimer() {
+        clearTimeout(this.idleTimer);
+        if (this.answered || quizLayer.hidden) return;
+        const delay = this.idleCount === 0 ? 18000 : 16000;
+        this.idleTimer = setTimeout(() => this.handleIdle(), delay);
+      }
+
+      handleIdle() {
+        if (this.answered || quizLayer.hidden) return;
+        const idleActions = ["think", "wait", "yawn", "stretch"];
+        const idleMessages = [
+          ["慢慢想，不用急。", "Sweetchie 正在和你一起思考。"],
+          ["需要多一點時間嗎？", "看看每個選項和題目關鍵字。"],
+          ["休息一下也可以。", "伸展一下，再回來完成這題。"],
+          ["Sweetchie 還在等你。", "準備好後選擇最合適的答案。"]
+        ];
+        const index = this.idleCount % idleActions.length;
+        this.idleCount += 1;
+        this.engine.playAction(idleActions[index], 1, null, "waiting patiently for an answer");
+        const feedback = document.querySelector("[data-quiz-feedback]");
+        feedback.hidden = false;
+        feedback.dataset.result = "idle";
+        document.querySelector("[data-feedback-title]").textContent = idleMessages[index][0];
+        document.querySelector("[data-feedback-copy]").textContent = idleMessages[index][1];
+        this.armIdleTimer();
+      }
+
+      openDashboard() {
+        clearTimeout(this.idleTimer);
+        quizLayer.hidden = true;
+        dashboardLayer.hidden = false;
+        this.engine.exitQuizMode();
+        this.renderDashboard();
+        this.engine.setStatus("showing the learning dashboard");
+      }
+
+      renderDashboard() {
+        const stats = this.getStats();
+        const statItems = [
+          [stats.attempts, "Answers"],
+          [stats.unique, "Unique questions"],
+          [`${stats.accuracy}%`, "Correct rate"],
+          [stats.unresolved.length, "To review"]
+        ];
+        const statsNode = document.querySelector("[data-dashboard-stats]");
+        statsNode.replaceChildren();
+        for (const [value, label] of statItems) {
+          const card = document.createElement("div");
+          card.className = "stat-card";
+          const valueNode = document.createElement("span");
+          valueNode.className = "stat-value";
+          valueNode.textContent = value;
+          const labelNode = document.createElement("span");
+          labelNode.className = "stat-label";
+          labelNode.textContent = label;
+          card.append(valueNode, labelNode);
+          statsNode.append(card);
+        }
+        const topics = [
+          ["E-a-technology-innovation", "Technology innovation"],
+          ["E-b-health-and-ethical-issues", "Health and ethics"],
+          ["E-c-intellectual-property", "Intellectual property"]
+        ];
+        const topicNode = document.querySelector("[data-topic-progress]");
+        topicNode.replaceChildren();
+        for (const [id, label] of topics) {
+          const attempts = this.progress.attempts.filter(attempt => attempt.subtopic === id);
+          const correct = attempts.filter(attempt => attempt.correct).length;
+          const accuracy = attempts.length ? Math.round(correct / attempts.length * 100) : 0;
+          const row = document.createElement("div");
+          row.className = "progress-row";
+          const name = document.createElement("span");
+          name.textContent = label;
+          const track = document.createElement("div");
+          track.className = "progress-track";
+          const fill = document.createElement("div");
+          fill.className = "progress-fill";
+          fill.style.width = `${accuracy}%`;
+          track.append(fill);
+          const value = document.createElement("strong");
+          value.textContent = `${accuracy}%`;
+          row.append(name, track, value);
+          topicNode.append(row);
+        }
+        const wrongList = document.querySelector("[data-wrong-list]");
+        wrongList.replaceChildren();
+        if (!stats.unresolved.length) {
+          const empty = document.createElement("p");
+          empty.className = "empty-state";
+          empty.textContent = "No unresolved mistakes yet. Start a quiz when you are ready.";
+          wrongList.append(empty);
+        } else {
+          for (const attempt of stats.unresolved.slice(0, 20)) {
+            const question = this.questionById.get(attempt.questionId);
+            if (!question) continue;
+            const item = document.createElement("div");
+            item.className = "wrong-item";
+            const copy = document.createElement("p");
+            copy.textContent = question.stem;
+            const detail = document.createElement("small");
+            detail.textContent = `${question.id} · Your answer ${attempt.selectedOptionId} · Correct ${attempt.correctOptionId}`;
+            copy.append(detail);
+            const retry = document.createElement("button");
+            retry.type = "button";
+            retry.dataset.reviewId = question.id;
+            retry.textContent = "Retry";
+            item.append(copy, retry);
+            wrongList.append(item);
+          }
+        }
+      }
+
+      exportProgress() {
+        const payload = JSON.stringify(this.progress, null, 2);
+        const url = URL.createObjectURL(new Blob([payload], { type: "application/json" }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `sweetchie-progress-${new Date().toISOString().slice(0, 10)}.json`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      resetProgress() {
+        if (!confirm("Reset all locally saved Sweetchie quiz progress on this browser?")) return;
+        this.progress = { version: 1, bankVersion: this.bank.bank?.version || "unknown", attempts: [] };
+        this.saveProgress();
+        this.renderDashboard();
+        this.engine.playAction("wave", 1, null, "starting a fresh learning record");
+      }
+
+      closePanels() {
+        clearTimeout(this.idleTimer);
+        quizLayer.hidden = true;
+        dashboardLayer.hidden = true;
+        this.engine.exitQuizMode();
+        this.engine.setStatus("ready for the next learning activity");
+      }
+
+      isPanelOpen() { return !quizLayer.hidden || !dashboardLayer.hidden; }
+    }
+
+    class RoomEngine {
+      constructor(images) {
+        this.images = images;
+        this.pet = {
+          x: 570, y: 672, lastDx: 1,
+          mode: "idle", frame: 0, frameClock: 0,
+          action: ACTIONS.idle, actionLoops: Infinity,
+          actionElapsed: 0, path: [], pendingArrival: null
+        };
+        this.speed = clamp(Number(params.get("speed") || 1), 0.4, 2);
+        this.paused = params.get("paused") === "1";
+        this.nextDecision = performance.now() + 1300;
+        this.lastTime = performance.now();
+        this.hoverObject = null;
+        this.quiz = null;
+        this.quizMode = false;
+        this.status = "looking around her room";
+        this.debugPath = params.get("debug") === "1";
+        this.reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (this.reduceMotion) this.speed = 0.55;
+        this.bind();
+        this.setStatus(this.paused ? "paused" : this.status);
+      }
+
+      bind() {
+        canvas.addEventListener("pointermove", event => {
+          const point = this.eventPoint(event);
+          this.hoverObject = [...objects].reverse().find(object => pointInRect(point.x, point.y, object.hit)) || null;
+          canvas.style.cursor = this.hoverObject ? "pointer" : "crosshair";
+        });
+
+        canvas.addEventListener("pointerleave", () => { this.hoverObject = null; });
+
+        canvas.addEventListener("pointerdown", event => {
+          if (this.quiz?.isPanelOpen()) return;
+          const point = this.eventPoint(event);
+          const object = [...objects].reverse().find(item => pointInRect(point.x, point.y, item.hit));
+          if (object) this.visit(object.id);
+          else if (this.isPointWalkable(point.x, point.y)) this.walkTo(point, null, "walking where you pointed");
+        });
+
+        pauseButton?.addEventListener("click", () => this.togglePause());
+        speedSelect?.addEventListener("change", event => { this.speed = Number(event.currentTarget.value); });
+        document.querySelectorAll("[data-go]").forEach(button => {
+          button.addEventListener("click", () => {
+            const destination = button.dataset.go;
+            destination === "roam" ? this.roam() : this.visit(destination);
+          });
+        });
+        document.querySelectorAll("[data-animation]").forEach(button => {
+          button.addEventListener("click", () => this.previewAction(button.dataset.animation));
+        });
+
+        addEventListener("message", event => {
+          const message = event.data;
+          if (!message || message.type !== "sweetchie-room") return;
+          if (message.action === "pause") this.pause();
+          else if (message.action === "resume") this.resume();
+          else if (message.action === "roam") this.roam();
+          else if (objects.some(object => object.id === message.action)) this.visit(message.action);
+          if (Number.isFinite(Number(message.speed))) this.speed = clamp(Number(message.speed), .4, 2);
+        });
+      }
+
+      eventPoint(event) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: (event.clientX - rect.left) * WIDTH / rect.width,
+          y: (event.clientY - rect.top) * HEIGHT / rect.height
+        };
+      }
+
+      start() {
+        this.lastTime = performance.now();
+        requestAnimationFrame(time => this.loop(time));
+        try { parent.postMessage({ type: "sweetchie-room-ready" }, "*"); } catch { /* standalone */ }
+      }
+
+      loop(time) {
+        const delta = Math.min(48, time - this.lastTime);
+        this.lastTime = time;
+        if (!this.paused) this.update(delta, time);
+        this.draw(time);
+        requestAnimationFrame(next => this.loop(next));
+      }
+
+      update(deltaMs, time) {
+        const scaled = deltaMs * this.speed;
+        if (this.pet.mode === "walking") this.updateWalking(scaled);
+        else if (this.pet.mode === "action") this.updateAction(scaled);
+        else this.updateIdle(scaled, time);
+      }
+
+      updateWalking(deltaMs) {
+        const pet = this.pet;
+        let remaining = WALK_SPEED * deltaMs / 1000;
+
+        while (remaining > 0 && pet.path.length) {
+          const target = pet.path[0];
+          const dx = target.x - pet.x;
+          const dy = target.y - pet.y;
+          const distance = Math.hypot(dx, dy);
+
+          if (distance <= Math.max(2.5, remaining)) {
+            pet.x = target.x;
+            pet.y = target.y;
+            pet.path.shift();
+            remaining -= distance;
+            continue;
+          }
+
+          const ratio = remaining / distance;
+          pet.x += dx * ratio;
+          pet.y += dy * ratio;
+          if (Math.abs(dx) > 1) pet.lastDx = Math.sign(dx);
+          remaining = 0;
+        }
+
+        pet.frameClock += deltaMs;
+        while (pet.frameClock >= 112) {
+          pet.frameClock -= 112;
+          pet.frame = (pet.frame + 1) % 8;
+        }
+
+        if (!pet.path.length) {
+          const arrival = pet.pendingArrival;
+          pet.pendingArrival = null;
+          pet.mode = "idle";
+          pet.frame = 0;
+          pet.frameClock = 0;
+          if (arrival) arrival();
+          else this.scheduleNext(900, 1800);
+        }
+      }
+
+      updateAction(deltaMs) {
+        const pet = this.pet;
+        pet.actionElapsed += deltaMs;
+        pet.frameClock += deltaMs;
+        while (pet.frameClock >= pet.action.frameMs) {
+          pet.frameClock -= pet.action.frameMs;
+          pet.frame = (pet.frame + 1) % pet.action.frames;
+        }
+
+        const duration = pet.action.frameMs * pet.action.frames * pet.actionLoops;
+        if (pet.actionElapsed >= duration) {
+          const finished = pet.pendingArrival;
+          pet.pendingArrival = null;
+          pet.mode = "idle";
+          pet.action = ACTIONS.idle;
+          pet.frame = 0;
+          pet.frameClock = 0;
+          if (finished) finished();
+          else this.scheduleNext(900, 1900);
+        }
+      }
+
+      updateIdle(deltaMs, time) {
+        this.pet.frameClock += deltaMs;
+        if (this.pet.frameClock >= ACTIONS.idle.frameMs) {
+          this.pet.frameClock %= ACTIONS.idle.frameMs;
+          this.pet.frame = (this.pet.frame + 1) % ACTIONS.idle.frames;
+        }
+        if (!this.quizMode && !this.quiz?.isPanelOpen() && time >= this.nextDecision) this.chooseActivity();
+      }
+
+      scheduleNext(minMs, maxMs) {
+        this.nextDecision = performance.now() + random(minMs, maxMs) / this.speed;
+      }
+
+      chooseActivity() {
+        const activity = weightedChoice([
+          ["roam", 42], ["study", 25], ["action", 33]
+        ]);
+
+        if (activity === "roam") this.roam();
+        else if (activity === "action") this.playAction(choice([
+          "wave", "think", "review", "clap", "giggle", "twirl", "dance", "heartHands", "curtsy", "cheer", "bow"
+        ]), Math.random() < .25 ? 1 : 2);
+        else this.studyAt(choice(["reviewShelf", "quizDesk", "dashboard"]));
+      }
+
+      roam() {
+        if (this.quizMode || this.quiz?.isPanelOpen()) return;
+        for (let attempt = 0; attempt < 80; attempt += 1) {
+          const point = { x: random(90, WIDTH - 90), y: random(300, HEIGHT - 62) };
+          if (this.isPointWalkable(point.x, point.y)) {
+            this.walkTo(point, () => {
+              if (Math.random() < .42) this.playAction(choice(["wave", "think", "clap", "giggle", "curtsy"]), 1);
+              else { this.setStatus("watching the room"); this.scheduleNext(700, 1700); }
+            }, "exploring the room");
+            return;
+          }
+        }
+        this.scheduleNext(600, 1200);
+      }
+
+      visit(id) {
+        const object = objects.find(item => item.id === id);
+        if (!object) return;
+        if (this.quiz?.isPanelOpen()) this.quiz.closePanels();
+        this.walkTo(object.point, () => {
+          if (id === "quizDesk") this.quiz?.openQuiz();
+          else if (id === "dashboard") this.quiz?.openDashboard();
+          else if (id === "reviewShelf") {
+            if (this.quiz?.getStats().unresolved.length) this.quiz.openReviewQuestion();
+            else this.playSequence(object.actions, "reviewing the study shelf");
+          }
+        }, `walking to the ${object.label}`);
+      }
+
+      studyAt(id) {
+        const object = objects.find(item => item.id === id);
+        if (!object || this.quizMode || this.quiz?.isPanelOpen()) return;
+        this.walkTo(object.point, () => this.playSequence(object.actions, object.label), `walking to the ${object.label}`);
+      }
+
+      enterQuizMode() {
+        if (this.paused) this.resume();
+        this.quizMode = true;
+        this.pet.path = [];
+        this.pet.pendingArrival = null;
+        this.pet.x = 175;
+        this.pet.y = 754;
+        this.pet.mode = "idle";
+        this.pet.action = ACTIONS.idle;
+        this.pet.frame = 0;
+        this.pet.frameClock = 0;
+        this.setStatus("ready to help with this question");
+      }
+
+      exitQuizMode() {
+        if (!this.quizMode) return;
+        this.quizMode = false;
+        this.pet.x = 570;
+        this.pet.y = 672;
+        this.pet.mode = "idle";
+        this.pet.action = ACTIONS.idle;
+        this.pet.frame = 0;
+        this.pet.frameClock = 0;
+        this.pet.pendingArrival = null;
+        this.scheduleNext(900, 1800);
+      }
+
+      reactToQuizAnswer(correct, stats) {
+        const streak = stats?.streak || 0;
+        if (correct) {
+          const celebration = streak >= 3
+            ? choice(["cheer", "dance", "twirl"])
+            : choice(["clap", "cheer", "dance", "heartHands"]);
+          this.playAction(celebration, celebration === "twirl" ? 4 : 2, null,
+            streak >= 3 ? `celebrating a ${streak}-answer streak` : "celebrating the correct answer");
+        } else {
+          const support = choice(["oops", "read", "write", "review"]);
+          this.playAction(support, support === "oops" ? 1 : 2, null, "helping to review the answer");
+        }
+      }
+
+      walkTo(point, onArrival, label) {
+        const path = this.findPath(this.pet, point);
+        if (!path.length) {
+          this.setStatus("could not find a clear path");
+          this.scheduleNext(700, 1300);
+          return;
+        }
+        this.pet.mode = "walking";
+        this.pet.path = path;
+        this.pet.pendingArrival = onArrival;
+        this.pet.frame = 0;
+        this.pet.frameClock = 0;
+        this.setStatus(label || "walking");
+      }
+
+      playSequence(sequence, label, index = 0) {
+        if (index >= sequence.length) {
+          this.setStatus("deciding what to do next");
+          this.scheduleNext(900, 1800);
+          return;
+        }
+        const [name, loops] = sequence[index];
+        this.playAction(name, loops, () => this.playSequence(sequence, label, index + 1), label);
+      }
+
+      playAction(name, loops = 2, onDone = null, label = null) {
+        const action = ACTIONS[name] || ACTIONS.idle;
+        this.pet.mode = "action";
+        this.pet.action = action;
+        // Keep the approved six-frame twirl art, but let the rotation continue
+        // long enough to read as a complete flourish rather than a brief flash.
+        this.pet.actionLoops = name === "twirl" ? Math.max(4, loops) : loops;
+        this.pet.actionElapsed = 0;
+        this.pet.frame = 0;
+        this.pet.frameClock = 0;
+        this.pet.pendingArrival = onDone;
+        this.setStatus(label || this.humanize(name));
+      }
+
+      previewAction(name) {
+        if (this.paused) this.resume();
+        if (this.quiz?.isPanelOpen()) this.quiz.closePanels();
+        this.pet.path = [];
+        this.pet.pendingArrival = null;
+        const loops = Object.hasOwn(WALK_PREVIEWS, name) ? 3 : 2;
+        this.playAction(name, loops, null, `previewing ${this.humanize(name)}`);
+      }
+
+      humanize(name) {
+        const labels = {
+          heartHands: "making a little heart", oops: "recovering from a small oops",
+          review: "reviewing her notes", think: "thinking", wait: "waiting patiently",
+          walkSouthWest: "the south-west walk", walkSouthEast: "the south-east walk",
+          walkNorthWest: "the north-west walk", walkNorthEast: "the north-east walk"
+        };
+        return labels[name] || `${name.replace(/([A-Z])/g, " $1").toLowerCase()}ing`;
+      }
+
+      pause() {
+        this.paused = true;
+        pauseButton.textContent = "Resume";
+        this.setStatus("paused");
+      }
+
+      resume() {
+        this.paused = false;
+        this.lastTime = performance.now();
+        pauseButton.textContent = "Pause";
+        this.setStatus(this.pet.mode === "walking" ? "continuing her walk" : "back in motion");
+      }
+
+      togglePause() { this.paused ? this.resume() : this.pause(); }
+
+      setStatus(text) {
+        this.status = text;
+        if (statusNode) statusNode.textContent = `Sweetchie is ${text}.`;
+        canvas.dispatchEvent(new CustomEvent("sweetchie-room-state", {
+          detail: { state: this.pet.mode, status: text }, bubbles: true
+        }));
+      }
+
+      isPointWalkable(x, y) {
+        if (x < 42 || x > WIDTH - 42 || y < 260 || y > HEIGHT - 38) return false;
+        return !objects.some(object => pointInRect(x, y, inflate(object.collision, 20)));
+      }
+
+      cellPoint(gx, gy) { return { x: gx * GRID + GRID / 2, y: gy * GRID + GRID / 2 }; }
+
+      isCellWalkable(gx, gy) {
+        if (gx < 0 || gy < 0 || gx >= Math.ceil(WIDTH / GRID) || gy >= Math.ceil(HEIGHT / GRID)) return false;
+        const point = this.cellPoint(gx, gy);
+        return this.isPointWalkable(point.x, point.y);
+      }
+
+      findPath(startPoint, endPoint) {
+        const start = { x: clamp(Math.floor(startPoint.x / GRID), 0, 35), y: clamp(Math.floor(startPoint.y / GRID), 0, 25) };
+        const goal = { x: clamp(Math.floor(endPoint.x / GRID), 0, 35), y: clamp(Math.floor(endPoint.y / GRID), 0, 25) };
+        const key = node => `${node.x},${node.y}`;
+        const open = [start];
+        const cameFrom = new Map();
+        const gScore = new Map([[key(start), 0]]);
+        const fScore = new Map([[key(start), Math.hypot(goal.x - start.x, goal.y - start.y)]]);
+        const closed = new Set();
+        const directions = [
+          [1, 0], [-1, 0], [0, 1], [0, -1],
+          [1, 1], [1, -1], [-1, 1], [-1, -1]
+        ];
+
+        while (open.length) {
+          open.sort((a, b) => (fScore.get(key(a)) ?? Infinity) - (fScore.get(key(b)) ?? Infinity));
+          const current = open.shift();
+          const currentKey = key(current);
+          if (current.x === goal.x && current.y === goal.y) {
+            const cells = [];
+            let cursor = current;
+            while (cursor && key(cursor) !== key(start)) {
+              cells.push(this.cellPoint(cursor.x, cursor.y));
+              cursor = cameFrom.get(key(cursor));
+            }
+            cells.reverse();
+            cells.push({ x: endPoint.x, y: endPoint.y });
+            return this.simplifyPath(cells);
+          }
+
+          closed.add(currentKey);
+          for (const [dx, dy] of directions) {
+            const next = { x: current.x + dx, y: current.y + dy };
+            const nextKey = key(next);
+            if (closed.has(nextKey) || !this.isCellWalkable(next.x, next.y)) continue;
+            if (dx && dy && (!this.isCellWalkable(current.x + dx, current.y) || !this.isCellWalkable(current.x, current.y + dy))) continue;
+
+            const tentative = (gScore.get(currentKey) ?? Infinity) + (dx && dy ? Math.SQRT2 : 1);
+            if (tentative >= (gScore.get(nextKey) ?? Infinity)) continue;
+            cameFrom.set(nextKey, current);
+            gScore.set(nextKey, tentative);
+            fScore.set(nextKey, tentative + Math.hypot(goal.x - next.x, goal.y - next.y));
+            if (!open.some(node => node.x === next.x && node.y === next.y)) open.push(next);
+          }
+        }
+        return [];
+      }
+
+      simplifyPath(points) {
+        if (points.length < 3) return points;
+        const simplified = [points[0]];
+        let lastDirection = null;
+        for (let index = 1; index < points.length; index += 1) {
+          const previous = points[index - 1];
+          const current = points[index];
+          const direction = `${Math.sign(current.x - previous.x)},${Math.sign(current.y - previous.y)}`;
+          if (lastDirection && direction !== lastDirection) simplified.push(previous);
+          lastDirection = direction;
+        }
+        simplified.push(points.at(-1));
+        return simplified;
+      }
+
+      draw(time) {
+        ctx.imageSmoothingEnabled = true;
+        this.drawBackground(time);
+
+        const layers = objects.map(object => ({ baseline: object.baseline, draw: () => this.drawObject(object, time) }));
+        layers.push({ baseline: this.pet.y, draw: () => this.drawPet() });
+        layers.sort((a, b) => a.baseline - b.baseline).forEach(layer => layer.draw());
+
+        this.drawForeground(time);
+        this.drawOverlay();
+      }
+
+      drawBackground(time) {
+        const gradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+        gradient.addColorStop(0, "#eee8fb");
+        gradient.addColorStop(.3, "#ddd2f2");
+        gradient.addColorStop(.301, "#c99a7e");
+        gradient.addColorStop(1, "#ad725f");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+        // Floorboards and perspective seams make the room read like a compact game map.
+        ctx.fillStyle = "rgba(255,242,229,.15)";
+        for (let y = 260; y < HEIGHT; y += 48) ctx.fillRect(0, y, WIDTH, 2);
+        ctx.strokeStyle = "rgba(82,46,59,.11)";
+        ctx.lineWidth = 2;
+        for (let x = -80; x <= WIDTH + 80; x += 96) {
+          ctx.beginPath(); ctx.moveTo(WIDTH / 2 + (x - WIDTH / 2) * .3, 250); ctx.lineTo(x, HEIGHT); ctx.stroke();
+        }
+
+        ctx.fillStyle = "#85618d"; ctx.fillRect(0, 236, WIDTH, 18);
+        ctx.fillStyle = "#fff0f7"; ctx.fillRect(0, 229, WIDTH, 8);
+        ctx.fillStyle = "rgba(79,47,86,.12)"; ctx.fillRect(0, 254, WIDTH, 5);
+
+        this.drawWindow(34, 34, time);
+        this.drawWallDecor();
+        this.drawRug();
+      }
+
+      drawWindow(x, y, time) {
+        roundedRect(ctx, x, y, 216, 102, 13, "#fff7fb", "rgba(91,61,103,.18)");
+        roundedRect(ctx, x + 13, y + 13, 190, 74, 8, "#b8d8f2");
+        const sky = ctx.createLinearGradient(0, y, 0, y + 100);
+        sky.addColorStop(0, "#a98be8");
+        sky.addColorStop(1, "#f4bddd");
+        ctx.fillStyle = sky;
+        ctx.fillRect(x + 18, y + 18, 180, 64);
+        ctx.fillStyle = "rgba(255,255,255,.84)";
+        for (let index = 0; index < 8; index += 1) {
+          const sx = x + 28 + (index * 29) % 158;
+          const sy = y + 26 + (index * 17) % 35;
+          const pulse = 1 + Math.sin(time / 600 + index) * .25;
+          ctx.fillRect(sx - pulse, sy, 2 + pulse * 2, 2);
+          ctx.fillRect(sx, sy - pulse, 2, 2 + pulse * 2);
+        }
+        ctx.fillStyle = "rgba(87,58,111,.17)";
+        ctx.fillRect(x + 106, y + 16, 4, 68);
+        ctx.fillRect(x + 16, y + 49, 184, 4);
+        roundedRect(ctx, x + 26, y + 104, 164, 38, 8, "#f6d879", "rgba(87,55,96,.18)");
+        ctx.fillStyle = "#674b78"; ctx.font = "800 13px ui-rounded, Segoe UI, sans-serif";
+        ctx.fillText("QUESTION OF THE DAY", x + 37, y + 128);
+      }
+
+      drawWallDecor() {
+        // Central quiz board.
+        roundedRect(ctx, 330, 28, 480, 181, 18, "#4d456d", "rgba(42,30,63,.35)");
+        roundedRect(ctx, 345, 43, 450, 151, 10, "#f8f4ff");
+        ctx.fillStyle = "#6d51af"; ctx.font = "900 25px ui-rounded, Segoe UI, sans-serif";
+        ctx.textAlign = "center"; ctx.fillText("ICT QUIZ LAB", 570, 77);
+        ctx.fillStyle = "#877595"; ctx.font = "700 13px ui-rounded, Segoe UI, sans-serif";
+        ctx.fillText("TOPIC E  •  DATA  •  NETWORKS  •  THE WEB", 570, 100);
+        const answers = [["A", "#a98be8"], ["B", "#e68fb7"], ["C", "#69b9c4"], ["D", "#edbd62"]];
+        answers.forEach(([letter, color], index) => {
+          const cx = 405 + index * 110;
+          roundedRect(ctx, cx, 119, 82, 49, 14, color, "rgba(70,50,86,.15)");
+          ctx.fillStyle = "white"; ctx.font = "900 23px ui-rounded, Segoe UI, sans-serif";
+          ctx.fillText(letter, cx + 41, 151);
+        });
+        ctx.textAlign = "left";
+
+        // Bunting, clock and compact learning posters.
+        ctx.strokeStyle = "rgba(92,65,111,.35)"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(260, 20); ctx.quadraticCurveTo(570, 62, 830, 18); ctx.stroke();
+        [280, 318, 824, 862].forEach((x, index) => {
+          ctx.fillStyle = ["#ed9fbd", "#f1c766", "#80c1c5", "#b091dc"][index];
+          ctx.beginPath(); ctx.moveTo(x, 23); ctx.lineTo(x + 22, 25); ctx.lineTo(x + 11, 45); ctx.closePath(); ctx.fill();
+        });
+        roundedRect(ctx, 1030, 24, 72, 72, 36, "#fff8fc", "rgba(80,57,91,.2)");
+        ctx.strokeStyle = "#6d5680"; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(1066, 60); ctx.lineTo(1066, 41); ctx.moveTo(1066, 60); ctx.lineTo(1082, 69); ctx.stroke();
+        for (const [x, text, color] of [[270,"TRY", "#d989ae"], [270,"THINK", "#8066bf"], [270,"LEARN", "#58a6af"]]) {
+          const y = 112 + (["TRY","THINK","LEARN"].indexOf(text) * 35);
+          roundedRect(ctx, x, y, 55, 27, 7, color);
+          ctx.fillStyle = "white"; ctx.font = "800 10px ui-rounded, Segoe UI, sans-serif"; ctx.textAlign = "center"; ctx.fillText(text, x + 27, y + 18);
+        }
+        ctx.textAlign = "left";
+      }
+
+      drawRug() {
+        const gradient = ctx.createRadialGradient(580, 618, 40, 580, 618, 265);
+        gradient.addColorStop(0, "#d9c9ed");
+        gradient.addColorStop(1, "#9573b5");
+        ctx.save();
+        ctx.translate(580, 618);
+        ctx.scale(1.65, .8);
+        ctx.beginPath();
+        ctx.arc(0, 0, 205, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        ctx.lineWidth = 8;
+        ctx.strokeStyle = "rgba(255,240,255,.55)";
+        ctx.stroke();
+        ctx.setLineDash([16, 12]);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "rgba(255,255,255,.46)";
+        ctx.beginPath(); ctx.arc(0, 0, 174, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+        ctx.save(); ctx.textAlign = "center"; ctx.font = "900 24px ui-rounded, Segoe UI, sans-serif";
+        [[430,"A","#f9d9e8"], [516,"B","#e8dcfb"], [646,"C","#d5eff0"], [730,"D","#f9e9bd"]].forEach(([x, letter, color]) => {
+          roundedRect(ctx, x - 24, 690, 48, 38, 12, color, "rgba(76,54,85,.12)");
+          ctx.fillStyle = "#675174"; ctx.fillText(letter, x, 717);
+        });
+        ctx.restore();
+      }
+
+      drawObject(object, time) {
+        ctx.save();
+        if (this.hoverObject?.id === object.id) {
+          ctx.shadowColor = "rgba(255, 233, 131, .7)";
+          ctx.shadowBlur = 20;
+        }
+        if (object.id === "reviewShelf") this.drawReviewShelf();
+        else if (object.id === "quizDesk") this.drawQuizDesk();
+        else if (object.id === "dashboard") this.drawDashboardBoard();
+        ctx.restore();
+      }
+
+      drawReviewShelf() {
+        const x = 54, y = 154, w = 224, h = 246;
+        roundedRect(ctx, x, y, w, h, 14, "#8b5b54", "rgba(71,42,58,.28)");
+        roundedRect(ctx, x + 12, y + 44, w - 24, h - 60, 7, "#6e4749");
+        roundedRect(ctx, x + 24, y + 10, w - 48, 40, 10, "#efe3ff");
+        ctx.fillStyle = "#624b78"; ctx.font = "900 15px ui-rounded, Segoe UI, sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("REVIEW SHELF", x + w / 2, y + 36); ctx.textAlign = "left";
+        ctx.fillStyle = "#aa7462";
+        for (const sy of [y + 104, y + 165, y + 218]) ctx.fillRect(x + 10, sy, w - 20, 9);
+        const colors = ["#b895e1", "#e79cbd", "#f0bd65", "#8ebdcc", "#d7a48b"];
+        for (let shelf = 0; shelf < 3; shelf += 1) {
+          let cursor = x + 24;
+          const top = y + 67 + shelf * 59;
+          for (let book = 0; book < 8; book += 1) {
+            const bw = 13 + (book % 3) * 3;
+            const bh = 32 + ((book * 7 + shelf * 4) % 15);
+            ctx.fillStyle = colors[(book + shelf) % colors.length];
+            roundedRect(ctx, cursor, top + 38 - bh, bw, bh, 2, ctx.fillStyle);
+            cursor += bw + 5;
+          }
+        }
+        ctx.fillStyle = "#744948";
+        ctx.fillRect(x + 18, y + h - 8, 34, 16);
+        ctx.fillRect(x + w - 52, y + h - 8, 34, 16);
+        const wrong = this.quiz?.getStats().unresolved.length || 0;
+        roundedRect(ctx, x + 153, y + 57, 50, 27, 10, wrong ? "#e687ad" : "#79b8aa");
+        ctx.fillStyle = "white"; ctx.font = "900 12px ui-rounded, Segoe UI, sans-serif"; ctx.textAlign = "center";
+        ctx.fillText(wrong ? `${wrong} TO FIX` : "CLEAR", x + 178, y + 75); ctx.textAlign = "left";
+      }
+
+      drawQuizDesk() {
+        const x = 365, y = 314;
+        ctx.fillStyle = "rgba(74,43,65,.16)";
+        ctx.beginPath(); ctx.ellipse(x + 211, y + 228, 235, 31, 0, 0, Math.PI * 2); ctx.fill();
+        roundedRect(ctx, x, y + 80, 422, 142, 22, "#795b82", "rgba(59,38,71,.3)");
+        roundedRect(ctx, x + 14, y + 94, 394, 112, 16, "#a97b92");
+        ctx.fillStyle = "#d4a28d"; ctx.fillRect(x - 12, y + 72, 446, 22);
+        roundedRect(ctx, x + 132, y, 158, 96, 12, "#574a72", "rgba(59,38,71,.32)");
+        roundedRect(ctx, x + 144, y + 12, 134, 62, 7, "#d9d4f4");
+        ctx.fillStyle = "#735ab1"; ctx.font = "900 18px ui-rounded, Segoe UI, sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("TOPIC E", x + 211, y + 40);
+        ctx.fillStyle = "#8f7ba0"; ctx.font = "700 11px ui-rounded, Segoe UI, sans-serif"; ctx.fillText("READY FOR A QUIZ?", x + 211, y + 59);
+        ctx.textAlign = "left";
+        [[46,"A","#aa8ce3"], [137,"B","#df8fb1"], [228,"C","#69b5bd"], [319,"D","#e2b85f"]].forEach(([offset, letter, color]) => {
+          roundedRect(ctx, x + offset, y + 116, 61, 51, 14, color, "rgba(56,38,65,.16)");
+          ctx.fillStyle = "white"; ctx.font = "900 21px ui-rounded, Segoe UI, sans-serif"; ctx.textAlign = "center";
+          ctx.fillText(letter, x + offset + 30, y + 149);
+        });
+        ctx.textAlign = "left";
+        roundedRect(ctx, x + 32, y + 179, 106, 16, 7, "#f2d9a8");
+        roundedRect(ctx, x + 282, y + 178, 104, 18, 7, "#d9caed");
+        ctx.fillStyle = "#654d73"; ctx.fillRect(x + 24, y + 206, 32, 32); ctx.fillRect(x + 366, y + 206, 32, 32);
+      }
+
+      drawDashboardBoard() {
+        const x = 850, y = 72, w = 242, h = 212;
+        roundedRect(ctx, x, y, w, h, 16, "#5b506e", "rgba(46,33,59,.34)");
+        roundedRect(ctx, x + 12, y + 12, w - 24, h - 47, 9, "#f7f4fb");
+        ctx.fillStyle = "#6c50aa"; ctx.font = "900 16px ui-rounded, Segoe UI, sans-serif";
+        ctx.fillText("MY PROGRESS", x + 28, y + 40);
+        const stats = this.quiz?.getStats() || { attempts: 0, accuracy: 0, unresolved: [] };
+        const cards = [
+          ["DONE", String(stats.attempts), "#a58cdd"],
+          ["RATE", `${stats.accuracy}%`, "#69b6b8"],
+          ["REVIEW", String(stats.unresolved.length), "#dd8faf"]
+        ];
+        cards.forEach(([label, value, color], index) => {
+          const cy = y + 58 + index * 39;
+          roundedRect(ctx, x + 26, cy, 190, 30, 8, color);
+          ctx.fillStyle = "white"; ctx.font = "800 11px ui-rounded, Segoe UI, sans-serif"; ctx.fillText(label, x + 38, cy + 20);
+          ctx.font = "900 16px ui-rounded, Segoe UI, sans-serif"; ctx.textAlign = "right"; ctx.fillText(value, x + 202, cy + 21); ctx.textAlign = "left";
+        });
+        ctx.fillStyle = "#443a53"; ctx.fillRect(x + 30, y + h - 35, 16, 35); ctx.fillRect(x + w - 46, y + h - 35, 16, 35);
+      }
+
+      drawPet() {
+        const pet = this.pet;
+        let image = this.images.atlas;
+        let row = 0;
+        let column = pet.frame;
+
+        if (pet.mode === "walking") {
+          const target = pet.path[0] || pet;
+          const dx = target.x - pet.x;
+          const dy = target.y - pet.y;
+          const horizontal = Math.abs(dx) > 1 ? Math.sign(dx) : pet.lastDx;
+          if (dy < -1) {
+            image = this.images.backWalk;
+            row = horizontal >= 0 ? 0 : 1;
+          } else {
+            image = this.images.atlas;
+            row = horizontal >= 0 ? 1 : 2;
+          }
+        } else if (pet.mode === "action") {
+          image = this.images[pet.action.source];
+          row = pet.action.row;
+          column = pet.frame % pet.action.frames;
+        } else {
+          image = this.images.atlas;
+          row = 0;
+          column = pet.frame % ACTIONS.idle.frames;
+        }
+
+        const displayScale = this.quizMode ? PET_SCALE * 1.52 : PET_SCALE;
+        const width = CELL_WIDTH * displayScale;
+        const height = CELL_HEIGHT * displayScale;
+        const drawX = pet.x - width / 2;
+        const drawY = pet.y - height + 4;
+
+        ctx.save();
+        ctx.fillStyle = "rgba(63, 43, 67, .17)";
+        const shadowScale = this.quizMode ? 1.52 : 1;
+        ctx.beginPath(); ctx.ellipse(pet.x, pet.y + 1, 37 * shadowScale, 11 * shadowScale, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowColor = "rgba(48, 30, 53, .18)";
+        ctx.shadowBlur = 9;
+        ctx.shadowOffsetY = 5;
+        ctx.drawImage(
+          image,
+          column * CELL_WIDTH, row * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT,
+          drawX, drawY, width, height
+        );
+        ctx.restore();
+
+        if (this.debugPath && pet.path.length) {
+          ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.lineWidth = 3; ctx.setLineDash([7, 6]);
+          ctx.beginPath(); ctx.moveTo(pet.x, pet.y);
+          for (const point of pet.path) ctx.lineTo(point.x, point.y);
+          ctx.stroke(); ctx.setLineDash([]);
+        }
+      }
+
+      drawForeground(time) {
+        ctx.fillStyle = "rgba(255,255,255,.14)";
+        ctx.beginPath(); ctx.ellipse(30, 802, 100, 45, -.3, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "rgba(88,58,94,.09)";
+        ctx.fillRect(0, HEIGHT - 14, WIDTH, 14);
+      }
+
+      drawOverlay() {
+        roundedRect(ctx, 18, 18, 292, 48, 16, "rgba(255,252,255,.84)", "rgba(92,61,103,.13)");
+        ctx.fillStyle = "#7c58bf";
+        ctx.beginPath(); ctx.arc(44, 42, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#4b3a52";
+        ctx.font = "700 17px ui-rounded, Segoe UI, sans-serif";
+        ctx.fillText("Sweetchie", 62, 39);
+        ctx.fillStyle = "#77677b";
+        ctx.font = "13px ui-rounded, Segoe UI, sans-serif";
+        const shortStatus = this.paused ? "paused" : this.status;
+        ctx.fillText(shortStatus.length > 34 ? `${shortStatus.slice(0, 33)}…` : shortStatus, 62, 57);
+
+        if (this.hoverObject) {
+          const hoverLabels = { quizDesk: "Start quiz", dashboard: "Open dashboard", reviewShelf: "Review mistakes" };
+          const label = hoverLabels[this.hoverObject.id] || `Visit ${this.hoverObject.label}`;
+          ctx.font = "700 14px ui-rounded, Segoe UI, sans-serif";
+          const width = ctx.measureText(label).width + 28;
+          roundedRect(ctx, WIDTH - width - 18, 18, width, 38, 14, "rgba(255,252,255,.9)", "rgba(92,61,103,.13)");
+          ctx.fillStyle = "#6847a7";
+          ctx.fillText(label, WIDTH - width - 4, 43);
+        }
+
+        if (this.paused) {
+          roundedRect(ctx, WIDTH / 2 - 72, HEIGHT / 2 - 27, 144, 54, 16, "rgba(67,45,73,.78)");
+          ctx.fillStyle = "white"; ctx.font = "800 19px ui-rounded, Segoe UI, sans-serif"; ctx.textAlign = "center";
+          ctx.fillText("Paused", WIDTH / 2, HEIGHT / 2 + 7); ctx.textAlign = "left";
+        }
+      }
+    }
+
+    Promise.all(Object.entries(ASSET_URLS).map(async ([name, url]) => [name, await loadImage(url)]))
+      .then(entries => {
+        const images = Object.fromEntries(entries);
+        const engine = new RoomEngine(images);
+        const quiz = new QuizController(engine, questionBank);
+        engine.quiz = quiz;
+        window.sweetchieRoom = engine;
+        window.sweetchieQuiz = quiz;
+        speedSelect.value = String(engine.speed);
+        if (engine.paused) pauseButton.textContent = "Resume";
+        loading.hidden = true;
+        engine.start();
+      })
+      .catch(error => {
+        console.error(error);
+        loading.textContent = "Sweetchie's artwork could not be loaded.";
+      });
+  })();
+  </script>
+</body>
+</html>

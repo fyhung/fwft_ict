@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sweetchie · Separated Layer Motion Preview</title>
+<style>
+:root{color-scheme:light;--ink:#40294a;--muted:#76657d;--violet:#7a43c4;--panel:#fffaff;--line:#ddcce8}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Inter,Segoe UI,sans-serif;color:var(--ink);background:radial-gradient(circle at 30% 15%,#fff 0,#f5ebfb 45%,#e8d8f3 100%)}
+main{display:grid;grid-template-columns:minmax(420px,1fr) 330px;gap:18px;max-width:1250px;margin:auto;padding:18px;min-height:100vh}
+.stage-shell,.panel{background:rgba(255,250,255,.9);border:1px solid var(--line);border-radius:22px;box-shadow:0 18px 60px #6c3a8a20}
+.stage-shell{display:grid;place-items:center;padding:16px;overflow:hidden}.stage{position:relative;width:min(72vh,100%);aspect-ratio:1;overflow:hidden;border-radius:18px;background-size:32px 32px;background-position:0 0,0 16px,16px -16px,-16px 0;background-image:linear-gradient(45deg,#eee7f2 25%,transparent 25%),linear-gradient(-45deg,#eee7f2 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#eee7f2 75%),linear-gradient(-45deg,transparent 75%,#eee7f2 75%);background-color:#fff}
+.stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;will-change:transform;transform-origin:50% 42%}.stage img.body{transform-origin:50% 61%}.stage img.exact{z-index:70;transform-origin:50% 48%}.stage img.reference{z-index:90;opacity:.48;visibility:hidden;transform:none!important;will-change:auto}.stage.compare img.reference{visibility:visible}
+.panel{padding:18px;overflow:auto}h1{font-size:1.3rem;margin:0 0 5px}.sub{font-size:.84rem;color:var(--muted);line-height:1.45;margin:0 0 16px}.section{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}.section h2{font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;color:#724b83;margin:0 0 9px}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}button{border:1px solid #cdb7dc;background:white;color:var(--ink);border-radius:10px;padding:9px;font:700 .82rem inherit;cursor:pointer}button:hover,button.active{background:#7a43c4;color:white;border-color:#7a43c4}.wide{grid-column:1/-1}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0;font-size:.84rem}input[type=range]{width:150px;accent-color:#7a43c4}.meter{height:7px;background:#ebdfef;border-radius:9px;overflow:hidden;margin-top:4px}.meter i{display:block;height:100%;width:50%;background:linear-gradient(90deg,#b47ce0,#6b38b4);transition:width .08s}.status{font:12px ui-monospace,SFMono-Regular,Consolas,monospace;color:#705879}.layer-list{max-height:180px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:white;padding:7px}.layer-list label{display:flex;gap:7px;align-items:center;font-size:.74rem;padding:3px 2px}.note{font-size:.74rem;color:var(--muted);line-height:1.4}.badge{position:absolute;left:12px;bottom:12px;z-index:100;background:#3f2559d9;color:white;border-radius:999px;padding:7px 10px;font:700 11px ui-monospace,monospace;pointer-events:none}
+.tuner select,.tuner input[type=number],.tuner textarea{width:100%;border:1px solid #cdb7dc;border-radius:9px;background:#fff;color:var(--ink);padding:8px;font:12px ui-monospace,Consolas,monospace}.xy{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.xy label{font-size:.72rem;color:var(--muted)}.nudge{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:9px 0}.nudge .blank{visibility:hidden}.tuner textarea{height:92px;resize:vertical;margin-top:8px}.copy-status{min-height:17px;color:#6d3aa5;font-size:.72rem;margin-top:5px}
+@media(max-width:850px){main{grid-template-columns:1fr}.stage{width:min(92vw,650px)}.panel{max-height:none}}
+</style>
+</head>
+<body>
+<main>
+  <section class="stage-shell"><div class="stage" id="stage"><img id="exactFrame" class="exact" src="bustlab-exact/neutral.png" alt="Exact Bust Lab Sweetchie"><img id="reference" class="reference" src="bustlab-exact/neutral.png" alt="Static alignment reference"><div class="badge" id="badge">separated cut art · Bust Lab target</div></div></section>
+  <aside class="panel">
+    <h1>Sweetchie motion lab</h1>
+    <p class="sub">Independent cut-art layers are the live model. The Bust Lab frame remains available as a registration reference.</p>
+    <div class="section"><h2>Render mode</h2><div class="buttons"><button id="cutMode" class="active">Separated cut art</button><button id="exactMode">Bust Lab reference</button></div></div>
+    <div class="section"><h2>Expressions</h2><div class="buttons">
+      <button data-expression="neutral" class="active">Neutral</button><button data-expression="happy">Happy</button>
+      <button data-expression="surprised">Surprised</button><button id="blink">Blink</button>
+      <button id="talk" class="wide">Start talking</button>
+    </div></div>
+    <div class="section"><h2>Motion</h2>
+      <div class="row"><label for="motion">Motion strength</label><input id="motion" type="range" min="0" max="150" value="45"></div>
+      <div class="row"><label><input id="tracking" type="checkbox" checked> Pointer tracking</label></div>
+      <div class="row"><label><input id="auto" type="checkbox"> Auto demonstration</label></div>
+      <div class="row"><label><input id="compare" type="checkbox"> Static alignment overlay</label></div>
+    </div>
+    <div class="section"><h2>Live parameters</h2>
+      <div class="status">Angle X <span id="vx">0.00</span><div class="meter"><i id="mx"></i></div></div>
+      <div class="status">Angle Y <span id="vy">0.00</span><div class="meter"><i id="my"></i></div></div>
+      <div class="status">Eye X <span id="ve">0.00</span><div class="meter"><i id="me"></i></div></div>
+      <div class="status">Mouth <span id="vm">0.00</span><div class="meter"><i id="mm"></i></div></div>
+      <div class="status">Breath <span id="vb">0.00</span><div class="meter"><i id="mb"></i></div></div>
+    </div>
+    <div class="section tuner"><h2>Alignment tuner</h2>
+      <select id="tuneLayer" aria-label="Layer to align"></select>
+      <div class="xy"><label>X offset<input id="offsetX" type="number" min="-400" max="400" step="1" value="0"></label><label>Y offset<input id="offsetY" type="number" min="-400" max="400" step="1" value="0"></label></div>
+      <div class="nudge"><span class="blank"></span><button data-nudge="0,-1">↑</button><span class="blank"></span><button data-nudge="-1,0">←</button><button data-nudge="0,1">↓</button><button data-nudge="1,0">→</button></div>
+      <div class="buttons"><button id="resetLayer">Reset selected</button><button id="resetAll">Reset all</button><button id="exportAlignment" class="wide">Prepare alignment data</button><button id="copyAlignment" class="wide">Copy data for Codex</button></div>
+      <textarea id="alignmentData" spellcheck="false" placeholder="Alignment JSON appears here. You can also paste saved data here and press Import."></textarea>
+      <button id="importAlignment" class="wide">Import pasted data</button><div class="copy-status" id="copyStatus"></div>
+      <p class="note">Offsets use the 1024×1024 canvas. Turn on Static alignment overlay and set Motion strength to 0. Arrow keys nudge by 1 pixel; Shift+arrow nudges by 10.</p>
+    </div>
+    <div class="section"><h2>Layer inspector</h2><div class="layer-list" id="layerList"></div>
+      <p class="note">Toggle individual layers to inspect overlap and registration. Alternate mouths and closed lids begin hidden.</p>
+    </div>
+  </aside>
+</main>
+<script>
+const assetVersion='20260827-face-registration-2';
+const defs=[
+ ['01_Back_Hair','hair'],['02_Hair_Shadow','hair'],['28_Left_Side_Hair','hair side-left'],['29_Right_Side_Hair','hair side-right'],
+ ['03_Torso_Underlay','body'],['04_Skirt','body'],['05_Blouse','body'],['06_Sailor_Collar','body'],['07_Clothing_Shadow','body'],
+ ['08_Neck','head'],['09_Left_Ear','head'],['10_Right_Ear','head'],['11_Face_Base','head'],['12_Face_Shadow','head'],
+ ['13_Left_Eye_White','head eye-open'],['14_Right_Eye_White','head eye-open'],['15_Left_Iris','head iris eye-open'],['16_Right_Iris','head iris eye-open'],
+ ['17_Left_Upper_Lid','head eye-open'],['18_Right_Upper_Lid','head eye-open'],['19_Left_Closed_Lid','head eye-closed'],['20_Right_Closed_Lid','head eye-closed'],
+ ['21_Left_Eyebrow','head'],['22_Right_Eyebrow','head'],['23_Mouth_Closed','head mouth mouth-neutral'],['24_Mouth_Small_Open','head mouth mouth-small'],
+ ['25_Mouth_Wide_Open','head mouth mouth-wide'],['26_Mouth_Surprised_O','head mouth mouth-surprised'],['27_Mouth_Happy','head mouth mouth-happy'],
+ ['30_Front_Hair_Bangs','head hair'],['31_Hair_Highlights','head hair'],['33_Left_Earring','head earring-left'],['34_Right_Earring','head earring-right'],
+ ['32_Glasses','head'],['35_Bow','body bow'],['36_Star_Brooch','body bow']
+];
+const stage=document.querySelector('#stage'), map=new Map(), manual=new Map(), defaultOff=new Set(['03_Torso_Underlay','28_Left_Side_Hair','29_Right_Side_Hair','31_Hair_Highlights']);
+for(const [name,classes] of defs){const img=new Image();img.src=`layers/${name}.png?v=${assetVersion}`;img.alt=name;img.className=classes;img.dataset.name=name;stage.insertBefore(img,stage.lastElementChild);map.set(name,img);manual.set(name,!defaultOff.has(name))}
+const list=document.querySelector('#layerList');
+for(const [name] of defs){const label=document.createElement('label'),box=document.createElement('input');box.type='checkbox';box.checked=manual.get(name);box.onchange=()=>{manual.set(name,box.checked)};label.append(box,document.createTextNode(name));list.append(label)}
+const alignment=new Map(defs.map(([name])=>[name,{x:0,y:0}]));
+const tuneLayer=document.querySelector('#tuneLayer'),offsetX=document.querySelector('#offsetX'),offsetY=document.querySelector('#offsetY'),alignmentData=document.querySelector('#alignmentData'),copyStatus=document.querySelector('#copyStatus');
+for(const [name] of defs){const option=document.createElement('option');option.value=name;option.textContent=name;tuneLayer.append(option)}
+function selectedOffset(){return alignment.get(tuneLayer.value)}
+function syncTuner(){const o=selectedOffset();offsetX.value=o.x;offsetY.value=o.y}
+function saveAlignment(){localStorage.setItem('sweetchieAlignmentV1',JSON.stringify(Object.fromEntries([...alignment].filter(([,v])=>v.x||v.y))))}
+function setOffset(x,y){const o=selectedOffset();o.x=Math.max(-400,Math.min(400,Math.round(Number(x))||0));o.y=Math.max(-400,Math.min(400,Math.round(Number(y))||0));syncTuner();saveAlignment()}
+function alignmentObject(){return {format:'sweetchie-layer-offsets-v1',canvas:[1024,1024],offsets:Object.fromEntries([...alignment].filter(([,v])=>v.x||v.y))}}
+function prepareAlignment(){alignmentData.value=JSON.stringify(alignmentObject(),null,2);copyStatus.textContent='Ready—paste this data into your Codex message.'}
+function importAlignment(text){const data=JSON.parse(text),values=data.offsets||data;for(const [name] of defs){const v=values[name];alignment.set(name,{x:Number(v?.x)||0,y:Number(v?.y)||0})}syncTuner();saveAlignment()}
+tuneLayer.onchange=syncTuner;offsetX.oninput=()=>setOffset(offsetX.value,offsetY.value);offsetY.oninput=()=>setOffset(offsetX.value,offsetY.value);
+document.querySelectorAll('[data-nudge]').forEach(b=>b.onclick=()=>{const [dx,dy]=b.dataset.nudge.split(',').map(Number),o=selectedOffset();setOffset(o.x+dx,o.y+dy)});
+document.querySelector('#resetLayer').onclick=()=>setOffset(0,0);document.querySelector('#resetAll').onclick=()=>{for(const [name] of defs)alignment.set(name,{x:0,y:0});syncTuner();saveAlignment()};
+document.querySelector('#exportAlignment').onclick=prepareAlignment;document.querySelector('#importAlignment').onclick=()=>{try{importAlignment(alignmentData.value);copyStatus.textContent='Alignment data imported.'}catch(e){copyStatus.textContent='Could not read that JSON.'}};
+document.querySelector('#copyAlignment').onclick=async()=>{prepareAlignment();try{await navigator.clipboard.writeText(alignmentData.value)}catch(e){alignmentData.focus();alignmentData.select();document.execCommand('copy')}copyStatus.textContent='Copied—paste it into your Codex message.'};
+try{const saved=localStorage.getItem('sweetchieAlignmentV1');if(saved)importAlignment(saved)}catch(e){}syncTuner();
+document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;const d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(!d)return;e.preventDefault();const step=e.shiftKey?10:1,o=selectedOffset();setOffset(o.x+d[0]*step,o.y+d[1]*step)});
+const state={x:0,y:0,tx:0,ty:0,expression:'neutral',talking:false,blinkUntil:0,nextBlink:performance.now()+2200,motion:.45,auto:false,mode:'cut'};
+const exactFrame=document.querySelector('#exactFrame'),reference=document.querySelector('#reference');
+const mouths=['neutral','small','wide','surprised','happy'];
+function expressionVisibility(now){
+ const blink=now<state.blinkUntil || (state.expression==='happy' && !state.talking);
+ for(const [name,el] of map)el.style.visibility=manual.get(name)?'visible':'hidden';
+ document.querySelectorAll('.eye-open').forEach(el=>el.style.visibility=manual.get(el.dataset.name)&&!blink?'visible':'hidden');
+ document.querySelectorAll('.eye-closed').forEach(el=>el.style.visibility=manual.get(el.dataset.name)&&blink?'visible':'hidden');
+ let mouth=state.expression;
+ if(state.talking) mouth=Math.floor(now/150)%2?'small':'wide';
+ document.querySelectorAll('.mouth').forEach(el=>el.style.visibility=manual.get(el.dataset.name)&&el.classList.contains(`mouth-${mouth}`)?'visible':'hidden');
+ return mouth==='wide' ? 1
+   : mouth==='small' ? .42
+   : mouth==='surprised' ? .32
+   : mouth==='happy' ? .72
+   : 0;
+}
+function setExpression(value){state.expression=value;state.talking=false;document.querySelector('#talk').textContent='Start talking';document.querySelectorAll('[data-expression]').forEach(b=>b.classList.toggle('active',b.dataset.expression===value))}
+document.querySelectorAll('[data-expression]').forEach(b=>b.onclick=()=>setExpression(b.dataset.expression));
+document.querySelector('#blink').onclick=()=>state.blinkUntil=performance.now()+180;
+document.querySelector('#talk').onclick=e=>{state.talking=!state.talking;e.target.textContent=state.talking?'Stop talking':'Start talking'};
+document.querySelector('#motion').oninput=e=>state.motion=+e.target.value/100;
+document.querySelector('#tracking').onchange=e=>{if(!e.target.checked)state.tx=state.ty=0};
+document.querySelector('#auto').onchange=e=>state.auto=e.target.checked;
+document.querySelector('#compare').onchange=e=>{stage.classList.toggle('compare',e.target.checked);if(e.target.checked){state.motion=0;document.querySelector('#motion').value=0;state.tx=state.ty=0}};
+document.querySelector('#exactMode').onclick=()=>setMode('exact');document.querySelector('#cutMode').onclick=()=>setMode('cut');
+function setMode(mode){state.mode=mode;document.querySelector('#exactMode').classList.toggle('active',mode==='exact');document.querySelector('#cutMode').classList.toggle('active',mode==='cut');document.querySelector('#badge').textContent=mode==='exact'?'Bust Lab registration reference':'separated cut art · Bust Lab target';document.querySelector('#layerList').style.opacity=mode==='exact'?'.45':'1'}
+stage.onpointermove=e=>{if(!document.querySelector('#tracking').checked)return;const r=stage.getBoundingClientRect();state.tx=((e.clientX-r.left)/r.width-.5)*2;state.ty=((e.clientY-r.top)/r.height-.5)*2};
+stage.onpointerleave=()=>{if(!state.auto)state.tx=state.ty=0};
+function transform(el,angleX,angleY,breath,sway,eyeX,eyeY){
+ let rot=angleX*2.15,dx=angleX*5,dy=angleY*3.2,extra='';
+ if(el.classList.contains('body')){rot=angleX*.28;dx=angleX*.7;dy=breath*.7;extra=`scaleY(${1+breath*.0035})`}
+ if(el.classList.contains('side-left'))extra+=` rotate(${sway*.65}deg) translateX(${-sway*.45}px)`;
+ if(el.classList.contains('side-right'))extra+=` rotate(${-sway*.65}deg) translateX(${sway*.45}px)`;
+ if(el.classList.contains('earring-left'))extra+=` rotate(${sway*1.4}deg)`;
+ if(el.classList.contains('earring-right'))extra+=` rotate(${-sway*1.4}deg)`;
+ if(el.classList.contains('iris')){dx+=eyeX*5;dy+=eyeY*3.5}
+ if(el.classList.contains('bow'))extra+=` translateY(${breath*.6}px)`;
+ const adjust=alignment.get(el.dataset.name)||{x:0,y:0};
+ el.style.transform=`translate(${dx+adjust.x}px,${dy+adjust.y}px) rotate(${rot}deg) ${extra}`;
+}
+function meter(id,value){document.querySelector(id).style.width=`${Math.max(0,Math.min(100,(value+1)*50))}%`}
+function tick(now){
+ if(state.auto){state.tx=Math.sin(now/1350)*.65;state.ty=Math.sin(now/1900)*.25}
+ state.x+=(state.tx-state.x)*.075;state.y+=(state.ty-state.y)*.075;
+ if(now>state.nextBlink){state.blinkUntil=now+150;state.nextBlink=now+1900+Math.random()*3200}
+ const breath=Math.sin(now/820),sway=Math.sin(now/630)*state.motion,ax=state.x*state.motion,ay=state.y*state.motion;
+ const mouth=expressionVisibility(now);
+ let exactName=state.expression;
+ if(now<state.blinkUntil)exactName='blink';else if(state.talking)exactName=Math.floor(now/150)%2?'talk-small':'talk-wide';
+ exactFrame.src=`bustlab-exact/${exactName}.png?v=${assetVersion}`;
+ exactFrame.style.visibility=state.mode==='exact'?'visible':'hidden';
+ reference.src=`bustlab-exact/neutral.png?v=${assetVersion}`;
+ const exactRot=ax*1.5,exactX=ax*3.5,exactY=ay*2+breath*state.motion*.6;
+ exactFrame.style.transform=`translate(${exactX}px,${exactY}px) rotate(${exactRot}deg) scaleY(${1+breath*state.motion*.0025})`;
+ for(const el of map.values()){transform(el,ax,ay,breath*state.motion,sway,ax,ay);if(state.mode==='exact')el.style.visibility='hidden'}
+ document.querySelector('#vx').textContent=ax.toFixed(2);document.querySelector('#vy').textContent=ay.toFixed(2);document.querySelector('#ve').textContent=ax.toFixed(2);document.querySelector('#vm').textContent=mouth.toFixed(2);document.querySelector('#vb').textContent=breath.toFixed(2);
+ meter('#mx',ax);meter('#my',ay);meter('#me',ax);meter('#mm',mouth*2-1);meter('#mb',breath);requestAnimationFrame(tick)
+}
+setExpression('neutral');requestAnimationFrame(tick);
+</script>
+</body>
+</html>

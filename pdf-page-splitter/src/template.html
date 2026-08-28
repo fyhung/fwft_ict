@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#eff8f2">
+  <title>PDF Page Splitter</title>
+  <style>/*__STYLES__*/</style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img"><path d="M13 5h16l8 8v28H13z"/><path d="M29 5v9h8M19 22h12M19 28h12M19 34h8"/></svg>
+      </div>
+      <div>
+        <p class="eyebrow">Private browser tool</p>
+        <h1>PDF Page Splitter</h1>
+        <p class="subtitle">Turn every page into its own named PDF, delivered in one ZIP.</p>
+      </div>
+    </header>
+
+    <section class="privacy-note" aria-label="Privacy information">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.8 2.8 8.2 7 10 4.2-1.8 7-5.2 7-10V6z"/><path d="m9.3 12 1.8 1.8 3.8-4"/></svg>
+      <span><strong>Your PDF stays private.</strong> Processing happens entirely in this browser.</span>
+    </section>
+
+    <section class="card upload-card" aria-labelledby="upload-heading">
+      <div class="step-heading">
+        <span class="step-number">1</span>
+        <div><h2 id="upload-heading">Choose a PDF</h2><p>Drag a file here or browse from your device.</p></div>
+      </div>
+
+      <input id="pdf-file" class="visually-hidden" type="file" accept="application/pdf,.pdf">
+      <label class="drop-zone" id="drop-zone" for="pdf-file">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 6h15l8 8v28H14z"/><path d="M29 6v9h8M24 34V21m-5 5 5-5 5 5"/></svg>
+        <strong>Drop your PDF here</strong>
+        <span>or <span class="browse-text">choose a file</span></span>
+      </label>
+
+      <div id="file-summary" class="file-summary" hidden>
+        <div class="file-icon" aria-hidden="true">PDF</div>
+        <div class="file-details"><strong id="file-name"></strong><span id="file-meta"></span></div>
+        <button id="remove-file" class="icon-button" type="button" aria-label="Remove selected PDF">&times;</button>
+      </div>
+      <p id="file-warning" class="notice warning" hidden></p>
+    </section>
+
+    <section id="naming-card" class="card naming-card is-disabled" aria-labelledby="naming-heading" aria-disabled="true">
+      <div class="step-heading">
+        <span class="step-number">2</span>
+        <div><h2 id="naming-heading">Name the pages</h2><p id="name-instruction">Choose a PDF first.</p></div>
+      </div>
+
+      <div class="field-row">
+        <label class="field">
+          <span>Optional prefix</span>
+          <input id="prefix" type="text" maxlength="80" placeholder="e.g. Class 4A - " disabled>
+        </label>
+        <button id="auto-name" class="secondary-button" type="button" disabled>Fill automatic names</button>
+      </div>
+
+      <label class="field names-field">
+        <span>One filename per line</span>
+        <textarea id="names" rows="8" spellcheck="false" placeholder="Cover&#10;Chapter 1&#10;Chapter 2&#10;Answer key" disabled></textarea>
+      </label>
+
+      <div class="name-status-row">
+        <p id="name-status">0 names entered</p>
+        <button id="clear-names" class="text-button" type="button" disabled>Clear names</button>
+      </div>
+
+      <details class="preview-panel" id="preview-details">
+        <summary>Filename preview <span id="preview-count"></span></summary>
+        <ol id="name-preview" class="name-preview"></ol>
+      </details>
+    </section>
+
+    <section class="action-area">
+      <button id="split-button" class="primary-button" type="button" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 20h14"/></svg>
+        <span>Split and download ZIP</span>
+      </button>
+      <p id="action-help">Select a PDF to begin.</p>
+      <div id="progress-wrap" class="progress-wrap" hidden>
+        <div class="progress-track"><span id="progress-bar"></span></div>
+        <p id="progress-text" role="status" aria-live="polite"></p>
+      </div>
+      <p id="message" class="notice" role="status" aria-live="polite" hidden></p>
+    </section>
+
+    <footer>Works offline after saving this HTML file. No account or upload required.</footer>
+  </main>
+
+  <!-- pdf-lib 1.17.1, MIT License: https://github.com/Hopding/pdf-lib -->
+  <script>/*__PDF_LIB__*/</script>
+  <!-- JSZip 3.10.1, MIT or GPLv3 License: https://github.com/Stuk/jszip -->
+  <script>/*__JSZIP__*/</script>
+  <script>/*__APP__*/</script>
+</body>
+</html>

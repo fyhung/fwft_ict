@@ -1,0 +1,2 @@
+C:\Users\teacher\github\fwft_ict\sweetchie-live2d-art-package\scripts\build_package.py:70: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  pixels = list(rgba.getdata())

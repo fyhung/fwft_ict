@@ -1,0 +1,26 @@
+{
+  "ok": true,
+  "chroma_key": {
+    "hex": "#00FF2A",
+    "rgb": [
+      0,
+      255,
+      42
+    ],
+    "threshold": 105.0
+  },
+  "rows": [
+    {
+      "state": "idle",
+      "frames": [
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\work\\extra-actions\\repairs\\twirl-v2\\frames\\idle\\00.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\work\\extra-actions\\repairs\\twirl-v2\\frames\\idle\\01.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\work\\extra-actions\\repairs\\twirl-v2\\frames\\idle\\02.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\work\\extra-actions\\repairs\\twirl-v2\\frames\\idle\\03.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\work\\extra-actions\\repairs\\twirl-v2\\frames\\idle\\04.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\work\\extra-actions\\repairs\\twirl-v2\\frames\\idle\\05.png"
+      ],
+      "method": "components"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "bankId": "ict-topic-e-mcq-zh-hk",
+  "bankVersion": "0.25.0",
+  "generatedAt": "2026-08-17",
+  "totalQuestions": 1000,
+  "completeFile": "ict-topic-e-all.json",
+  "browserScript": "ict-topic-e-all.js",
+  "files": [
+    {
+      "src": "shards/topic-e-a-001.json",
+      "subtopic": "E-a-technology-innovation",
+      "count": 375,
+      "firstQuestionId": "ICT-E-A-MCQ-0001",
+      "lastQuestionId": "ICT-E-A-MCQ-0375"
+    },
+    {
+      "src": "shards/topic-e-b-001.json",
+      "subtopic": "E-b-health-and-ethical-issues",
+      "count": 375,
+      "firstQuestionId": "ICT-E-B-MCQ-0001",
+      "lastQuestionId": "ICT-E-B-MCQ-0375"
+    },
+    {
+      "src": "shards/topic-e-c-001.json",
+      "subtopic": "E-c-intellectual-property",
+      "count": 250,
+      "firstQuestionId": "ICT-E-C-MCQ-0001",
+      "lastQuestionId": "ICT-E-C-MCQ-0250"
+    }
+  ],
+  "summary": {
+    "subtopics": {
+      "E-a-technology-innovation": 375,
+      "E-b-health-and-ethical-issues": 375,
+      "E-c-intellectual-property": 250
+    },
+    "difficulty": {
+      "basic": 300,
+      "intermediate": 500,
+      "advanced": 200
+    },
+    "archetypes": {
+      "scenario_application": 375,
+      "best_reason_or_measure": 200,
+      "direct_concept": 150,
+      "statement_combination": 200,
+      "comparison": 75
+    },
+    "answerPositions": {
+      "B": 250,
+      "D": 250,
+      "A": 250,
+      "C": 250
+    }
+  }
+}

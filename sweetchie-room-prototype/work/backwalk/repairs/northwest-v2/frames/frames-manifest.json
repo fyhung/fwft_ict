@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "chroma_key": {
+    "hex": "#00FF2A",
+    "rgb": [
+      0,
+      255,
+      42
+    ],
+    "threshold": 105.0
+  },
+  "rows": [
+    {
+      "state": "running-left",
+      "frames": [
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\work\\backwalk\\repairs\\northwest-v2\\frames\\running-left\\00.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\work\\backwalk\\repairs\\northwest-v2\\frames\\running-left\\01.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\work\\backwalk\\repairs\\northwest-v2\\frames\\running-left\\02.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\work\\backwalk\\repairs\\northwest-v2\\frames\\running-left\\03.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\work\\backwalk\\repairs\\northwest-v2\\frames\\running-left\\04.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\work\\backwalk\\repairs\\northwest-v2\\frames\\running-left\\05.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\work\\backwalk\\repairs\\northwest-v2\\frames\\running-left\\06.png",
+        "C:\\Users\\teacher\\github\\fwft_ict\\sweetchie-room-prototype\\work\\backwalk\\repairs\\northwest-v2\\frames\\running-left\\07.png"
+      ],
+      "method": "components"
+    }
+  ]
+}
