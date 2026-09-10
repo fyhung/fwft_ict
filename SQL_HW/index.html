@@ -303,7 +303,7 @@
 <div class="modalwrap" id="helpModal" hidden>
   <section class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
     <span class="eyebrow">FIELD MANUAL</span><h2 id="helpTitle">BUILD. RUN. MATCH.</h2>
-    <p>Click the glowing Lego-style blocks to assemble a query. The palette only enables blocks that fit the current position. Once the query is valid, the source table transforms immediately.</p>
+    <p>Click the glowing Lego-style blocks to assemble a query. Every SQL block is available at every stage, so you must identify and correct invalid choices yourself. Once the query is valid, the source table transforms immediately.</p>
     <p><strong style="color:var(--cyan)">Edit anywhere:</strong> Click a thin gap in the query to move the glowing insertion cursor, then choose a palette block. Click an existing SQL block to delete it. Undo restores the previous insertion or deletion.</p>
     <p>Match every target column, row, value, and ordering exactly. Each inserted block costs 1 point, each Undo costs another point, and time costs 1 point every 2 seconds. There is no move limit, and you can keep solving at zero.</p>
     <p><strong style="color:var(--cyan)">Tip:</strong> Punctuation and formatting are wired automatically, so you only pay for meaningful SQL blocks.</p>
@@ -601,14 +601,7 @@ function availableBlocks(){
    {name:"VALUES",items:values.map(v=>token("value",v,valueLabel(v),"value"))}
   ];
 }
-const unlock={SELECT:1,FROM:1,WHERE:4,"=":4,">":5,">=":5,"<":5,"<=":5,"!=":6,AND:7,OR:8,IN:8,NOT:9,"ORDER BY":10,ASC:10,DESC:11,LIMIT:12,DISTINCT:13,
- COUNT:14,SUM:15,AVG:16,MIN:16,MAX:16,"GROUP BY":17,HAVING:19,LIKE:6,BETWEEN:6,"IS NULL":6,"IS NOT NULL":6};
-function enabled(t){
-  const levelNo=levelIndex+1;if((unlock[t.type]||unlock[t.value]||1)>levelNo)return false;
-  if(t.type==="field"&&t.value==="*"&&tokens[insertAt-1]?.type!=="agg")return false;
-  const candidate=[...tokens.slice(0,insertAt),t,...tokens.slice(insertAt)];
-  return parse(candidate).errorAt===null;
-}
+function enabled(){return !solved}
 function lastOp(){for(let i=tokens.length-1;i>=0;i--)if(tokens[i].type==="op")return tokens[i].value;return null}
 
 function tableHTML(data,animated=false){
@@ -632,8 +625,8 @@ function renderQuery(){
 }
 function renderPalette(){
   el.palette.innerHTML=availableBlocks().map(g=>`<section class="group"><div class="grouplabel">${g.name}</div><div class="blocks">${g.items.map((t,i)=>{
-    const ok=enabled(t), locked=(unlock[t.type]||unlock[t.value]||1)>levelIndex+1;
-    return`<button class="block ${t.kind}" data-token="${encodeURIComponent(JSON.stringify(t))}" ${ok?"":"disabled"} title="${locked?"Unlocks at level "+(unlock[t.type]||unlock[t.value]):ok?"Insert "+t.label:"Not valid at this position"}">${escapeHtml(t.label)}</button>`
+    const ok=enabled(t);
+    return`<button class="block ${t.kind}" data-token="${encodeURIComponent(JSON.stringify(t))}" ${ok?"":"disabled"} title="${ok?"Insert "+t.label:"Puzzle complete"}">${escapeHtml(t.label)}</button>`
   }).join("")}</div></section>`).join("");
 }
 function renderTables(animate=false){
