@@ -11,7 +11,7 @@
   *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--font)}
   body{background:radial-gradient(circle at 12% -10%,#14324d,transparent 34%),radial-gradient(circle at 88% 0,#271744,transparent 30%),linear-gradient(#07101d,#050914)}
   body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.16;background-image:linear-gradient(#64dbff12 1px,transparent 1px),linear-gradient(90deg,#64dbff12 1px,transparent 1px);background-size:32px 32px}
-  button,input{font:inherit}button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:3px}
+  button,input,select{font:inherit}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #fff;outline-offset:3px}
   .app{width:min(1450px,100%);margin:auto;padding:22px clamp(12px,2.5vw,34px) 40px;position:relative}
   header{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:16px}
   .brand{display:flex;align-items:center;gap:13px}.mark{width:43px;height:43px;border:1px solid #55e6ff80;border-radius:13px;display:grid;place-items:center;background:#10263a;box-shadow:0 0 22px #55e6ff25}.mark:after{content:"";width:17px;height:17px;border:3px solid var(--cyan);transform:rotate(45deg);box-shadow:0 0 9px var(--cyan)}
@@ -22,6 +22,7 @@
   .notice{margin-top:14px;padding:16px;border:1px solid #6b512a;border-radius:13px;background:#20170c;color:#ffe0aa;line-height:1.6;font-size:12px}.notice[hidden]{display:none}.notice strong{color:var(--amber)}.uid{display:block;margin:9px 0;padding:9px 11px;border-radius:8px;background:#080e17;color:var(--cyan);user-select:all;overflow-wrap:anywhere}
   .dashboard[hidden]{display:none}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:15px 0}.card{padding:16px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,#0f1d2f,#091321);box-shadow:0 10px 26px #0003}.card small{display:block;color:var(--muted);font-size:9px;letter-spacing:.12em}.card strong{display:block;margin-top:7px;font-size:clamp(23px,3vw,34px);color:var(--cyan)}.card:nth-child(2) strong{color:var(--green)}.card:nth-child(3) strong{color:var(--amber)}.card:nth-child(4) strong{color:var(--purple);font-size:14px;margin-top:12px}
   .panel{border:1px solid var(--line);border-radius:16px;background:#0a1422e8;overflow:hidden;box-shadow:0 14px 36px #0005}.panelhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #203b50}.panelhead h2{margin:0;font-size:13px;letter-spacing:.12em}.controls{display:flex;gap:8px}.search{width:min(320px,46vw);border:1px solid var(--line);border-radius:9px;background:#07101b;color:var(--ink);padding:8px 11px;outline:0}.search:focus{border-color:var(--cyan)}
+  .resetbar{display:flex;align-items:center;gap:10px;margin:15px 0;padding:14px 16px;border:1px solid #6b512a;border-radius:14px;background:#18130d}.resetbar strong{font-size:11px;color:var(--amber);margin-right:auto}.resetbar select{min-height:39px;border:1px solid var(--line);border-radius:9px;background:#07101b;color:var(--ink);padding:8px 11px}.button.danger{border-color:#a83e50;background:#35131b;color:#ffd5db}.button.danger:hover{border-color:var(--red)}
   .tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:930px;font-size:11px}th,td{padding:12px 13px;border-bottom:1px solid #1b3448;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#122238;color:#8feeff;font-size:9px;letter-spacing:.1em;text-transform:uppercase}tbody tr:hover{background:#10223880}.player strong{display:block;font-size:12px}.player small,.muted{color:var(--muted);font-size:9px}.score{font-size:18px;color:var(--cyan);font-weight:900}.sets summary{cursor:pointer;color:var(--cyan);white-space:nowrap}.setlist{display:grid;gap:5px;margin-top:8px;min-width:245px}.setrow{display:grid;grid-template-columns:1fr auto auto;gap:10px;padding:6px 8px;border:1px solid #223e52;border-radius:7px;background:#07111d}.setrow b{color:var(--green)}.empty{padding:38px;text-align:center;color:var(--muted)}
   footer{margin-top:15px;text-align:center;color:var(--muted);font-size:9px;line-height:1.6}
   @media(max-width:760px){header{align-items:flex-start;flex-direction:column}.authbar{align-items:stretch;flex-direction:column}.authactions .button{flex:1}.summary{grid-template-columns:1fr 1fr}.panelhead{align-items:stretch;flex-direction:column}.controls{width:100%}.search{width:100%;flex:1}}
@@ -50,6 +51,12 @@
       <div class="card"><small>LATEST CLOUD UPDATE / 最近更新</small><strong id="latestUpdate">—</strong></div>
     </section>
 
+    <section class="resetbar" aria-label="Reset set marks">
+      <strong>RESET SET FOR ALL PLAYERS / 重設所有學生的指定題組</strong>
+      <select id="resetSet" aria-label="Set to reset"><option value="set_1">SET 1 — Pokémon Data Lab</option><option value="set_2">SET 2</option><option value="set_3">SET 3</option><option value="set_4">SET 4</option><option value="set_5">SET 5</option><option value="set_6">SET 6</option><option value="set_7">SET 7</option><option value="set_8">SET 8</option><option value="set_9">SET 9</option><option value="set_10">SET 10</option></select>
+      <button class="button danger" id="resetBtn">RESET MARKS</button>
+    </section>
+
     <section class="panel">
       <div class="panelhead"><h2>ALL PLAYER PROGRESS / 全部學生進度</h2><div class="controls"><input class="search" id="search" type="search" placeholder="Search name or email…" aria-label="Search players"><button class="button" id="sortBtn">SORT: SCORE ↓</button></div></div>
       <div class="tablewrap"><table>
@@ -59,7 +66,7 @@
     </section>
   </main>
 
-  <footer>Read-only teacher view · Student saves remain protected by Firebase Authentication and Firestore Security Rules.</footer>
+  <footer>Teacher dashboard · Student saves and teacher reset actions are protected by Firebase Authentication and Firestore Security Rules.</footer>
 </div>
 
 <script>
@@ -93,7 +100,28 @@ function normalisePlayer(snapshot){
   const setRows=Object.entries(sets).map(([id,set])=>{const best=set?.best||{},completed=set?.completed||{};return{id,score:Object.values(best).reduce((sum,n)=>sum+Number(n||0),0),completed:Object.values(completed).filter(Boolean).length,last:Number(set?.last||1)}}).sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
   const calculatedScore=setRows.reduce((sum,set)=>sum+set.score,0),completed=setRows.reduce((sum,set)=>sum+set.completed,0),updated=timestampMs(data.updatedAt)||Number(data.clientUpdatedAt||state.localUpdatedAt||0);
   const lastSet=state.lastSet||data.lastSet||"set_1",lastLevel=Number(sets[lastSet]?.last||1);
-  return{uid:snapshot.id,name:data.displayName||state.playerName||"Unnamed player",email:data.email||"",score:Number(data.totalScore??calculatedScore)||calculatedScore,completed,lastSet,lastLevel,updated,setRows};
+  return{uid:snapshot.id,data,name:data.displayName||state.playerName||"Unnamed player",email:data.email||"",score:Number(data.totalScore??calculatedScore)||calculatedScore,completed,lastSet,lastLevel,updated,setRows};
+}
+function scoreGameState(state){return Object.values(state.sets||{}).reduce((total,set)=>total+Object.values(set?.best||{}).reduce((sum,value)=>sum+Number(value||0),0),0)}
+async function resetSetForAllPlayers(){
+  if(!currentUser||!db||!players.length)return;
+  const setId=$("#resetSet").value,label=$("#resetSet").selectedOptions[0].textContent;
+  if(!confirm(`Reset ${label} marks for all ${players.length} players?\n\n重設所有 ${players.length} 位學生的 ${label} 成績？\n\nThis cannot be undone.`))return;
+  const button=$("#resetBtn");button.disabled=true;button.textContent="RESETTING…";setAuth("loading",currentUser.displayName||"TEACHER",`Resetting ${setId} for ${players.length} players…`);
+  try{
+    const resetAt=Date.now();
+    for(let offset=0;offset<players.length;offset+=400){
+      const batch=firestoreApi.writeBatch(db);
+      players.slice(offset,offset+400).forEach(player=>{
+        const state=structuredClone(player.data.gameState||{});state.sets={...(state.sets||{})};delete state.sets[setId];state.setResets={...(state.setResets||{}),[setId]:resetAt};
+        if(state.lastSet===setId)state.lastSet="set_1";state.localUpdatedAt=resetAt;state.total=scoreGameState(state);
+        batch.update(firestoreApi.doc(db,"progress",player.uid),{gameState:state,totalScore:state.total,clientUpdatedAt:resetAt,updatedAt:firestoreApi.serverTimestamp()});
+      });
+      await batch.commit();
+    }
+    await loadPlayers();alert(`${label} marks were reset for all players.\n已重設所有學生的 ${label} 成績。`);
+  }catch(error){alert(`Reset failed / 重設失敗\n${error.message||error}`);setAuth("error",currentUser.displayName||"TEACHER","Reset failed — check Firestore rules");}
+  finally{button.disabled=false;button.textContent="RESET MARKS";}
 }
 function render(){
   const query=$("#search").value.trim().toLowerCase();
@@ -137,6 +165,7 @@ async function initialize(){
 }
 
 $("#loginBtn").addEventListener("click",login);$("#logoutBtn").addEventListener("click",logout);$("#refreshBtn").addEventListener("click",loadPlayers);
+$("#resetBtn").addEventListener("click",resetSetForAllPlayers);
 $("#search").addEventListener("input",render);$("#sortBtn").addEventListener("click",()=>{scoreDescending=!scoreDescending;render()});
 void initialize();
 })();

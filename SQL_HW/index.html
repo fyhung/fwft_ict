@@ -354,7 +354,7 @@ const firebaseConfig={
  measurementId:"G-K83XP2S5HS"
 };
 const fallbackManifest={version:2,defaultSet:"set_1",sets:[
- {id:"set_1",file:"set_1.json",title:"Core Circuit / 核心電路",description:"The original SQL campaign / 原創 SQL 學習旅程",levelCount:20},
+ {id:"set_1",file:"set_1.json",title:"Pokémon Data Lab / 寶可夢數據實驗室",description:"Learn core SQL skills with Pokémon / 使用寶可夢學習核心 SQL 技能",levelCount:20},
  {id:"set_2",file:"set_2.json",title:"Neon Expansion / 霓虹擴展",description:"Racers, relics, drones, beasts, and traders / 賽車、遺物、無人機、怪獸及交易員",levelCount:20},
  {id:"set_3",file:"set_3.json",title:"Space Academy / 太空學院",description:"Cadets, missions, planets, and space relics / 學員、任務、行星及太空遺物",levelCount:20},
  {id:"set_4",file:"set_4.json",title:"Ocean Research / 海洋研究",description:"Research vessels, samples, oceans, and specimens / 研究船、樣本、海洋及標本",levelCount:20},
@@ -368,7 +368,7 @@ const fallbackManifest={version:2,defaultSet:"set_1",sets:[
 let auth=null,db=null,authUser=null,authApi=null,firestoreApi=null,cloudReady=false,cloudSaving=false,cloudSaveQueued=false,cloudSaveTimer=null;
 let gameInitialized=false,authSequence=0;
 function readStored(key){try{return JSON.parse(localStorage.getItem(key))||{}}catch(error){return{}}}
-function defaultProgress(){return{saveVersion:SAVE_VERSION,sound:true,reduced:false,playerName:"",lastSet:"set_1",sets:{},seenHelp:false,total:0,localUpdatedAt:0}}
+function defaultProgress(){return{saveVersion:SAVE_VERSION,sound:true,reduced:false,playerName:"",lastSet:"set_1",sets:{},setResets:{},seenHelp:false,total:0,localUpdatedAt:0}}
 function migrateSave(raw={}){
  const source=raw&&typeof raw.gameState==="object"?raw.gameState:raw;
  const data=source&&typeof source==="object"?source:{};
@@ -379,6 +379,7 @@ function migrateSave(raw={}){
  migrated.playerName=typeof data.playerName==="string"?data.playerName:"";
  migrated.lastSet=typeof data.lastSet==="string"&&data.lastSet?data.lastSet:"set_1";
  migrated.localUpdatedAt=Number(data.localUpdatedAt||raw.clientUpdatedAt||0)||0;
+ migrated.setResets=data.setResets&&typeof data.setResets==="object"?{...data.setResets}:{};
  migrated.sets={};
  const sourceSets=data.sets&&typeof data.sets==="object"?data.sets:{};
  Object.entries(sourceSets).forEach(([id,set])=>{
@@ -403,9 +404,12 @@ function totalScore(value){return Object.values(value?.sets||{}).reduce((sum,set
 function mergeProgress(localValue,cloudValue){
  const local=migrateSave(localValue),cloud=migrateSave(cloudValue),cloudIsNewer=cloud.localUpdatedAt>=local.localUpdatedAt;
  const recent=cloudIsNewer?cloud:local,older=cloudIsNewer?local:cloud,result=migrateSave(recent);
+ result.setResets={...local.setResets,...cloud.setResets};
  result.sets={};
  new Set([...Object.keys(local.sets),...Object.keys(cloud.sets)]).forEach(id=>{
-   const a=local.sets[id]||{},b=cloud.sets[id]||{},newer=recent.sets[id]||{},fallback=older.sets[id]||{};
+   const localReset=Number(local.setResets[id]||0),cloudReset=Number(cloud.setResets[id]||0);
+   const a=localReset<cloudReset?{}:local.sets[id]||{},b=cloudReset<localReset?{}:cloud.sets[id]||{};
+   const newer=cloudIsNewer?b:a,fallback=cloudIsNewer?a:b;
    const best={};new Set([...Object.keys(a.best||{}),...Object.keys(b.best||{})]).forEach(level=>best[level]=Math.max(Number(a.best?.[level]||0),Number(b.best?.[level]||0)));
    const completed={};new Set([...Object.keys(a.completed||{}),...Object.keys(b.completed||{})]).forEach(level=>completed[level]=Boolean(a.completed?.[level]||b.completed?.[level]));
    result.sets[id]={...fallback,...newer,unlocked:Math.max(1,Number(a.unlocked)||1,Number(b.unlocked)||1),best,completed,last:Math.max(1,Number(newer.last||fallback.last)||1)};

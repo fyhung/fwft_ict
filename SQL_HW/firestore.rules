@@ -17,7 +17,9 @@ service cloud.firestore {
 
     match /progress/{uid} {
       allow read: if owns(uid) || isTeacher();
-      allow create, update, delete: if owns(uid);
+      allow create, delete: if owns(uid);
+      // Teachers may reset an individual campaign through the dashboard.
+      allow update: if owns(uid) || isTeacher();
     }
 
     match /teachers/{uid} {
