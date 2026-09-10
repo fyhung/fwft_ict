@@ -203,58 +203,58 @@
   <header class="topbar">
     <div class="brand"><div class="brandmark" aria-hidden="true"><i></i></div><div><h1>SQL <span>CIRCUIT</span></h1><small>雙語 SQL 解謎實驗室 // 2026 SUMMER</small></div></div>
     <div class="iconrow">
-      <button class="setnav" id="levelsBtn" aria-label="Select puzzle set and level" title="Select puzzle set and level"><span>PUZZLE SET</span><b id="currentSetName">01 // Core Circuit</b><i>⌄</i></button>
-      <button class="iconbtn" id="soundBtn" aria-label="Mute sound" title="Sound">♪</button>
-      <button class="iconbtn" id="settingsBtn" aria-label="Settings" title="Settings">⚙</button>
-      <button class="iconbtn" id="helpBtn" aria-label="How to play" title="How to play">?</button>
+      <button class="setnav" id="levelsBtn" aria-label="選擇題組及關卡" title="選擇題組及關卡"><span>題組</span><b id="currentSetName">01 // 寶可夢數據實驗室</b><i>⌄</i></button>
+      <button class="iconbtn" id="soundBtn" aria-label="靜音" title="音效">♪</button>
+      <button class="iconbtn" id="settingsBtn" aria-label="設定" title="設定">⚙</button>
+      <button class="iconbtn" id="helpBtn" aria-label="玩法說明" title="玩法說明">?</button>
     </div>
   </header>
 
-  <section class="authbar" id="authBar" data-state="loading" aria-label="Cloud save account status">
-    <div class="authinfo"><span aria-hidden="true"></span><strong id="authName">CONNECTING TO FIREBASE</strong><small id="authEmail">Local backup remains available</small></div>
+  <section class="authbar" id="authBar" data-state="loading" aria-label="雲端儲存帳戶狀態">
+    <div class="authinfo"><span aria-hidden="true"></span><strong id="authName">正在連接 FIREBASE</strong><small id="authEmail">仍可使用本機備份</small></div>
     <div class="authactions">
-      <button class="action primary" id="loginBtn">SIGN IN WITH GOOGLE</button>
-      <button class="action primary" id="cloudSaveBtn" hidden>SAVE TO CLOUD</button>
-      <button class="action" id="logoutBtn" hidden>LOGOUT</button>
+      <button class="action primary" id="loginBtn">使用 GOOGLE 登入</button>
+      <button class="action primary" id="cloudSaveBtn" hidden>儲存至雲端</button>
+      <button class="action" id="logoutBtn" hidden>登出</button>
     </div>
   </section>
 
-  <section class="hud" aria-label="Game status">
-    <div class="mission"><span class="eyebrow" id="levelLabel">LOADING SETS</span><strong id="missionText">Connecting puzzle manifest…</strong></div>
-    <div class="stat"><label>POINTS</label><b id="score">200</b><span class="deduct" id="deduct">−1 BLOCK</span></div>
-    <div class="stat"><label>TIME</label><b id="time">00:00</b></div>
-    <div class="stat"><label>BEST</label><b id="best">—</b></div>
+  <section class="hud" aria-label="遊戲狀態">
+    <div class="mission"><span class="eyebrow" id="levelLabel">正在載入題組</span><strong id="missionText">正在連接題目清單……</strong></div>
+    <div class="stat"><label>分數</label><b id="score">200</b><span class="deduct" id="deduct">−1 積木</span></div>
+    <div class="stat"><label>時間</label><b id="time">00:00</b></div>
+    <div class="stat"><label>最佳</label><b id="best">—</b></div>
   </section>
   <div class="progress" aria-hidden="true"><i id="progressBar"></i></div>
-  <div class="databanner" id="dataBanner" hidden><b>PUZZLE DATA OFFLINE</b><span id="dataBannerText"></span></div>
+  <div class="databanner" id="dataBanner" hidden><b>題目資料離線</b><span id="dataBannerText"></span></div>
 
   <main class="grid">
     <section class="panel source" aria-labelledby="liveTitle">
-      <div class="panelhead"><div class="paneltitle"><i class="dot"></i><span id="liveTitle">SOURCE TABLE</span></div><span class="badge" id="tableName"></span></div>
+      <div class="panelhead"><div class="paneltitle"><i class="dot"></i><span id="liveTitle">來源資料表</span></div><span class="badge" id="tableName"></span></div>
       <div class="tablebox" id="liveTable"></div>
-      <div class="tablefoot"><span id="liveCount"></span><span class="signal" id="liveSignal">● SOURCE FEED</span></div>
+      <div class="tablefoot"><span id="liveCount"></span><span class="signal" id="liveSignal">● 來源資料</span></div>
     </section>
 
     <section class="panel target" aria-labelledby="targetTitle">
-      <div class="panelhead"><div class="paneltitle"><i class="dot"></i><span id="targetTitle">TARGET TABLE</span></div><span class="badge">EXACT MATCH</span></div>
+      <div class="panelhead"><div class="paneltitle"><i class="dot"></i><span id="targetTitle">目標資料表</span></div><span class="badge">完全相符</span></div>
       <div class="tablebox" id="targetTable"></div>
-      <div class="tablefoot"><span id="targetCount"></span><span class="signal">◆ GOAL LOCKED</span></div>
+      <div class="tablefoot"><span id="targetCount"></span><span class="signal">◆ 目標已鎖定</span></div>
     </section>
 
     <section class="panel query-panel" aria-labelledby="queryTitle">
-      <div class="panelhead"><div class="paneltitle"><i class="dot"></i><span id="queryTitle">QUERY CIRCUIT</span></div><span class="badge" id="blockCount">0 BLOCKS</span></div>
+      <div class="panelhead"><div class="paneltitle"><i class="dot"></i><span id="queryTitle">查詢電路</span></div><span class="badge" id="blockCount">0 塊積木</span></div>
       <div class="querybody">
         <div class="queryarea" id="queryArea" aria-live="polite"></div>
         <div class="querystatus" id="queryStatus"></div>
         <div class="queryactions">
-          <button class="action primary" id="undoBtn">↶ UNDO <span aria-hidden="true">−1</span></button>
-          <button class="action danger" id="restartBtn">↻ RESTART PUZZLE</button>
+          <button class="action primary" id="undoBtn">↶ 復原 <span aria-hidden="true">−1</span></button>
+          <button class="action danger" id="restartBtn">↻ 重新開始</button>
         </div>
       </div>
     </section>
 
     <section class="panel palette-panel" aria-labelledby="paletteTitle">
-      <div class="panelhead"><div class="paneltitle"><i class="dot"></i><span id="paletteTitle">BLOCK PALETTE</span></div><span class="badge">CLICK TO CONNECT</span></div>
+      <div class="panelhead"><div class="paneltitle"><i class="dot"></i><span id="paletteTitle">積木面板</span></div><span class="badge">按一下以連接</span></div>
       <div class="palette" id="palette"></div>
     </section>
   </main>
@@ -268,64 +268,64 @@
 
 <div class="modalwrap" id="completeModal" hidden>
   <section class="modal complete" role="dialog" aria-modal="true" aria-labelledby="completeTitle">
-    <div class="rank" id="rank">S</div><span class="eyebrow">TARGET SYNCHRONIZED</span><h2 id="completeTitle">PUZZLE COMPLETE</h2>
+    <div class="rank" id="rank">S</div><span class="eyebrow">目標已同步</span><h2 id="completeTitle">題目完成</h2>
     <p id="completeText"></p>
     <div class="summary">
-      <div><small>FINAL SCORE</small><b id="sumScore"></b></div><div><small>BLOCKS</small><b id="sumBlocks"></b></div>
-      <div><small>UNDOS</small><b id="sumUndos"></b></div><div><small>TIME</small><b id="sumTime"></b></div>
+      <div><small>最終分數</small><b id="sumScore"></b></div><div><small>積木</small><b id="sumBlocks"></b></div>
+      <div><small>復原次數</small><b id="sumUndos"></b></div><div><small>時間</small><b id="sumTime"></b></div>
     </div>
     <pre class="finalsql" id="finalSql"></pre>
     <div class="modalactions">
-      <button class="action primary" id="nextBtn">NEXT PUZZLE →</button>
-      <button class="action" id="replayBtn">REPLAY</button><button class="action" id="completeLevelsBtn">LEVEL SELECT</button>
+      <button class="action primary" id="nextBtn">下一題 →</button>
+      <button class="action" id="replayBtn">再玩一次</button><button class="action" id="completeLevelsBtn">選擇關卡</button>
     </div>
   </section>
 </div>
 
 <div class="modalwrap" id="levelsModal" hidden>
   <section class="modal" role="dialog" aria-modal="true" aria-labelledby="levelsTitle">
-    <span class="eyebrow">CAMPAIGN MAP</span><h2 id="levelsTitle">LEVEL SELECT</h2>
-    <p>Best scores are kept locally and synchronized after Google sign-in.</p>
-    <label class="playerfield"><span>PLAYER NAME</span><input id="playerName" type="text" maxlength="24" autocomplete="nickname" placeholder="Enter name"></label>
-    <div class="setheading">SELECT PUZZLE SET</div>
-    <div class="setpicker" id="setPicker" aria-label="Puzzle set selector"></div>
+    <span class="eyebrow">挑戰地圖</span><h2 id="levelsTitle">選擇關卡</h2>
+    <p>最佳成績會儲存在本機，使用 Google 登入後即可同步。</p>
+    <label class="playerfield"><span>學生名稱</span><input id="playerName" type="text" maxlength="24" autocomplete="nickname" placeholder="輸入名稱"></label>
+    <div class="setheading">選擇題組</div>
+    <div class="setpicker" id="setPicker" aria-label="題組選擇器"></div>
     <p class="setmeta" id="setMeta"></p>
     <div class="setscore" aria-live="polite">
-      <span>CURRENT SET TOTAL / 本組總分</span>
+      <span>本組總分</span>
       <strong id="setTotalScore">0</strong>
       <small id="setTotalMax">/ 4000</small>
     </div>
     <div class="levelgrid" id="levelGrid"></div>
-    <div class="modalactions"><button class="action" data-close="levelsModal">CLOSE</button></div>
+    <div class="modalactions"><button class="action" data-close="levelsModal">關閉</button></div>
   </section>
 </div>
 
 <div class="modalwrap" id="helpModal" hidden>
   <section class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
-    <span class="eyebrow">FIELD MANUAL</span><h2 id="helpTitle">BUILD. RUN. MATCH.</h2>
-    <p>Click the glowing Lego-style blocks to assemble a query. Every SQL block is available at every stage, so you must identify and correct invalid choices yourself. Once the query is valid, the source table transforms immediately.</p>
-    <p><strong style="color:var(--cyan)">Edit anywhere:</strong> Click a thin gap in the query to move the glowing insertion cursor, then choose a palette block. Click an existing SQL block to delete it. Undo restores the previous insertion or deletion.</p>
-    <p>Match every target column, row, value, and ordering exactly. Each inserted block costs 1 point, each Undo costs another point, and time costs 1 point every 2 seconds. There is no move limit, and you can keep solving at zero.</p>
-    <p><strong style="color:var(--cyan)">Tip:</strong> Punctuation and formatting are wired automatically, so you only pay for meaningful SQL blocks.</p>
-    <div class="modalactions"><button class="action primary" data-close="helpModal">ENTER THE LAB</button></div>
+    <span class="eyebrow">操作手冊</span><h2 id="helpTitle">組合、執行、配對</h2>
+    <p>按下發光的積木來組合查詢。每個階段都會提供所有 SQL 積木，你需要自行判斷並修正無效的選擇。查詢有效後，來源資料表會立即顯示結果。</p>
+    <p><strong style="color:var(--cyan)">在任何位置編輯：</strong>按下查詢中的細線空位以移動發光的插入游標，再選擇面板上的積木。按下查詢中已有的 SQL 積木即可刪除；「復原」可還原上一次插入或刪除。</p>
+    <p>你必須令所有目標欄、資料列、數值及排序完全相符。每插入一塊積木扣 1 分，每次復原再扣 1 分，時間每 2 秒扣 1 分。操作次數不限，即使分數降至零仍可繼續解題。</p>
+    <p><strong style="color:var(--cyan)">提示：</strong>標點符號及格式會自動處理，因此只有具 SQL 意義的積木才會扣分。</p>
+    <div class="modalactions"><button class="action primary" data-close="helpModal">進入實驗室</button></div>
   </section>
 </div>
 
 <div class="modalwrap" id="settingsModal" hidden>
   <section class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-    <span class="eyebrow">LAB CONTROLS</span><h2 id="settingsTitle">SETTINGS</h2>
-    <div class="settingsrow"><span>Sound effects</span><button class="toggle" id="soundToggle" role="switch" aria-label="Sound effects"></button></div>
-    <div class="settingsrow"><span>Reduced motion</span><button class="toggle" id="motionToggle" role="switch" aria-label="Reduced motion"></button></div>
-    <div class="modalactions"><button class="action primary" data-close="settingsModal">DONE</button></div>
+    <span class="eyebrow">實驗室控制</span><h2 id="settingsTitle">設定</h2>
+    <div class="settingsrow"><span>音效</span><button class="toggle" id="soundToggle" role="switch" aria-label="音效"></button></div>
+    <div class="settingsrow"><span>減少動態效果</span><button class="toggle" id="motionToggle" role="switch" aria-label="減少動態效果"></button></div>
+    <div class="modalactions"><button class="action primary" data-close="settingsModal">完成</button></div>
   </section>
 </div>
 
 <div class="modalwrap" id="dataErrorModal" hidden>
   <section class="modal" role="alertdialog" aria-modal="true" aria-labelledby="dataErrorTitle">
-    <span class="eyebrow">DATA LINK OFFLINE</span><h2 id="dataErrorTitle">PUZZLE SETS NOT FOUND</h2>
+    <span class="eyebrow">資料連線離線</span><h2 id="dataErrorTitle">找不到題組</h2>
     <div class="loaderror" id="dataErrorText"></div>
-    <p>Keep <strong>index.html</strong> (or <strong>sql-circuit.html</strong>), <strong>sets.json</strong>, and every <strong>set_*.json</strong> file in the same folder. Open the folder through a small local web server; browsers usually block JSON loading when an HTML file is double-clicked.</p>
-    <div class="modalactions"><button class="action primary" id="retryDataBtn">RETRY</button></div>
+    <p>請把 <strong>index.html</strong>（或 <strong>sql-circuit.html</strong>）、<strong>sets.json</strong> 及所有 <strong>set_*.json</strong> 檔案放在同一資料夾，並透過小型本機網頁伺服器開啟。直接按兩下 HTML 檔案時，瀏覽器通常會阻止載入 JSON。</p>
+    <div class="modalactions"><button class="action primary" id="retryDataBtn">重試</button></div>
   </section>
 </div>
 <div class="toast" id="toast" role="status"></div>
@@ -477,21 +477,21 @@ function parse(ts){
   const out=(valid,msg,next,errorAt=valid?null:i-1)=>({valid,msg,next,ast,state,errorAt});
   while(i<ts.length){
     const t=ts[i++];
-    if(state==="start"){if(t.type!=="SELECT")return out(false,"Begin with SELECT",["SELECT"]);state="selectStart";continue}
+    if(state==="start"){if(t.type!=="SELECT")return out(false,"請以 SELECT 開始",["SELECT"]);state="selectStart";continue}
     if(state==="selectStart"){
       if(t.type==="DISTINCT"&&!ast.select.length&&!ast.distinct){ast.distinct=true;continue}
       if(t.type==="field"){ast.select.push(F(t.value));state="selectDone";continue}
       if(t.type==="agg"){pendingAgg=t.value;state="aggFieldSelect";continue}
-      return out(false,"Choose a field or aggregate",["field","agg","DISTINCT"]);
+      return out(false,"請選擇欄位或聚合函數",["field","agg","DISTINCT"]);
     }
-    if(state==="aggFieldSelect"){if(t.type!=="field")return out(false,"Choose a field for the aggregate",["field"]);ast.select.push(A(pendingAgg,t.value));pendingAgg=null;state="selectDone";continue}
+    if(state==="aggFieldSelect"){if(t.type!=="field")return out(false,"請選擇聚合函數使用的欄位",["field"]);ast.select.push(A(pendingAgg,t.value));pendingAgg=null;state="selectDone";continue}
     if(state==="selectDone"){
       if(t.type==="field"){ast.select.push(F(t.value));continue}
       if(t.type==="agg"){pendingAgg=t.value;state="aggFieldSelect";continue}
       if(t.type==="FROM"){state="fromTable";continue}
-      return out(false,"Add a field or FROM",["field","agg","FROM"]);
+      return out(false,"請加入另一個欄位或 FROM",["field","agg","FROM"]);
     }
-    if(state==="fromTable"){if(t.type!=="table")return out(false,"Choose the source table",["table"]);state="post";continue}
+    if(state==="fromTable"){if(t.type!=="table")return out(false,"請選擇來源資料表",["table"]);state="post";continue}
     if(state==="post"||state==="conditionDone"||state==="groupDone"||state==="orderDone"){
       if((state==="post"||state==="conditionDone")&&t.type==="WHERE"&&!ast.where.length){clause="where";state="condOperand";continue}
       if((state==="post"||state==="conditionDone")&&t.type==="GROUP BY"&&!ast.groupBy.length){state="groupField";continue}
@@ -502,46 +502,46 @@ function parse(ts){
       if(state==="groupDone"&&t.type==="field"){ast.groupBy.push(t.value);continue}
       if(state==="orderDone"&&t.type==="field"){current={expr:F(t.value),dir:"ASC"};ast.orderBy.push(current);state="orderDir";continue}
       if(state==="orderDone"&&t.type==="agg"){pendingAgg=t.value;state="orderAggField";continue}
-      return out(false,"That block cannot connect here",[]);
+      return out(false,"這塊積木不能連接在此位置",[]);
     }
     if(state==="condOperand"){
       if(t.type==="NOT"&&!negate){negate=true;continue}
       current=current||{};current.not=negate;negate=false;
       if(t.type==="field"){current.left=F(t.value);state="condOp";continue}
       if(t.type==="agg"&&clause==="having"){pendingAgg=t.value;state="condAggField";continue}
-      return out(false,"Choose a field"+(clause==="having"?" or aggregate":""),clause==="having"?["field","agg","NOT"]:["field","NOT"]);
+      return out(false,clause==="having"?"請選擇欄位或聚合函數":"請選擇欄位",clause==="having"?["field","agg","NOT"]:["field","NOT"]);
     }
-    if(state==="condAggField"){if(t.type!=="field")return out(false,"Choose an aggregate field",["field"]);current.left=A(pendingAgg,t.value);pendingAgg=null;state="condOp";continue}
+    if(state==="condAggField"){if(t.type!=="field")return out(false,"請選擇聚合欄位",["field"]);current.left=A(pendingAgg,t.value);pendingAgg=null;state="condOp";continue}
     if(state==="condOp"){
-      if(t.type!=="op")return out(false,"Choose a comparison operator",["op"]);current.op=t.value;
+      if(t.type!=="op")return out(false,"請選擇比較運算子",["op"]);current.op=t.value;
       if(t.value==="IS NULL"||t.value==="IS NOT NULL"){(clause==="where"?ast.where:ast.having).push(current);current=null;state="conditionDone"}else state="condValue";
       continue;
     }
     if(state==="condValue"){
-      if(t.type!=="value")return out(false,"Choose a value",["value"]);
+      if(t.type!=="value")return out(false,"請選擇數值",["value"]);
       if(current.op==="BETWEEN"&&!Array.isArray(t.value)){current.right=[t.value];state="betweenSecond";continue}
-      if(current.op==="IN"&&!Array.isArray(t.value))return out(false,"Choose a value-set block",["valueSet"]);
+      if(current.op==="IN"&&!Array.isArray(t.value))return out(false,"請選擇數值集合積木",["valueSet"]);
       current.right=t.value;(clause==="where"?ast.where:ast.having).push(current);current=null;state="conditionDone";continue;
     }
-    if(state==="betweenSecond"){if(t.type!=="value"||Array.isArray(t.value))return out(false,"Choose the second range value",["scalarValue"]);current.right.push(t.value);(clause==="where"?ast.where:ast.having).push(current);current=null;state="conditionDone";continue}
-    if(state==="groupField"){if(t.type!=="field")return out(false,"Choose a GROUP BY field",["field"]);ast.groupBy.push(t.value);state="groupDone";continue}
+    if(state==="betweenSecond"){if(t.type!=="value"||Array.isArray(t.value))return out(false,"請選擇範圍的第二個數值",["scalarValue"]);current.right.push(t.value);(clause==="where"?ast.where:ast.having).push(current);current=null;state="conditionDone";continue}
+    if(state==="groupField"){if(t.type!=="field")return out(false,"請選擇 GROUP BY 欄位",["field"]);ast.groupBy.push(t.value);state="groupDone";continue}
     if(state==="orderExpr"){
       if(t.type==="field"){ast.orderBy.push({expr:F(t.value),dir:"ASC"});state="orderDir";continue}
       if(t.type==="agg"){pendingAgg=t.value;state="orderAggField";continue}
-      return out(false,"Choose a field to sort",["field","agg"]);
+      return out(false,"請選擇排序欄位",["field","agg"]);
     }
-    if(state==="orderAggField"){if(t.type!=="field")return out(false,"Choose an aggregate field",["field"]);ast.orderBy.push({expr:A(pendingAgg,t.value),dir:"ASC"});pendingAgg=null;state="orderDir";continue}
+    if(state==="orderAggField"){if(t.type!=="field")return out(false,"請選擇聚合欄位",["field"]);ast.orderBy.push({expr:A(pendingAgg,t.value),dir:"ASC"});pendingAgg=null;state="orderDir";continue}
     if(state==="orderDir"){
       if(t.type==="ASC"||t.type==="DESC"){ast.orderBy.at(-1).dir=t.type;state="orderDone";continue}
-      return out(false,"Choose ASC or DESC",["ASC","DESC"]);
+      return out(false,"請選擇 ASC 或 DESC",["ASC","DESC"]);
     }
-    if(state==="limitValue"){if(t.type!=="value"||typeof t.value!=="number"||!Number.isInteger(t.value)||t.value<0)return out(false,"Choose a whole-number limit",["limitValue"]);ast.limit=t.value;state="post";continue}
+    if(state==="limitValue"){if(t.type!=="value"||typeof t.value!=="number"||!Number.isInteger(t.value)||t.value<0)return out(false,"請選擇非負整數作為筆數限制",["limitValue"]);ast.limit=t.value;state="post";continue}
   }
   const valid=["post","conditionDone","groupDone","orderDone","orderDir"].includes(state);
-  const messages={start:"Begin with SELECT",selectStart:"Choose a field",aggFieldSelect:"Choose an aggregate field",selectDone:"Add another field or FROM",
-   fromTable:"Choose the source table",condOperand:"Choose a condition field",condAggField:"Choose an aggregate field",condOp:"Choose a comparison operator",
-   condValue:"Choose a value",betweenSecond:"Choose the upper range value",groupField:"Choose a GROUP BY field",orderExpr:"Choose a field to sort",
-   orderAggField:"Choose an aggregate field",orderDir:"Choose ASC or DESC",limitValue:"Choose a row limit"};
+  const messages={start:"請以 SELECT 開始",selectStart:"請選擇欄位",aggFieldSelect:"請選擇聚合欄位",selectDone:"請加入另一個欄位或 FROM",
+   fromTable:"請選擇來源資料表",condOperand:"請選擇條件欄位",condAggField:"請選擇聚合欄位",condOp:"請選擇比較運算子",
+   condValue:"請選擇數值",betweenSecond:"請選擇範圍上限",groupField:"請選擇 GROUP BY 欄位",orderExpr:"請選擇排序欄位",
+   orderAggField:"請選擇聚合欄位",orderDir:"請選擇 ASC 或 DESC",limitValue:"請選擇筆數限制"};
   let next=[];
   if(state==="start")next=["SELECT"];
   if(state==="selectStart")next=["field","agg","DISTINCT"];
@@ -552,7 +552,7 @@ function parse(ts){
   if(state==="condOperand")next=clause==="having"?["field","agg","NOT"]:["field","NOT"];
   if(state==="condOp")next=["op"];if(state==="condValue")next=["value"];if(state==="betweenSecond")next=["scalarValue"];
   if(state==="groupField")next=["field"];if(state==="orderExpr")next=["field","agg"];if(state==="orderDir")next=["ASC","DESC"];if(state==="limitValue")next=["limitValue"];
-  return out(valid,valid?"Circuit active • result updating":messages[state]||"Continue building",next,null);
+  return out(valid,valid?"查詢有效 • 正在更新結果":messages[state]||"請繼續組合",next,null);
 }
 
 function formatQuery(ts){
@@ -593,52 +593,52 @@ function availableBlocks(){
   if(lvl.goal.limit!=null)addValue(lvl.goal.limit);
   (lvl.extraValues||[]).forEach(addValue);
   return[
-   {name:"SQL CLAUSES",items:["SELECT","FROM","WHERE","GROUP BY","HAVING","ORDER BY","LIMIT","DISTINCT"].map(x=>token(x,x,x,"clause"))},
-   {name:"TABLE & FIELDS",items:[token("table",lvl.table,lvl.table,"table"),...fields.map(x=>token("field",x,x,"field")),token("field","*","*","field")]},
-   {name:"AGGREGATE FUNCTIONS",items:["COUNT","SUM","AVG","MIN","MAX"].map(x=>token("agg",x,x,"agg"))},
-   {name:"COMPARISONS",items:["=","!=",">",">=","<","<=","LIKE","BETWEEN","IN","IS NULL","IS NOT NULL"].map(x=>token("op",x,x,"op"))},
-   {name:"LOGIC & SORTING",items:["AND","OR","NOT","ASC","DESC"].map(x=>token(x,x,x,["AND","OR","NOT"].includes(x)?"op":"clause"))},
-   {name:"VALUES",items:values.map(v=>token("value",v,valueLabel(v),"value"))}
+   {name:"SQL 子句",items:["SELECT","FROM","WHERE","GROUP BY","HAVING","ORDER BY","LIMIT","DISTINCT"].map(x=>token(x,x,x,"clause"))},
+   {name:"資料表及欄位",items:[token("table",lvl.table,lvl.table,"table"),...fields.map(x=>token("field",x,x,"field")),token("field","*","*","field")]},
+   {name:"聚合函數",items:["COUNT","SUM","AVG","MIN","MAX"].map(x=>token("agg",x,x,"agg"))},
+   {name:"比較運算子",items:["=","!=",">",">=","<","<=","LIKE","BETWEEN","IN","IS NULL","IS NOT NULL"].map(x=>token("op",x,x,"op"))},
+   {name:"邏輯及排序",items:["AND","OR","NOT","ASC","DESC"].map(x=>token(x,x,x,["AND","OR","NOT"].includes(x)?"op":"clause"))},
+   {name:"數值",items:values.map(v=>token("value",v,valueLabel(v),"value"))}
   ];
 }
 function enabled(){return !solved}
 function lastOp(){for(let i=tokens.length-1;i>=0;i--)if(tokens[i].type==="op")return tokens[i].value;return null}
 
 function tableHTML(data,animated=false){
-  if(!data||!data.columns.length)return'<div class="emptyquery">No result columns</div>';
+  if(!data||!data.columns.length)return'<div class="emptyquery">沒有結果欄位</div>';
   const cells=v=>v===null?'<span style="color:var(--purple)">NULL</span>':String(v);
   return`<table class="${animated?"table-animate":""}"><thead><tr>${data.columns.map(c=>`<th>${escapeHtml(c)}</th>`).join("")}</tr></thead><tbody>${data.rows.map(r=>`<tr>${data.columns.map(c=>`<td>${escapeHtml(cells(r[c]))}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function sourceData(lvl){const rows=datasets[lvl.table], columns=Object.keys(rows[0]);return{columns,rows}}
 function renderQuery(){
-  if(!tokens.length)el.query.innerHTML='<div class="emptyquery">Connect a <strong style="color:var(--cyan);margin:0 5px">SELECT</strong> block to begin the circuit.</div>';
+  if(!tokens.length)el.query.innerHTML='<div class="emptyquery">連接 <strong style="color:var(--cyan);margin:0 5px">SELECT</strong> 積木以開始查詢。</div>';
   else{const lines=formatQuery(tokens);el.query.innerHTML=lines.map((l,lineIndex)=>`<div class="qline ${l.indent?"indent":""}">${l.tokens.map((t,i)=>{
     const prev=l.tokens[i-1],aggregateField=t.type==="field"&&prev?.type==="agg";
     const alias=aggregateField&&findClause(tokens,t._idx)==="select"?" AS "+aggName(A(prev.value,t.value)):"";
-    const slot=`<button class="insert-slot ${insertAt===t._idx?"active":""}" data-insert="${t._idx}" aria-label="Insert before ${escapeHtml(t.label)}" title="Insert here"></button>`;
-    return slot+(t.comma?'<span class="comma">,</span>':"")+(aggregateField?'<span class="comma">(</span>':"")+`<button class="qblock ${t.kind}" data-delete="${t._idx}" aria-label="Delete ${escapeHtml(t.label)}" title="Click to delete">${escapeHtml(t.label)}</button>`+(aggregateField?`<span class="comma">)${escapeHtml(alias)}</span>`:"")
-   }).join("")+(lineIndex===lines.length-1?`<button class="insert-slot ${insertAt===tokens.length?"active":""}" data-insert="${tokens.length}" aria-label="Insert at end" title="Insert here"></button>`:"")}</div>`).join("")}
-  el.status.textContent=`${parsed.msg} • Click a gap to insert; click a block to delete.`;
+    const slot=`<button class="insert-slot ${insertAt===t._idx?"active":""}" data-insert="${t._idx}" aria-label="在 ${escapeHtml(t.label)} 前插入" title="在此插入"></button>`;
+    return slot+(t.comma?'<span class="comma">,</span>':"")+(aggregateField?'<span class="comma">(</span>':"")+`<button class="qblock ${t.kind}" data-delete="${t._idx}" aria-label="刪除 ${escapeHtml(t.label)}" title="按一下以刪除">${escapeHtml(t.label)}</button>`+(aggregateField?`<span class="comma">)${escapeHtml(alias)}</span>`:"")
+   }).join("")+(lineIndex===lines.length-1?`<button class="insert-slot ${insertAt===tokens.length?"active":""}" data-insert="${tokens.length}" aria-label="在末端插入" title="在此插入"></button>`:"")}</div>`).join("")}
+  el.status.textContent=`${parsed.msg} • 按下空位以插入；按下積木以刪除。`;
   el.status.style.color=parsed.valid?"var(--green)":"var(--amber)";
-  el.blockCount.textContent=`${tokens.length} BLOCK${tokens.length===1?"":"S"}`;$("#undoBtn").disabled=!history.length||solved;
+  el.blockCount.textContent=`${tokens.length} 塊積木`;$("#undoBtn").disabled=!history.length||solved;
 }
 function renderPalette(){
   el.palette.innerHTML=availableBlocks().map(g=>`<section class="group"><div class="grouplabel">${g.name}</div><div class="blocks">${g.items.map((t,i)=>{
     const ok=enabled(t);
-    return`<button class="block ${t.kind}" data-token="${encodeURIComponent(JSON.stringify(t))}" ${ok?"":"disabled"} title="${ok?"Insert "+t.label:"Puzzle complete"}">${escapeHtml(t.label)}</button>`
+    return`<button class="block ${t.kind}" data-token="${encodeURIComponent(JSON.stringify(t))}" ${ok?"":"disabled"} title="${ok?"插入 "+t.label:"題目已完成"}">${escapeHtml(t.label)}</button>`
   }).join("")}</div></section>`).join("");
 }
 function renderTables(animate=false){
   const lvl=levels[levelIndex], target=targetFor(lvl), live=lastValid||sourceData(lvl);
   el.live.innerHTML=tableHTML(live,animate);el.target.innerHTML=tableHTML(target,false);
-  el.liveTitle.textContent=lastValid?"LIVE RESULT":"SOURCE TABLE";el.liveSignal.textContent=lastValid?"● QUERY ACTIVE":"● SOURCE FEED";
-  el.liveCount.textContent=lastValid?(live.grouped?`${live.rows.length} groups`:`${live.rows.length} rows selected`):`${live.rows.length} rows`;
-  el.targetCount.textContent=`${target.rows.length} ${target.grouped?"groups":"target rows"}`;el.tableName.textContent=lvl.table.toUpperCase();
+  el.liveTitle.textContent=lastValid?"即時結果":"來源資料表";el.liveSignal.textContent=lastValid?"● 查詢有效":"● 來源資料";
+  el.liveCount.textContent=lastValid?(live.grouped?`${live.rows.length} 個群組`:`已選取 ${live.rows.length} 列`):`${live.rows.length} 列`;
+  el.targetCount.textContent=`${target.rows.length} ${target.grouped?"個目標群組":"列目標資料"}`;el.tableName.textContent=lvl.table.toUpperCase();
 }
 function renderHud(){
   const score=currentScore(),sp=setProgress();el.score.textContent=score;el.time.textContent=formatTime(elapsed);el.best.textContent=sp.best[levelIndex+1]??"—";
-  el.level.textContent=`${currentSet.id.toUpperCase().replace("_"," ")} • LEVEL ${String(levelIndex+1).padStart(2,"0")} / ${levels.length}`;
+  el.level.textContent=`${currentSet.id.toUpperCase().replace("_"," ")} • 關卡 ${String(levelIndex+1).padStart(2,"0")} / ${levels.length}`;
   const mission=levels[levelIndex].mission,zh=typeof mission==="object"?(mission.zh||mission["zh-Hant"]||""):"",en=typeof mission==="object"?(mission.en||""):String(mission||"");
   el.mission.innerHTML=`<span class="mission-zh">${escapeHtml(zh)}</span><span class="mission-en">${escapeHtml(en)}</span>`;
   $("#currentSetName").textContent=`${String(setIndex+1).padStart(2,"0")} // ${currentSet.title}`;
@@ -662,7 +662,7 @@ function levelTitle(level){return level.titleZh?`${level.titleZh} / ${level.titl
 
 function update(animate=true){
   parsed=parse(tokens);
-  if(parsed.valid){try{lastValid=evaluate(parsed.ast,datasets[levels[levelIndex].table])}catch(e){parsed.msg="Circuit incomplete";parsed.valid=false}}
+  if(parsed.valid){try{lastValid=evaluate(parsed.ast,datasets[levels[levelIndex].table])}catch(e){parsed.msg="查詢尚未完成";parsed.valid=false}}
   renderQuery();renderPalette();renderTables(animate);renderHud();
   if(parsed.valid&&!solved&&exact(lastValid,targetFor(levels[levelIndex])))complete();
 }
@@ -688,21 +688,21 @@ function complete(){
   solved=true;clearInterval(timer);const final=currentScore(),id=levelIndex+1;
   const sp=setProgress();sp.best[id]=Math.max(sp.best[id]||0,final);sp.completed[id]=true;sp.unlocked=Math.max(sp.unlocked,Math.min(levels.length,id+1));
   progress.total=totalScore(progress);save();void saveGame();
-  beep("success");el.announce.textContent=`Puzzle complete. Final score ${final}.`;
+  beep("success");el.announce.textContent=`題目完成，最終分數為 ${final}。`;
   el.live.classList.add("matched");el.target.classList.add("matched");setTimeout(()=>{el.live.classList.remove("matched");el.target.classList.remove("matched")},850);
   const wave=document.createElement("div");wave.className="successwave";document.body.append(wave);setTimeout(()=>wave.remove(),900);
   setTimeout(()=>{const modal=$("#completeModal");$("#rank").textContent=final>=175?"S":final>=140?"A":final>=100?"B":final>0?"C":"D";
     $("#sumScore").textContent=final;$("#sumBlocks").textContent=insertions;$("#sumUndos").textContent=undos;$("#sumTime").textContent=formatTime(elapsed);
-    $("#completeText").textContent=`${progress.playerName?progress.playerName+", ":""}${levelTitle(levels[levelIndex])} synchronized. Time deduction: ${Math.floor(elapsed/2)} points.`;
+    $("#completeText").textContent=`${progress.playerName?progress.playerName+"，":""}${levelTitle(levels[levelIndex])} 已同步。時間扣分：${Math.floor(elapsed/2)} 分。`;
     $("#finalSql").textContent=sqlText(parsed.ast);$("#nextBtn").disabled=levelIndex===levels.length-1;openModal(modal)},650);
 }
 function openModal(m){closeAll();m.hidden=false;setTimeout(()=>m.querySelector("button")?.focus(),0)}
 function closeAll(){$$(".modalwrap").forEach(m=>m.hidden=true)}
 function gradeFor(score){
-  if(score==null)return{label:"UNPLAYED",cls:""};
-  if(score>=175)return{label:"S GRADE",cls:"grade-s"};if(score>=150)return{label:"A GRADE",cls:"grade-a"};
-  if(score>=120)return{label:"B GRADE",cls:"grade-b"};if(score>=80)return{label:"C GRADE",cls:"grade-c"};
-  if(score>0)return{label:"D GRADE",cls:"grade-d"};return{label:"FAIL",cls:"grade-fail"};
+  if(score==null)return{label:"尚未作答",cls:""};
+  if(score>=175)return{label:"S 級",cls:"grade-s"};if(score>=150)return{label:"A 級",cls:"grade-a"};
+  if(score>=120)return{label:"B 級",cls:"grade-b"};if(score>=80)return{label:"C 級",cls:"grade-c"};
+  if(score>0)return{label:"D 級",cls:"grade-d"};return{label:"未通過",cls:"grade-fail"};
 }
 function showLevels(){
   const sp=setProgress();
@@ -714,9 +714,9 @@ function showLevels(){
   $("#levelGrid").innerHTML=currentSet?levels.map((l,i)=>{const n=i+1,locked=n>sp.unlocked,best=sp.best[n];
    const grade=gradeFor(best);
    return`<button class="level ${sp.completed[n]?"done":""} ${i===levelIndex?"current":""}" data-level="${i}" ${locked?"disabled":""}>
-    <b class="levelno">LEVEL ${String(n).padStart(2,"0")}</b>
-    ${locked?'<strong class="bestscore">—</strong><span class="gradetag">LOCKED</span>':best!=null?`<strong class="bestscore ${grade.cls}">${best}</strong><span class="gradetag ${grade.cls}">${grade.label}</span>`:`<strong class="bestscore">—</strong><small>${l.concept}</small>`}
-   </button>`}).join(""):'<div class="loaderror" style="grid-column:1/-1">The set selector is working, but this preview cannot load the adjacent JSON puzzle file. Serve the complete folder to play.</div>';
+    <b class="levelno">關卡 ${String(n).padStart(2,"0")}</b>
+    ${locked?'<strong class="bestscore">—</strong><span class="gradetag">尚未解鎖</span>':best!=null?`<strong class="bestscore ${grade.cls}">${best}</strong><span class="gradetag ${grade.cls}">${grade.label}</span>`:`<strong class="bestscore">—</strong><small>${l.concept}</small>`}
+   </button>`}).join(""):'<div class="loaderror" style="grid-column:1/-1">題組選擇器運作正常，但目前無法載入相鄰的 JSON 題目檔案。請透過網頁伺服器提供整個資料夾後再開始遊戲。</div>';
   $("#playerName").value=progress.playerName;
   openModal($("#levelsModal"));
 }
@@ -734,21 +734,21 @@ function updateAuthUI(state,message=""){
   bar.dataset.state=state;login.hidden=signedIn;cloudSave.hidden=!signedIn;logoutButton.hidden=!signedIn;
   login.disabled=state==="loading"||state==="unavailable";cloudSave.disabled=state==="loading"||state==="saving";logoutButton.disabled=state==="loading";
   if(signedIn){
-    $("#authName").textContent=authUser.displayName||"GOOGLE ACCOUNT";
+    $("#authName").textContent=authUser.displayName||"GOOGLE 帳戶";
     $("#authEmail").textContent=[authUser.email,message].filter(Boolean).join(" • ");
   }else{
-    $("#authName").textContent=state==="loading"?"CONNECTING TO FIREBASE":state==="unavailable"?"CLOUD SAVE UNAVAILABLE":"LOCAL BACKUP MODE";
-    $("#authEmail").textContent=message||(state==="loading"?"Checking saved Google session":"Sign in with Google to synchronize progress");
+    $("#authName").textContent=state==="loading"?"正在連接 FIREBASE":state==="unavailable"?"雲端儲存無法使用":"本機備份模式";
+    $("#authEmail").textContent=message||(state==="loading"?"正在檢查已儲存的 Google 工作階段":"使用 Google 登入以同步進度");
   }
 }
 function friendlyAuthError(error){
   const code=error?.code||"";
-  if(code==="auth/popup-closed-by-user"||code==="auth/cancelled-popup-request")return"Sign-in was cancelled.";
-  if(code==="auth/popup-blocked")return"The browser blocked the Google sign-in window. Allow pop-ups and try again.";
-  if(code==="auth/unauthorized-domain")return"This website domain is not authorized in Firebase Authentication.";
-  if(code==="auth/network-request-failed")return"Firebase could not be reached. Local backup is still working.";
-  if(code==="permission-denied"||code==="firestore/permission-denied")return"Firestore denied access. Check and publish the security rules.";
-  return error?.message||"Firebase is temporarily unavailable. Local backup is still working.";
+  if(code==="auth/popup-closed-by-user"||code==="auth/cancelled-popup-request")return"登入已取消。";
+  if(code==="auth/popup-blocked")return"瀏覽器已封鎖 Google 登入視窗。請允許彈出式視窗後重試。";
+  if(code==="auth/unauthorized-domain")return"Firebase Authentication 尚未授權此網站網域。";
+  if(code==="auth/network-request-failed")return"無法連接 Firebase，本機備份仍可運作。";
+  if(code==="permission-denied"||code==="firestore/permission-denied")return"Firestore 拒絕存取。請檢查並發布安全規則。";
+  return error?.message||"Firebase 暫時無法使用，本機備份仍可運作。";
 }
 function createNewSave(user=authUser){
   const gameState=migrateSave(progress);gameState.total=totalScore(gameState);
@@ -763,7 +763,7 @@ function userLocalFallback(user){
   return defaultProgress();
 }
 async function loadGame(user=authUser){
-  if(!user||!db)throw new Error("Firebase is not ready");
+  if(!user||!db)throw new Error("Firebase 尚未準備就緒");
   const localProgress=userLocalFallback(user);progress=localProgress;
   const reference=firestoreApi.doc(db,CLOUD_COLLECTION,user.uid),snapshot=await firestoreApi.getDoc(reference);
   if(snapshot.exists())progress=mergeProgress(localProgress,snapshot.data());
@@ -772,12 +772,12 @@ async function loadGame(user=authUser){
 }
 async function saveGame({notify=false}={}){
   clearTimeout(cloudSaveTimer);cloudSaveTimer=null;save({cloud:false});
-  if(!authUser||!db||!cloudReady){if(notify)flashToast("Sign in with Google to save to the cloud");return false}
+  if(!authUser||!db||!cloudReady){if(notify)flashToast("請使用 Google 登入以儲存至雲端");return false}
   if(cloudSaving){cloudSaveQueued=true;return false}
-  cloudSaving=true;updateAuthUI("saving","Saving progress…");
+  cloudSaving=true;updateAuthUI("saving","正在儲存進度……");
   try{
     await firestoreApi.setDoc(firestoreApi.doc(db,CLOUD_COLLECTION,authUser.uid),createNewSave(authUser));
-    updateAuthUI("signed-in","Cloud save up to date");if(notify)flashToast("Progress saved to Firebase");return true;
+    updateAuthUI("signed-in","雲端進度已是最新");if(notify)flashToast("進度已儲存至 Firebase");return true;
   }catch(error){updateAuthUI("error",friendlyAuthError(error));if(notify)flashToast(friendlyAuthError(error));return false}
   finally{cloudSaving=false;if(cloudSaveQueued){cloudSaveQueued=false;void saveGame()}}
 }
@@ -797,24 +797,24 @@ async function handleAuthState(user){
     authUser=null;progress=migrateLegacyProgress(readStored(storeKey));
     await refreshGameFromProgress();if(sequence===authSequence)updateAuthUI("signed-out");return;
   }
-  authUser=user;updateAuthUI("loading","Loading cloud progress…");
+  authUser=user;updateAuthUI("loading","正在載入雲端進度……");
   try{
     await loadGame(user);if(sequence!==authSequence)return;
     await refreshGameFromProgress();if(sequence!==authSequence)return;
-    cloudReady=true;updateAuthUI("signed-in","Cloud progress loaded");await saveGame();
+    cloudReady=true;updateAuthUI("signed-in","雲端進度已載入");await saveGame();
   }catch(error){
     if(sequence!==authSequence)return;
     progress=migrateSave(progress);await refreshGameFromProgress();updateAuthUI("error",friendlyAuthError(error));
   }
 }
 async function loginWithGoogle(){
-  if(!auth||!authApi){flashToast("Firebase is unavailable; local backup is still active");return}
-  updateAuthUI("loading","Opening Google sign-in…");
+  if(!auth||!authApi){flashToast("Firebase 無法使用，本機備份仍然有效");return}
+  updateAuthUI("loading","正在開啟 Google 登入……");
   try{await authApi.signInWithPopup(auth,new authApi.GoogleAuthProvider())}catch(error){updateAuthUI("error",friendlyAuthError(error));flashToast(friendlyAuthError(error))}
 }
 async function logout(){
   if(!authUser||!authApi)return;
-  await saveGame();updateAuthUI("loading","Signing out…");
+  await saveGame();updateAuthUI("loading","正在登出……");
   try{await authApi.signOut(auth)}catch(error){updateAuthUI("error",friendlyAuthError(error))}
 }
 async function initializeFirebase(){
@@ -822,7 +822,7 @@ async function initializeFirebase(){
   try{
     const base=`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}`;
     const modules=Promise.all([import(`${base}/firebase-app.js`),import(`${base}/firebase-auth.js`),import(`${base}/firebase-firestore.js`)]);
-    const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("Firebase connection timed out")),8000));
+    const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("Firebase 連線逾時")),8000));
     const[appModule,authModule,firestoreModule]=await Promise.race([modules,timeout]);
     authApi=authModule;firestoreApi=firestoreModule;
     const firebaseApp=appModule.initializeApp(firebaseConfig);auth=authModule.getAuth(firebaseApp);db=firestoreModule.getFirestore(firebaseApp);
@@ -832,7 +832,7 @@ async function initializeFirebase(){
 }
 async function loadSet(index,reopenMap=false){
   const meta=manifest.sets[index];if(!meta)return;
-  clearInterval(timer);solved=true;el.level.textContent="LOADING PUZZLE SET";el.mission.textContent=meta.title;
+  clearInterval(timer);solved=true;el.level.textContent="正在載入題組";el.mission.textContent=meta.title;
   $("#currentSetName").textContent=`${String(index+1).padStart(2,"0")} // ${meta.title}`;
   const data=await readJSON(meta.file);validateSet(data,meta);
   setIndex=index;currentSet=data;datasets=data.datasets;levels=data.levels;progress.lastSet=data.id;
@@ -840,10 +840,10 @@ async function loadSet(index,reopenMap=false){
   startLevel(levelIndex);if(reopenMap)showLevels();
 }
 function showDataError(error){
-  clearInterval(timer);solved=true;el.level.textContent="DATA LINK OFFLINE";el.mission.textContent="Puzzle manifest could not be loaded";
-  $("#currentSetName").textContent=currentSet?`${String(setIndex+1).padStart(2,"0")} // ${currentSet.title}`:"SELECT PUZZLE SET";
-  $("#dataBannerText").textContent="The in-chat viewer and file:// mode cannot load sibling JSON. Use GitHub Pages or a local server.";
-  $("#dataBanner").hidden=false;$("#dataErrorText").textContent=error?.message||"Unknown puzzle data error";
+  clearInterval(timer);solved=true;el.level.textContent="資料連線離線";el.mission.textContent="無法載入題目清單";
+  $("#currentSetName").textContent=currentSet?`${String(setIndex+1).padStart(2,"0")} // ${currentSet.title}`:"選擇題組";
+  $("#dataBannerText").textContent="對話內預覽器及 file:// 模式無法載入同一資料夾的 JSON。請使用 GitHub Pages 或本機伺服器。";
+  $("#dataBanner").hidden=false;$("#dataErrorText").textContent=error?.message||"不明的題目資料錯誤";
 }
 async function initialize(){
   applySettings();
