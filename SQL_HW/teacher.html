@@ -120,7 +120,11 @@ async function resetSetForAllPlayers(){
       await batch.commit();
     }
     await loadPlayers();alert(`${label} marks were reset for all players.\n已重設所有學生的 ${label} 成績。`);
-  }catch(error){alert(`Reset failed / 重設失敗\n${error.message||error}`);setAuth("error",currentUser.displayName||"TEACHER","Reset failed — check Firestore rules");}
+  }catch(error){
+    const denied=error?.code==="permission-denied"||String(error?.message||error).toLowerCase().includes("permission");
+    const detail=denied?"Firestore 安全規則尚未發布。請先部署 SQL_HW/firestore.rules，再重新整理此頁。":error.message||error;
+    alert(`重設失敗\n${detail}`);setAuth("error",currentUser.displayName||"教師",denied?"需要發布 Firestore 安全規則":"重設失敗");
+  }
   finally{button.disabled=false;button.textContent="RESET MARKS";}
 }
 function render(){

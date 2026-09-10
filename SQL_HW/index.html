@@ -450,8 +450,18 @@ function testConditions(conds,ctx){
   let groups=[],cur=vals[0];for(let i=1;i<vals.length;i++){if(conds[i].join==="OR"){groups.push(cur);cur=vals[i]}else cur=cur&&vals[i]}groups.push(cur);
   return groups.some(Boolean);
 }
+function projectRow(select,row,groupRows,sourceColumns){
+  const result={};
+  select.forEach(expr=>{
+    if(expr.type==="field"&&expr.name==="*")sourceColumns.forEach(column=>result[column]=row[column]);
+    else if(expr.type==="field")result[expr.name]=row[expr.name];
+    else result[aggName(expr)]=calcAgg(groupRows,expr);
+  });
+  return result;
+}
 function evaluate(ast,source){
   let rows=source.filter(r=>testConditions(ast.where,{source:r,result:r,rows:[r]}));
+  const sourceColumns=source.length?Object.keys(source[0]):[];
   const aggregating=ast.groupBy.length||ast.select.some(x=>x.type==="agg");
   let records=[];
   if(aggregating){
@@ -459,15 +469,15 @@ function evaluate(ast,source){
     rows.forEach(r=>{const key=ast.groupBy.map(f=>JSON.stringify(r[f])).join("|")||"__all__";if(!map.has(key))map.set(key,[]);map.get(key).push(r)});
     if(!rows.length&&!ast.groupBy.length)map.set("__all__",[]);
     for(const groupRows of map.values()){
-      const first=groupRows[0]||{}, result={};
-      ast.select.forEach(x=>{result[x.type==="field"?x.name:aggName(x)]=x.type==="field"?first[x.name]:calcAgg(groupRows,x)});
+      const first=groupRows[0]||{},result=projectRow(ast.select,first,groupRows,sourceColumns);
       const ctx={source:first,result,rows:groupRows};if(testConditions(ast.having,ctx))records.push(ctx);
     }
-  }else records=rows.map(r=>{const result={};ast.select.forEach(x=>result[x.name]=r[x.name]);return{source:r,result,rows:[r]}});
+  }else records=rows.map(r=>({source:r,result:projectRow(ast.select,r,[r],sourceColumns),rows:[r]}));
   if(ast.distinct){const seen=new Set();records=records.filter(x=>{const k=JSON.stringify(x.result);if(seen.has(k))return false;seen.add(k);return true})}
   if(ast.orderBy.length)records.sort((a,b)=>{for(const o of ast.orderBy){const av=operandValue(o.expr,a),bv=operandValue(o.expr,b);let n=av===bv?0:av==null?1:bv==null?-1:av>bv?1:-1;if(n)return o.dir==="DESC"?-n:n}return 0});
   if(ast.limit!=null)records=records.slice(0,ast.limit);
-  return{columns:ast.select.map(x=>x.type==="field"?x.name:aggName(x)),rows:records.map(x=>x.result),grouped:!!ast.groupBy.length};
+  const columns=ast.select.flatMap(x=>x.type==="field"&&x.name==="*"?sourceColumns:[x.type==="field"?x.name:aggName(x)]);
+  return{columns:[...new Set(columns)],rows:records.map(x=>x.result),grouped:!!ast.groupBy.length};
 }
 function exact(a,b){return JSON.stringify(a.columns)===JSON.stringify(b.columns)&&JSON.stringify(a.rows)===JSON.stringify(b.rows)}
 
