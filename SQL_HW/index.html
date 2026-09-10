@@ -444,9 +444,13 @@ function calcAgg(rows,a){
   if(a.fn==="MIN")return Math.min(...vals);if(a.fn==="MAX")return Math.max(...vals);return null;
 }
 function operandValue(expr,ctx){return expr.type==="field"?(ctx.result[expr.name]??ctx.source?.[expr.name]):calcAgg(ctx.rows,expr)}
+function resolveConditionValue(value,ctx){
+  if(Array.isArray(value))return value.map(item=>resolveConditionValue(item,ctx));
+  return value&&typeof value==="object"&&(value.type==="field"||value.type==="agg")?operandValue(value,ctx):value;
+}
 function testConditions(conds,ctx){
   if(!conds.length)return true;
-  const vals=conds.map(c=>{let ok=compare(operandValue(c.left,ctx),c.right,c.op);return c.not?!ok:ok});
+  const vals=conds.map(c=>{let ok=compare(operandValue(c.left,ctx),resolveConditionValue(c.right,ctx),c.op);return c.not?!ok:ok});
   let groups=[],cur=vals[0];for(let i=1;i<vals.length;i++){if(conds[i].join==="OR"){groups.push(cur);cur=vals[i]}else cur=cur&&vals[i]}groups.push(cur);
   return groups.some(Boolean);
 }
@@ -528,12 +532,14 @@ function parse(ts){
       continue;
     }
     if(state==="condValue"){
-      if(t.type!=="value")return out(false,"請選擇數值",["value"]);
-      if(current.op==="BETWEEN"&&!Array.isArray(t.value)){current.right=[t.value];state="betweenSecond";continue}
+      if(t.type!=="value"&&t.type!=="field")return out(false,"請選擇數值或欄位",["value","field"]);
+      if(t.type==="field"&&current.op==="IN")return out(false,"IN 必須配合數值集合",["valueSet"]);
+      const rightValue=t.type==="field"?F(t.value):t.value;
+      if(current.op==="BETWEEN"&&!Array.isArray(rightValue)){current.right=[rightValue];state="betweenSecond";continue}
       if(current.op==="IN"&&!Array.isArray(t.value))return out(false,"請選擇數值集合積木",["valueSet"]);
-      current.right=t.value;(clause==="where"?ast.where:ast.having).push(current);current=null;state="conditionDone";continue;
+      current.right=rightValue;(clause==="where"?ast.where:ast.having).push(current);current=null;state="conditionDone";continue;
     }
-    if(state==="betweenSecond"){if(t.type!=="value"||Array.isArray(t.value))return out(false,"請選擇範圍的第二個數值",["scalarValue"]);current.right.push(t.value);(clause==="where"?ast.where:ast.having).push(current);current=null;state="conditionDone";continue}
+    if(state==="betweenSecond"){if(!["value","field"].includes(t.type)||Array.isArray(t.value))return out(false,"請選擇範圍的第二個數值或欄位",["scalarValue","field"]);current.right.push(t.type==="field"?F(t.value):t.value);(clause==="where"?ast.where:ast.having).push(current);current=null;state="conditionDone";continue}
     if(state==="groupField"){if(t.type!=="field")return out(false,"請選擇 GROUP BY 欄位",["field"]);ast.groupBy.push(t.value);state="groupDone";continue}
     if(state==="orderExpr"){
       if(t.type==="field"){ast.orderBy.push({expr:F(t.value),dir:"ASC"});state="orderDir";continue}
@@ -550,7 +556,7 @@ function parse(ts){
   const valid=["post","conditionDone","groupDone","orderDone","orderDir"].includes(state);
   const messages={start:"請以 SELECT 開始",selectStart:"請選擇欄位",aggFieldSelect:"請選擇聚合欄位",selectDone:"請加入另一個欄位或 FROM",
    fromTable:"請選擇來源資料表",condOperand:"請選擇條件欄位",condAggField:"請選擇聚合欄位",condOp:"請選擇比較運算子",
-   condValue:"請選擇數值",betweenSecond:"請選擇範圍上限",groupField:"請選擇 GROUP BY 欄位",orderExpr:"請選擇排序欄位",
+   condValue:"請選擇數值或欄位",betweenSecond:"請選擇範圍上限數值或欄位",groupField:"請選擇 GROUP BY 欄位",orderExpr:"請選擇排序欄位",
    orderAggField:"請選擇聚合欄位",orderDir:"請選擇 ASC 或 DESC",limitValue:"請選擇筆數限制"};
   let next=[];
   if(state==="start")next=["SELECT"];
@@ -560,7 +566,7 @@ function parse(ts){
   if(state==="fromTable")next=["table"];
   if(["post","conditionDone","groupDone","orderDone"].includes(state))next=["clause"];
   if(state==="condOperand")next=clause==="having"?["field","agg","NOT"]:["field","NOT"];
-  if(state==="condOp")next=["op"];if(state==="condValue")next=["value"];if(state==="betweenSecond")next=["scalarValue"];
+  if(state==="condOp")next=["op"];if(state==="condValue")next=["value","field"];if(state==="betweenSecond")next=["scalarValue","field"];
   if(state==="groupField")next=["field"];if(state==="orderExpr")next=["field","agg"];if(state==="orderDir")next=["ASC","DESC"];if(state==="limitValue")next=["limitValue"];
   return out(valid,valid?"查詢有效 • 正在更新結果":messages[state]||"請繼續組合",next,null);
 }
@@ -585,7 +591,8 @@ function findClause(ts,idx){let c="";for(let i=0;i<=idx;i++){if(ts[i].type==="SE
 function sqlText(ast){
   const expr=x=>x.type==="field"?x.name:x.fn+"("+x.field+")";
   const selectExpr=x=>x.type==="field"?x.name:expr(x)+" AS "+aggName(x);
-  const right=c=>c.op.startsWith("IS ")?"":c.op==="BETWEEN"?" "+valueLabel(c.right[0])+" AND "+valueLabel(c.right[1]):" "+valueLabel(c.right);
+  const operand=x=>x&&typeof x==="object"&&!Array.isArray(x)&&(x.type==="field"||x.type==="agg")?expr(x):valueLabel(x);
+  const right=c=>c.op.startsWith("IS ")?"":c.op==="BETWEEN"?" "+operand(c.right[0])+" AND "+operand(c.right[1]):" "+operand(c.right);
   const conds=cs=>cs.map((c,i)=>(i?(c.join||"AND")+" ":"")+(c.not?"NOT ":"")+expr(c.left)+" "+c.op+right(c)).join("\n  ");
   let s="SELECT "+(ast.distinct?"DISTINCT ":"")+ast.select.map(selectExpr).join(", ")+"\nFROM "+levels[levelIndex].table;
   if(ast.where.length)s+="\nWHERE "+conds(ast.where);if(ast.groupBy.length)s+="\nGROUP BY "+ast.groupBy.join(", ");
