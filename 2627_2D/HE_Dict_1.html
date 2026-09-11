@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dictation Deck · Vocabulary Revision</title>
+  <meta name="description" content="A focused three-mode English dictation revision tool.">
+  <meta name="theme-color" content="#e9efe9">
+  <style>
+    :root {
+      --ink: #17233a;
+      --ink-soft: #5f6d84;
+      --navy: #1f2d4d;
+      --navy-deep: #16223d;
+      --paper: #fffdf9;
+      --cream: #f7f4ee;
+      --line: #e9e5dc;
+      --orange: #ff7b54;
+      --orange-dark: #df5e3a;
+      --gold: #ffca67;
+      --mint: #dff5e9;
+      --green: #1f9d6a;
+      --green-dark: #146e4a;
+      --red: #de5d61;
+      --red-soft: #fff0ef;
+      --shadow: 0 22px 60px rgba(19, 31, 57, .15);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+    html { min-width: 320px; background: #e8eee8; -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      min-height: 100svh;
+      overflow-x: hidden;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 6% 5%, rgba(255, 202, 103, .25), transparent 23rem),
+        radial-gradient(circle at 98% 15%, rgba(125, 220, 181, .22), transparent 26rem),
+        #e9efe9;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible { outline: 3px solid rgba(255, 123, 84, .36); outline-offset: 3px; }
+    .app-shell { min-height: 100vh; overflow: hidden; }
+    .topbar, main, footer { width: min(1160px, calc(100% - 40px)); margin-inline: auto; }
+    .topbar { min-height: 84px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; color: var(--ink); }
+    .brand-mark {
+      width: 40px; height: 40px; display: grid; place-items: center; border-radius: 13px;
+      color: white; background: var(--orange); font-size: 20px; font-weight: 900;
+      box-shadow: 0 7px 15px rgba(255, 123, 84, .25);
+    }
+    .brand-copy { display: grid; line-height: 1.04; }
+    .brand-copy strong { font-family: Georgia, serif; font-size: 17px; letter-spacing: -.02em; }
+    .brand-copy small { margin-top: 4px; color: var(--ink-soft); font-size: 9px; font-weight: 800; letter-spacing: .17em; }
+    .source-chip { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-soft); font-size: 12px; font-weight: 700; }
+    .source-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px rgba(31, 157, 106, .1); }
+    .source-count { padding: 5px 9px; color: var(--green-dark); background: rgba(223, 245, 233, .8); border-radius: 999px; font-size: 11px; }
+
+    .hero {
+      min-height: 245px; position: relative; display: grid; grid-template-columns: 1.25fr .75fr;
+      align-items: center; gap: 30px; padding: 38px 50px; overflow: hidden; color: white;
+      background: linear-gradient(115deg, rgba(19, 31, 57, .97), rgba(35, 53, 86, .94)), var(--navy);
+      border-radius: 31px; box-shadow: 0 18px 40px rgba(26, 40, 67, .2);
+    }
+    .hero::before, .hero::after { content: ""; position: absolute; border: 1px solid rgba(255, 255, 255, .09); border-radius: 50%; pointer-events: none; }
+    .hero::before { width: 480px; height: 480px; top: -310px; right: 80px; }
+    .hero::after { width: 360px; height: 360px; bottom: -260px; left: 38%; }
+    .hero-copy-block { position: relative; z-index: 1; }
+    .eyebrow { margin: 0 0 10px; color: #9fe3be; font-size: 10px; font-weight: 900; letter-spacing: .2em; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 580px; margin-bottom: 12px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(38px, 5vw, 65px); line-height: .98; letter-spacing: -.065em; }
+    h1 em { color: var(--gold); font-style: normal; }
+    .hero-copy { max-width: 540px; margin-bottom: 20px; color: #dbe3f0; font-size: 15px; }
+    .hero-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: #bfcde0; font-size: 11px; font-weight: 800; }
+    .meta-pill { padding: 6px 10px; color: #ffe0b4; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .12); border-radius: 999px; }
+    .hero-visual { min-height: 165px; position: relative; display: grid; place-items: center; z-index: 1; }
+    .hero-card { width: min(255px, 100%); padding: 20px 22px; position: relative; transform: rotate(4deg); color: var(--ink); background: #fffdf3; border-radius: 19px; box-shadow: 0 18px 25px rgba(0, 0, 0, .2); }
+    .hero-card::before { content: ""; position: absolute; inset: 9px; border: 1px dashed #e8cfa9; border-radius: 12px; }
+    .hero-card > * { position: relative; }
+    .hero-card-top { display: flex; align-items: center; justify-content: space-between; color: var(--orange-dark); font-size: 10px; font-weight: 900; letter-spacing: .12em; }
+    .hero-card-word { margin: 21px 0 7px; font-family: Georgia, serif; font-size: 29px; font-weight: 700; letter-spacing: -.04em; }
+    .hero-card-meaning { color: var(--ink-soft); font-family: "Noto Serif TC", "Microsoft JhengHei", serif; font-size: 15px; }
+    .hero-card-line { height: 3px; margin-top: 20px; width: 72%; background: var(--gold); border-radius: 4px; }
+    .spark { position: absolute; font-size: 28px; color: var(--gold); }
+    .spark.one { top: 4px; right: 4px; transform: rotate(17deg); }
+    .spark.two { bottom: 12px; left: 2px; color: var(--orange); font-size: 18px; }
+
+    .workspace { margin: 29px 0 42px; padding: 26px; background: rgba(255, 253, 249, .88); border: 1px solid rgba(255, 255, 255, .75); border-radius: 31px; box-shadow: var(--shadow); }
+    .section-label { margin: 0 0 10px 4px; color: #9b9e9a; font-size: 10px; font-weight: 900; letter-spacing: .16em; }
+    .mode-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 6px; background: #f2f1ed; border-radius: 17px; }
+    .mode-tab { min-height: 63px; display: grid; grid-template-columns: 29px 1fr; column-gap: 10px; align-content: center; padding: 8px 14px; color: var(--ink-soft); text-align: left; border: 1px solid transparent; border-radius: 12px; background: transparent; transition: .18s ease; }
+    .mode-tab:hover { color: var(--ink); background: rgba(255,255,255,.7); }
+    .mode-tab.active { color: white; background: var(--navy); box-shadow: 0 8px 17px rgba(31, 45, 77, .2); }
+    .mode-tab-number { grid-row: span 2; align-self: center; display: grid; place-items: center; width: 27px; height: 27px; color: var(--orange-dark); background: #ffe4d6; border-radius: 9px; font-size: 12px; font-weight: 900; }
+    .mode-tab.active .mode-tab-number { color: var(--navy); background: var(--gold); }
+    .mode-tab-title { font-size: 13px; font-weight: 900; }
+    .mode-tab-desc { margin-top: 2px; color: #8c96a6; font-size: 10px; }
+    .mode-tab.active .mode-tab-desc { color: #c4cfdf; }
+
+    .dashboard { display: grid; grid-template-columns: 275px minmax(0, 1fr); gap: 26px; margin-top: 25px; }
+    .sidebar { padding: 18px 16px 15px; background: var(--cream); border: 1px solid var(--line); border-radius: 21px; }
+    .side-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 1px 5px 0; }
+    .side-kicker { margin-bottom: 3px; color: #9b9e9a; font-size: 9px; font-weight: 900; letter-spacing: .18em; }
+    .side-heading h2 { margin-bottom: 0; font-family: Georgia, serif; font-size: 21px; letter-spacing: -.03em; }
+    .count-badge { min-width: 30px; padding: 5px 8px; color: var(--orange-dark); background: #ffe7dc; border-radius: 10px; text-align: center; font-size: 12px; font-weight: 900; }
+    .sidebar-copy { margin: 14px 5px 16px; color: var(--ink-soft); font-size: 11px; line-height: 1.45; }
+    .word-nav { display: grid; gap: 5px; }
+    .word-nav-item { width: 100%; display: grid; grid-template-columns: 25px 1fr 17px; align-items: center; gap: 7px; padding: 8px; color: var(--ink-soft); text-align: left; border: 1px solid transparent; border-radius: 11px; background: transparent; transition: .16s ease; }
+    .word-nav-item:hover { color: var(--ink); background: white; }
+    .word-nav-item.active { color: var(--navy); background: white; border-color: #ece5d8; box-shadow: 0 5px 12px rgba(40, 52, 75, .06); }
+    .nav-index { color: #a6aaae; font-size: 10px; font-weight: 900; }
+    .word-nav-item.active .nav-index { color: var(--orange-dark); }
+    .nav-word { overflow: hidden; font-size: 11px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+    .nav-status { display: grid; place-items: center; width: 16px; height: 16px; color: #aeb3b5; border: 1px solid #d7d8d3; border-radius: 50%; font-size: 10px; font-weight: 900; }
+    .nav-status.done { color: var(--green); background: var(--mint); border-color: #bce8d2; }
+    .nav-status.wrong { color: var(--red); background: var(--red-soft); border-color: #facdca; }
+    .sidebar-tools { display: flex; justify-content: flex-end; margin: 12px 2px 0; }
+    .shuffle-button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; color: #929791; border: 0; background: transparent; border-radius: 8px; font-size: 10px; font-weight: 800; }
+    .shuffle-button:hover, .shuffle-button[aria-pressed="true"] { color: var(--orange-dark); background: #fff0e9; }
+    .shuffle-icon { font-size: 15px; }
+    .tip-box { display: flex; gap: 8px; margin: 16px 2px 0; padding: 11px; color: #66756d; background: #e8f5ed; border: 1px solid #d0ebda; border-radius: 13px; }
+    .tip-icon { flex: 0 0 19px; display: grid; place-items: center; width: 19px; height: 19px; color: white; background: var(--green); border-radius: 50%; font-size: 11px; font-weight: 900; }
+    .tip-box p { margin: 0; font-size: 10px; line-height: 1.45; }
+    .tip-box strong { color: var(--green-dark); }
+    kbd { padding: 1px 4px; color: var(--green-dark); background: rgba(255,255,255,.7); border: 1px solid #bedeca; border-radius: 4px; font-size: 9px; }
+
+    .work-area { min-width: 0; }
+    .mode-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; margin: 2px 3px 19px; }
+    .mode-heading h2 { margin: 5px 0 4px; font-family: Georgia, serif; font-size: clamp(25px, 3vw, 36px); line-height: 1.05; letter-spacing: -.045em; }
+    .mode-heading p { margin: 0; color: var(--ink-soft); font-size: 12px; }
+    .mode-label { display: flex; align-items: center; gap: 8px; color: var(--orange-dark); font-size: 10px; font-weight: 900; letter-spacing: .16em; }
+    .mode-label::before { content: ""; width: 22px; height: 3px; background: var(--orange); border-radius: 4px; }
+    .progress-note { flex: 0 0 auto; padding: 8px 10px; color: var(--ink-soft); background: #f5f3ef; border-radius: 10px; font-size: 10px; font-weight: 900; }
+
+    .study-card, .question-panel, .summary-panel { padding: 25px; background: white; border: 1px solid #eeeae1; border-radius: 23px; box-shadow: 0 12px 25px rgba(32, 43, 65, .05); }
+    .study-card { min-height: 367px; display: flex; flex-direction: column; justify-content: space-between; }
+    .card-topline, .question-topline { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+    .word-number, .question-badge { color: var(--orange-dark); font-size: 10px; font-weight: 900; letter-spacing: .15em; }
+    .word-category { padding: 6px 9px; color: #69756f; background: #eff8f2; border-radius: 8px; font-size: 10px; font-weight: 800; }
+    .study-center { padding: 36px 0 28px; text-align: center; }
+    .study-word { margin-bottom: 17px; color: var(--navy); font-family: Georgia, serif; font-size: clamp(35px, 6vw, 59px); font-weight: 700; line-height: 1.03; letter-spacing: -.06em; }
+    .meaning-block { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 18px; border-radius: 13px; background: #fff8e9; }
+    .meaning-label { color: #b58a37; font-size: 9px; font-weight: 900; letter-spacing: .13em; }
+    .meaning-text { color: #6d5728; font-family: "Noto Serif TC", "Microsoft JhengHei", serif; font-size: 20px; font-weight: 700; }
+    .speak-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 15px; color: white; background: var(--orange); border: 0; border-radius: 11px; font-size: 11px; font-weight: 900; box-shadow: 0 8px 15px rgba(255, 123, 84, .19); transition: .16s ease; }
+    .speak-button:hover { background: var(--orange-dark); transform: translateY(-1px); }
+    .speak-icon { display: inline-block; font-size: 12px; }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding-top: 16px; border-top: 1px solid #f1eee7; }
+    .progress-track { width: min(240px, 43%); height: 6px; overflow: hidden; background: #f0eee8; border-radius: 999px; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--orange), var(--gold)); border-radius: inherit; transition: width .25s ease; }
+    .nav-actions { display: flex; gap: 8px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 39px; padding: 9px 14px; border: 0; border-radius: 11px; font-size: 11px; font-weight: 900; transition: .16s ease; }
+    .button:hover { transform: translateY(-1px); }
+    .button-primary { color: white; background: var(--navy); box-shadow: 0 8px 15px rgba(31, 45, 77, .15); }
+    .button-primary:hover { background: #2c3e67; }
+    .button-secondary { color: var(--ink-soft); background: #f5f3ef; }
+    .button-secondary:hover { color: var(--ink); background: #ece9e1; }
+    .button:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+    .question-panel { padding: 26px; }
+    .question-topline { align-items: flex-start; margin-bottom: 21px; }
+    .question-topline h2 { margin: 7px 0 4px; font-family: Georgia, serif; font-size: clamp(24px, 4vw, 35px); line-height: 1.05; letter-spacing: -.045em; }
+    .question-topline p { margin: 0; color: var(--ink-soft); font-size: 12px; }
+    .question-counter { padding: 9px 11px; color: var(--orange-dark); background: #fff0e9; border-radius: 10px; font-size: 11px; font-weight: 900; white-space: nowrap; }
+    .listen-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 17px 19px; background: var(--navy-deep); border-radius: 16px; }
+    .listen-eyebrow { color: #99e0ba; font-size: 9px; font-weight: 900; letter-spacing: .16em; }
+    .listen-copy p { margin: 3px 0 0; color: #c5d1e1; font-size: 11px; }
+    .listen-card .speak-button { flex: 0 0 auto; color: var(--navy); background: var(--gold); box-shadow: none; }
+    .listen-card .speak-button:hover { background: #ffd986; }
+    .answer-form { margin-top: 25px; }
+    .answer-label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; color: var(--ink-soft); font-size: 10px; font-weight: 900; letter-spacing: .12em; }
+    .answer-label-note { color: #b3b7b8; font-size: 9px; font-weight: 700; letter-spacing: 0; }
+    .input-wrap { display: flex; align-items: center; gap: 9px; padding: 3px 5px 3px 15px; border: 2px solid #e5e2db; border-radius: 13px; transition: .18s ease; }
+    .input-wrap:focus-within { border-color: var(--orange); box-shadow: 0 0 0 4px rgba(255, 123, 84, .1); }
+    .answer-input { min-width: 0; flex: 1; padding: 10px 0; color: var(--ink); background: transparent; border: 0; outline: none; font-size: 18px; font-weight: 700; }
+    .answer-input::placeholder { color: #c2c5c4; font-weight: 500; }
+    .enter-hint { flex: 0 0 auto; padding: 5px 7px; color: #9da4aa; background: #f5f3ef; border-radius: 7px; font-size: 9px; font-weight: 800; }
+    .question-footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-top: 22px; }
+    .helper-text { color: #939c9a; font-size: 10px; }
+    .helper-text strong { color: var(--green); }
+
+    .feedback-card { margin-top: 17px; padding: 15px; border-radius: 15px; border: 1px solid; }
+    .feedback-card.is-correct { background: #f0fbf4; border-color: #c7ead4; }
+    .feedback-card.is-incorrect { background: var(--red-soft); border-color: #f5ccca; }
+    .feedback-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+    .feedback-title { font-size: 12px; font-weight: 900; }
+    .is-correct .feedback-title { color: var(--green-dark); }
+    .is-incorrect .feedback-title { color: #b5474c; }
+    .feedback-caption { color: #8d9891; font-size: 10px; }
+    .letter-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; min-height: 36px; }
+    .letter { min-width: 21px; height: 28px; display: inline-grid; place-items: center; padding-inline: 4px; border-radius: 6px; font-size: 14px; font-weight: 900; }
+    .letter.correct { color: var(--green-dark); background: #ccefd9; }
+    .letter.wrong { color: #bd4147; background: #ffd1cf; }
+    .letter.missing { color: #bd4147; background: #ffd1cf; border: 1px dashed #ef8f8c; }
+    .letter.space { min-width: 11px; color: transparent; background: transparent; }
+    .compare-label { margin-bottom: 6px; color: #89958d; font-size: 9px; font-weight: 900; letter-spacing: .1em; }
+    .compare-note { margin-top: 8px; color: #849089; font-size: 10px; }
+    .compare-note strong { color: var(--ink); font-size: 11px; }
+
+    .summary-panel { padding: 23px; }
+    .summary-hero { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 20px; padding: 21px; background: linear-gradient(135deg, #f0fbf4, #fff8e9); border: 1px solid #dcefe1; border-radius: 17px; }
+    .summary-hero h2 { margin: 6px 0 6px; font-family: Georgia, serif; font-size: clamp(26px, 4vw, 38px); line-height: 1; letter-spacing: -.05em; }
+    .summary-hero p { margin: 0; color: var(--ink-soft); font-size: 11px; }
+    .score-ring { width: 96px; height: 96px; display: grid; place-items: center; position: relative; border-radius: 50%; background: conic-gradient(var(--green) var(--score), #dceee2 0); }
+    .score-ring::before { content: ""; position: absolute; inset: 8px; background: white; border-radius: 50%; }
+    .score-number { position: relative; z-index: 1; color: var(--green-dark); font-size: 23px; font-weight: 900; line-height: 1; }
+    .score-number small { display: block; margin-top: 2px; color: #83948a; font-size: 9px; text-align: center; }
+    .summary-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; margin: 16px 0 18px; }
+    .stat { padding: 12px 13px; border-radius: 12px; background: #f7f5f0; }
+    .stat strong { display: block; font-size: 21px; line-height: 1; }
+    .stat span { display: block; margin-top: 4px; color: #909994; font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .stat.good strong { color: var(--green); }
+    .stat.bad strong { color: var(--red); }
+    .summary-list-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+    .summary-list-heading h3 { margin: 0; font-family: Georgia, serif; font-size: 18px; letter-spacing: -.03em; }
+    .summary-list-heading span { color: #9ba19d; font-size: 10px; }
+    .review-list { display: grid; gap: 7px; max-height: 425px; overflow: auto; padding-right: 2px; }
+    .review-item { display: grid; grid-template-columns: 27px 1fr minmax(150px, .9fr); align-items: center; gap: 11px; padding: 10px; border: 1px solid #efede7; border-radius: 12px; }
+    .review-item.is-correct { background: #fbfefb; }
+    .review-item.is-incorrect { background: #fffaf9; border-color: #f4e1df; }
+    .review-number { color: #a3a9a7; font-size: 10px; font-weight: 900; }
+    .review-word strong { display: block; color: var(--ink); font-family: Georgia, serif; font-size: 14px; }
+    .review-word span { display: block; margin-top: 1px; color: #929994; font-family: "Noto Serif TC", "Microsoft JhengHei", serif; font-size: 10px; }
+    .review-result { min-width: 0; }
+    .result-line { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+    .result-badge { padding: 3px 6px; border-radius: 6px; font-size: 8px; font-weight: 900; letter-spacing: .05em; }
+    .result-badge.good { color: var(--green-dark); background: var(--mint); }
+    .result-badge.bad { color: #b5474c; background: #ffe1df; }
+    .review-result .letter-strip { gap: 2px; }
+    .review-result .letter { min-width: 15px; height: 20px; padding-inline: 2px; border-radius: 4px; font-size: 10px; }
+    .review-result .letter.space { min-width: 7px; }
+    .summary-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 17px; }
+    footer { padding: 0 4px 30px; color: #899691; font-size: 10px; text-align: right; }
+    .toast { position: fixed; left: 50%; bottom: 24px; z-index: 10; padding: 10px 14px; color: white; background: var(--navy); border-radius: 10px; font-size: 11px; font-weight: 800; box-shadow: 0 12px 25px rgba(20, 33, 58, .22); transform: translate(-50%, 90px); opacity: 0; transition: .25s ease; pointer-events: none; }
+    .toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+    @media (max-width: 850px) {
+      .hero { grid-template-columns: 1fr; padding: 34px 34px 0; }
+      .hero-visual { min-height: 135px; align-items: end; }
+      .hero-card { transform: rotate(3deg) translateY(15px); }
+      .dashboard { grid-template-columns: 1fr; }
+      .sidebar { order: 2; }
+      .word-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .tip-box { display: none; }
+    }
+    @media (max-width: 590px) {
+      .topbar, main, footer { width: min(100% - 22px, 1160px); }
+      .topbar { min-height: 68px; }
+      .source-chip { display: none; }
+      .hero { min-height: 0; padding: 28px 23px 0; border-radius: 23px; }
+      h1 { font-size: 43px; }
+      .hero-copy { font-size: 13px; }
+      .hero-card { width: 225px; padding: 16px 18px; }
+      .hero-card-word { margin: 15px 0 4px; font-size: 24px; }
+      .workspace { margin-top: 18px; padding: 13px; border-radius: 23px; }
+      .mode-tabs { gap: 3px; padding: 4px; }
+      .mode-tab { min-height: 52px; grid-template-columns: 1fr; padding: 8px 5px; text-align: center; }
+      .mode-tab-number { width: 23px; height: 23px; margin-inline: auto; }
+      .mode-tab-title { margin-top: 4px; font-size: 10px; }
+      .mode-tab-desc { display: none; }
+      .dashboard { gap: 15px; margin-top: 17px; }
+      .sidebar { padding: 13px 11px; }
+      .word-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .work-area .mode-heading { margin-bottom: 13px; }
+      .mode-heading h2 { font-size: 28px; }
+      .mode-heading p { font-size: 11px; }
+      .progress-note { font-size: 9px; }
+      .study-card, .question-panel, .summary-panel { padding: 17px; border-radius: 17px; }
+      .study-card { min-height: 345px; }
+      .study-word { font-size: 39px; }
+      .meaning-text { font-size: 17px; }
+      .card-footer, .question-footer { align-items: stretch; flex-direction: column; }
+      .progress-track { width: 100%; }
+      .nav-actions { justify-content: space-between; }
+      .nav-actions .button { flex: 1; }
+      .listen-card { align-items: stretch; flex-direction: column; gap: 12px; }
+      .listen-card .speak-button { width: 100%; }
+      .question-counter { padding: 7px 8px; font-size: 10px; }
+      .answer-input { font-size: 16px; }
+      .enter-hint { display: none; }
+      .question-footer .button { width: 100%; }
+      .summary-hero { grid-template-columns: 1fr; padding: 17px; }
+      .score-ring { width: 82px; height: 82px; }
+      .review-item { grid-template-columns: 22px 1fr; }
+      .review-result { grid-column: 2; }
+      .summary-actions { flex-direction: column-reverse; }
+      .summary-actions .button { width: 100%; }
+    }
+
+    /* Compact, touch-first refinements */
+    @media (min-width: 851px) and (max-width: 1080px) {
+      .topbar, main, footer { width: min(100% - 32px, 1160px); }
+      .hero { padding-inline: 34px; gap: 20px; }
+      .workspace { padding: 21px; }
+      .dashboard { grid-template-columns: 235px minmax(0, 1fr); gap: 19px; }
+      .sidebar { padding-inline: 13px; }
+      .study-card, .question-panel, .summary-panel { padding: 21px; }
+    }
+
+    @media (max-width: 850px) {
+      .topbar, main, footer { width: min(100% - 32px, 760px); }
+      .button, .speak-button, .word-nav-item, .mode-tab { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+      .hero { min-height: 220px; padding: 29px 32px 0; border-radius: 26px; }
+      .hero-visual { min-height: 118px; }
+      .hero-card { width: 230px; padding: 17px 19px; }
+      .hero-card-word { margin: 16px 0 5px; font-size: 25px; }
+      .workspace { margin-top: 22px; padding: 20px; border-radius: 26px; }
+      .dashboard { gap: 18px; margin-top: 20px; }
+      .work-area { order: 1; }
+      .sidebar { order: 2; }
+      .word-nav-item { min-height: 42px; }
+      .button, .speak-button { min-height: 44px; }
+      .answer-input { min-height: 44px; }
+      .question-footer .nav-actions { width: 100%; }
+      .question-footer .nav-actions .button { width: auto; flex: 1; }
+    }
+
+    @media (max-width: 590px) {
+      body { background: #edf2ed; }
+      .topbar, main, footer { width: calc(100% - 24px); }
+      .topbar { min-height: 64px; }
+      .brand { gap: 9px; }
+      .brand-mark { width: 36px; height: 36px; border-radius: 11px; font-size: 18px; }
+      .brand-copy strong { font-size: 16px; }
+      .hero { display: block; min-height: 0; padding: 25px 21px 24px; border-radius: 22px; }
+      .hero-visual { display: none; }
+      .eyebrow { margin-bottom: 9px; font-size: 9px; }
+      h1 { max-width: 330px; margin-bottom: 11px; font-size: clamp(38px, 12vw, 48px); }
+      .hero-copy { margin-bottom: 16px; font-size: 13px; line-height: 1.48; }
+      .hero-meta { gap: 7px; font-size: 10px; }
+      .meta-pill { padding: 5px 8px; }
+      .workspace { margin-top: 15px; padding: 10px; border-radius: 21px; }
+      .section-label { margin: 1px 3px 9px; font-size: 9px; }
+      .mode-tabs { gap: 3px; padding: 4px; border-radius: 14px; }
+      .mode-tab { min-height: 62px; padding: 8px 4px; border-radius: 10px; }
+      .mode-tab-number { width: 24px; height: 24px; border-radius: 8px; font-size: 10px; }
+      .mode-tab-title { display: block; margin-top: 5px; font-size: 10px; line-height: 1.12; }
+      .dashboard { gap: 14px; margin-top: 14px; }
+      .work-area .mode-heading { margin: 1px 2px 12px; }
+      .mode-heading { gap: 8px; }
+      .mode-heading h2 { margin-top: 4px; font-size: 26px; }
+      .mode-heading p { max-width: 270px; font-size: 10px; line-height: 1.4; }
+      .progress-note { padding: 7px 8px; font-size: 9px; white-space: nowrap; }
+      .study-card, .question-panel, .summary-panel { padding: 15px; border-radius: 16px; }
+      .study-card { min-height: 0; }
+      .study-center { padding: 31px 0 28px; }
+      .study-word { margin-bottom: 15px; font-size: clamp(33px, 10vw, 43px); line-height: 1.05; }
+      .meaning-block { margin-top: 18px !important; padding: 9px 14px; }
+      .meaning-text { font-size: 16px; }
+      .card-footer { gap: 13px; padding-top: 14px; }
+      .progress-track { height: 5px; }
+      .nav-actions { width: 100%; }
+      .nav-actions .button { min-width: 0; padding-inline: 10px; }
+      .question-panel { padding: 15px; }
+      .question-topline { gap: 8px; margin-bottom: 17px; }
+      .question-topline h2 { margin-top: 5px; font-size: 25px; }
+      .question-topline p { max-width: 230px; font-size: 10px; line-height: 1.4; }
+      .question-counter { padding: 7px 8px; font-size: 9px; }
+      .listen-card { gap: 11px; padding: 14px; border-radius: 13px; }
+      .listen-copy p { font-size: 10px; }
+      .listen-card .speak-button { width: 100%; }
+      .answer-form { margin-top: 20px; }
+      .answer-label { margin-bottom: 7px; font-size: 9px; }
+      .answer-label-note { font-size: 8px; }
+      .input-wrap { min-height: 51px; padding-left: 13px; border-radius: 11px; }
+      .answer-input { min-height: 39px; padding-block: 8px; font-size: 16px; }
+      .feedback-card { padding: 13px; border-radius: 13px; }
+      .feedback-top { align-items: flex-start; flex-direction: column; gap: 3px; margin-bottom: 10px; }
+      .letter-strip { gap: 2px; }
+      .letter { min-width: 19px; height: 26px; padding-inline: 3px; font-size: 13px; }
+      .question-footer { align-items: stretch; flex-direction: column; gap: 11px; margin-top: 18px; }
+      .question-footer .helper-text { line-height: 1.35; }
+      .question-footer > .button { width: 100%; }
+      .question-footer .nav-actions { width: 100%; }
+      .question-footer .nav-actions .button { width: auto; flex: 1; }
+      .sidebar { padding: 13px 11px; border-radius: 16px; }
+      .sidebar-copy { margin-block: 11px 13px; font-size: 10px; }
+      .word-nav { gap: 4px; }
+      .word-nav-item { min-height: 40px; grid-template-columns: 22px 1fr 16px; gap: 5px; padding: 7px 6px; }
+      .nav-word { font-size: 10px; }
+      .summary-hero { gap: 13px; padding: 15px; }
+      .summary-hero h2 { font-size: 28px; }
+      .summary-stats { margin: 13px 0 16px; }
+      .stat { padding: 11px; }
+      .summary-list-heading { align-items: flex-start; flex-direction: column; gap: 3px; }
+      .summary-list-heading h3 { font-size: 17px; }
+      .review-list { max-height: none; overflow: visible; }
+      .review-item { gap: 8px; padding: 9px; }
+      .review-word strong { font-size: 13px; }
+      .review-result .letter { min-width: 14px; height: 19px; font-size: 9px; }
+      .summary-actions { gap: 7px; margin-top: 14px; }
+      footer { padding-bottom: 22px; font-size: 9px; text-align: center; }
+    }
+
+    /* Minimal, focused interface */
+    [hidden] { display: none !important; }
+    body { background: #f3f6f3; }
+    .topbar, main, footer { width: min(100% - 32px, 760px); }
+    .topbar { min-height: 76px; }
+    .brand-copy strong { font-size: 18px; }
+    .brand-copy small, .source-chip { display: none; }
+    .word-count { color: #789080; font-size: 11px; font-weight: 800; }
+    .home-view {
+      min-height: calc(100svh - 130px); display: flex; flex-direction: column; align-items: center;
+      padding: clamp(45px, 10vh, 100px) 0 55px; text-align: center;
+    }
+    .home-view .eyebrow { margin-bottom: 12px; color: var(--green); letter-spacing: .18em; }
+    .home-view h1 { max-width: none; margin: 0 0 14px; color: var(--navy); font-size: clamp(42px, 7vw, 68px); line-height: .98; }
+    .home-instruction { margin: 0 0 29px; color: var(--ink-soft); font-size: 14px; }
+    .home-mode-buttons { width: min(100%, 520px); display: grid; gap: 10px; text-align: left; }
+    .home-mode-button {
+      width: 100%; min-height: 72px; display: grid; grid-template-columns: 42px 1fr 20px; align-items: center;
+      gap: 12px; padding: 13px 17px; color: var(--ink); background: white; border: 1px solid #e4e9e3;
+      border-radius: 16px; box-shadow: 0 7px 18px rgba(31, 45, 77, .06); transition: .16s ease;
+    }
+    .home-mode-button:hover, .home-mode-button:focus-visible { border-color: #b5d7c1; box-shadow: 0 10px 24px rgba(31, 45, 77, .1); transform: translateY(-1px); }
+    .home-mode-number { display: grid; place-items: center; width: 34px; height: 34px; color: var(--green-dark); background: var(--mint); border-radius: 10px; font-size: 11px; font-weight: 900; }
+    .home-mode-button strong, .home-mode-button small { display: block; }
+    .home-mode-button strong { font-size: 14px; }
+    .home-mode-button small { margin-top: 2px; color: #8b9690; font-size: 10px; }
+    .home-mode-arrow { color: var(--orange); font-size: 19px; font-weight: 700; }
+    .app-view { width: 100%; max-width: 640px; margin: 0 auto 40px; }
+    .app-toolbar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin: 13px 0 20px; }
+    .back-home { justify-self: start; padding: 7px 0; color: #7d8b83; border: 0; background: transparent; font-size: 11px; font-weight: 800; }
+    .back-home:hover { color: var(--orange-dark); }
+    .active-mode-name { color: var(--navy); font-size: 12px; font-weight: 900; text-align: center; }
+    .active-progress { justify-self: end; color: #899890; font-size: 11px; font-weight: 800; }
+    .mode-card {
+      width: 100%; display: flex; flex-direction: column; align-items: center; padding: clamp(22px, 5vw, 38px);
+      color: var(--ink); background: white; border: 1px solid #e4e9e3; border-radius: 22px;
+      box-shadow: 0 15px 38px rgba(31, 45, 77, .08);
+    }
+    .mode-card-kicker { color: var(--orange-dark); font-size: 10px; font-weight: 900; letter-spacing: .15em; text-align: center; }
+    .study-mode-card .study-word { margin: 36px 0 22px; color: var(--navy); font-family: Georgia, serif; font-size: clamp(37px, 7vw, 58px); line-height: 1.05; text-align: center; }
+    .study-mode-card .study-meaning { margin-top: 24px; color: #6d5728; font-family: "Noto Serif TC", "Microsoft JhengHei", serif; font-size: 21px; font-weight: 700; }
+    .mode-navigation { width: min(100%, 390px); display: flex; gap: 10px; margin-top: 38px; }
+    .mode-navigation .button-secondary { width: 52px; }
+    .mode-navigation .button-primary { flex: 1; }
+    .question-mode-card { align-items: stretch; }
+    .question-mode-card .mode-card-kicker { align-self: center; }
+    .question-mode-card .speak-button { align-self: center; margin: 29px 0 30px; }
+    .question-mode-card .answer-label { margin: 0 0 8px; color: #7b8880; font-size: 10px; }
+    .question-mode-card .input-wrap { width: 100%; min-height: 53px; }
+    .question-mode-card .mode-main-action { width: 100%; margin-top: 18px; }
+    .summary-mode-card { align-items: stretch; }
+    .score-line { display: flex; align-items: baseline; align-self: center; gap: 3px; margin: 24px 0 24px; color: var(--green-dark); }
+    .score-line strong { font-size: 58px; line-height: .9; }
+    .score-line span { color: #90a099; font-size: 20px; font-weight: 800; }
+    .score-line em { margin-left: 10px; padding: 5px 8px; color: var(--green-dark); background: var(--mint); border-radius: 7px; font-size: 10px; font-style: normal; font-weight: 900; }
+    .summary-mode-card .summary-stats { margin: 0 0 22px; }
+    .summary-mode-card .summary-list-heading { margin-bottom: 9px; }
+    .summary-mode-card .review-list { max-height: none; overflow: visible; }
+    .summary-mode-card .summary-actions { justify-content: stretch; }
+    .summary-mode-card .summary-actions .button { width: 100%; }
+    footer { padding-bottom: 26px; color: #9aa8a0; text-align: center; }
+
+    @media (max-width: 590px) {
+      .topbar, main, footer { width: calc(100% - 24px); }
+      .topbar { min-height: 62px; }
+      .brand-mark { width: 34px; height: 34px; }
+      .brand-copy strong { font-size: 16px; }
+      .word-count { font-size: 10px; }
+      .home-view { min-height: calc(100svh - 105px); padding: 46px 0 30px; }
+      .home-view h1 { font-size: clamp(39px, 12vw, 50px); }
+      .home-instruction { margin-bottom: 24px; font-size: 13px; }
+      .home-mode-button { min-height: 68px; padding: 11px 13px; border-radius: 14px; }
+      .home-mode-number { width: 31px; height: 31px; }
+      .home-mode-button strong { font-size: 13px; }
+      .app-view { margin-bottom: 25px; }
+      .app-toolbar { margin: 8px 1px 14px; }
+      .active-mode-name { font-size: 11px; }
+      .mode-card { padding: 21px 16px; border-radius: 17px; }
+      .study-mode-card .study-word { margin: 34px 0 20px; font-size: clamp(32px, 10vw, 43px); }
+      .study-mode-card .study-meaning { margin-top: 21px; font-size: 18px; }
+      .mode-navigation { margin-top: 31px; }
+      .question-mode-card .speak-button { margin: 26px 0 27px; }
+      .question-mode-card .input-wrap { min-height: 51px; }
+      .answer-input { font-size: 16px; }
+      .summary-mode-card .review-list { max-height: none; overflow: visible; }
+      .summary-mode-card .summary-stats { margin-bottom: 19px; }
+      .score-line strong { font-size: 50px; }
+      footer { padding-bottom: 18px; font-size: 9px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="Dictation Deck home" data-action="home">
+        <span class="brand-mark">✓</span>
+        <span class="brand-copy"><strong>Dictation Deck</strong></span>
+      </a>
+    </header>
+
+    <main id="top">
+      <section id="home-view" class="home-view" aria-labelledby="page-title">
+        <p class="eyebrow">DICTATION REVISION</p>
+        <h1 id="page-title">Listen. Write. Learn.</h1>
+        <p class="home-instruction">Choose a mode to practise your 11 words.</p>
+        <div class="home-mode-buttons" aria-label="Revision modes">
+          <button class="home-mode-button" type="button" data-mode="study"><span class="home-mode-number">01</span><span><strong>Study</strong><small>See word + 中文</small></span><span class="home-mode-arrow">→</span></button>
+          <button class="home-mode-button" type="button" data-mode="practice"><span class="home-mode-number">02</span><span><strong>Check as you go</strong><small>Check every answer</small></span><span class="home-mode-arrow">→</span></button>
+          <button class="home-mode-button" type="button" data-mode="dictation"><span class="home-mode-number">03</span><span><strong>Full dictation</strong><small>See result at the end</small></span><span class="home-mode-arrow">→</span></button>
+        </div>
+      </section>
+
+      <section id="app-view" class="app-view" aria-label="Dictation revision workspace" hidden>
+        <div class="app-toolbar">
+          <button class="back-home" type="button" data-action="home">← Home</button>
+          <span id="active-mode-name" class="active-mode-name"></span>
+          <span id="active-progress" class="active-progress"></span>
+        </div>
+        <section id="work-area" class="work-area" aria-live="polite"></section>
+      </section>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status"></div>
+
+  <script>
+    const vocabulary = [
+      { word: "food additives", meaning: "食物添加劑", category: "Food & health" },
+      { word: "food labeling", meaning: "食物標籤", category: "Food & health" },
+      { word: "saturated fat", meaning: "飽和脂肪", category: "Food & health" },
+      { word: "sodium", meaning: "鈉質", category: "Food & health" },
+      { word: "trendy", meaning: "流行", category: "Style & materials" },
+      { word: "outfit", meaning: "服裝", category: "Style & materials" },
+      { word: "fabric", meaning: "布料", category: "Style & materials" },
+      { word: "man-made fibre", meaning: "人造纖維", category: "Style & materials" },
+      { word: "canvas", meaning: "帆布", category: "Style & materials" },
+      { word: "tote bag", meaning: "托特袋", category: "Style & materials" },
+      { word: "draw string bag", meaning: "索繩袋", category: "Style & materials" }
+    ];
+
+    const state = {
+      mode: null, current: 0, order: vocabulary.map((_, index) => index),
+      answers: {}, checked: {}, submitted: false
+    };
+
+    const homeView = document.getElementById("home-view");
+    const appView = document.getElementById("app-view");
+    const activeModeName = document.getElementById("active-mode-name");
+    const activeProgress = document.getElementById("active-progress");
+    const workArea = document.getElementById("work-area");
+    const toast = document.getElementById("toast");
+    let toastTimer;
+
+    const esc = (value) => String(value ?? "")
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    const currentWord = () => vocabulary[state.order[state.current]];
+    const currentIndex = () => state.order[state.current];
+    const normalized = (value) => String(value ?? "").trim().toLowerCase();
+    const isCorrect = (expected, actual) => normalized(expected) === normalized(actual);
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    function speak(word) {
+      if (!("speechSynthesis" in window)) {
+        showToast("Pronunciation is not supported in this browser.");
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = "en-GB";
+      utterance.rate = .82;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function letterStrip(expected, actual) {
+      const answer = String(actual ?? "").trim();
+      const target = String(expected ?? "");
+      const answerChars = Array.from(answer);
+      const targetChars = Array.from(target);
+      const length = Math.max(answerChars.length, targetChars.length);
+      if (!length) return '<span class="letter missing" title="No answer">·</span>';
+      let markup = "";
+      for (let i = 0; i < length; i += 1) {
+        const given = answerChars[i];
+        const expectedChar = targetChars[i];
+        if (given === undefined) {
+          markup += '<span class="letter missing" title="Missing: ' + esc(expectedChar) + '">·</span>';
+        } else {
+          const same = given.toLowerCase() === (expectedChar || "").toLowerCase();
+          const cls = same ? "correct" : "wrong";
+          const shown = given === " " ? " " : given;
+          const title = same ? "Correct" : "Expected: " + (expectedChar || "nothing");
+          markup += '<span class="letter ' + cls + (given === " " ? " space" : "") + '" title="' + esc(title) + '">' + esc(shown) + "</span>";
+        }
+      }
+      return markup;
+    }
+
+    function feedbackMarkup(item, answer) {
+      const correct = isCorrect(item.word, answer);
+      const safeAnswer = String(answer ?? "").trim();
+      return '<div class="feedback-card ' + (correct ? "is-correct" : "is-incorrect") + '">' +
+        '<div class="feedback-top"><span class="feedback-title">' +
+        (correct ? "Correct" : "Check your spelling") +
+        '</span></div><div class="compare-label">YOUR ANSWER</div>' +
+        '<div class="letter-strip" aria-label="Spelling feedback">' + letterStrip(item.word, safeAnswer) + "</div>" +
+        (correct ? "" : '<div class="compare-note">Correct spelling: <strong>' + esc(item.word) + "</strong></div>") +
+        "</div>";
+    }
+
+    function renderStudy() {
+      const item = currentWord();
+      workArea.innerHTML = '<article class="mode-card study-mode-card"><div class="mode-card-kicker">STUDY</div>' +
+        '<div class="study-word">' + esc(item.word) + '</div>' +
+        '<button class="speak-button" type="button" data-action="speak" aria-label="Play pronunciation of ' +
+        esc(item.word) + '"><span class="speak-icon">▶</span> Play pronunciation</button>' +
+        '<div class="study-meaning">' + esc(item.meaning) + '</div>' +
+        '<div class="mode-navigation"><button class="button button-secondary" type="button" data-action="previous" ' +
+        (state.current === 0 ? "disabled" : "") + '>←</button><button class="button button-primary" type="button" data-action="next">' +
+        (state.current === state.order.length - 1 ? "Start again" : "Next →") + "</button></div></article>";
+    }
+
+    function renderPractice() {
+      const item = currentWord();
+      const index = currentIndex();
+      const checked = Boolean(state.checked[index]);
+      const answer = state.answers[index] || "";
+      const isLast = state.current === state.order.length - 1;
+      workArea.innerHTML = '<article class="mode-card question-mode-card"><div class="mode-card-kicker">CHECK AS YOU GO · ' +
+        (state.current + 1) + " / " + state.order.length + '</div><button class="speak-button" type="button" data-action="speak" ' +
+        'aria-label="Play pronunciation"><span class="speak-icon">▶</span> Play pronunciation</button>' +
+        '<label class="answer-label" for="answer-input">YOUR ANSWER</label><div class="input-wrap"><input class="answer-input" ' +
+        'id="answer-input" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Type what you hear…" value="' +
+        esc(answer) + '"' + (checked ? " readonly" : "") + '></div>' + (checked ? feedbackMarkup(item, answer) : "") +
+        '<button class="button button-primary mode-main-action" type="button" data-action="' + (checked ? "next-practice" : "check-practice") + '">' +
+        (checked ? (isLast ? "Start again" : "Next →") : "Check answer") + "</button></article>";
+      if (!checked) {
+        const input = document.getElementById("answer-input");
+        if (input) input.focus();
+      }
+    }
+
+    function answeredCount() {
+      return state.order.filter((index) => String(state.answers[index] || "").trim().length > 0).length;
+    }
+
+    function renderDictation() {
+      if (state.submitted) return renderSummary();
+      const item = currentWord();
+      const index = currentIndex();
+      const answer = state.answers[index] || "";
+      const count = answeredCount();
+      workArea.innerHTML = '<article class="mode-card question-mode-card"><div class="mode-card-kicker">FULL DICTATION · ' +
+        (state.current + 1) + " / " + state.order.length + '</div><button class="speak-button" type="button" data-action="speak" ' +
+        'aria-label="Play pronunciation"><span class="speak-icon">▶</span> Play pronunciation</button>' +
+        '<label class="answer-label" for="answer-input">YOUR ANSWER</label><div class="input-wrap"><input class="answer-input" ' +
+        'id="answer-input" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Type what you hear…" value="' +
+        esc(answer) + '"></div><div class="mode-navigation dictation-navigation"><button class="button button-secondary" type="button" ' +
+        'data-action="previous" ' + (state.current === 0 ? "disabled" : "") + '>←</button><button class="button button-primary" ' +
+        'type="button" data-action="next-dictation">' + (state.current === state.order.length - 1 ? "See result" : "Next →") +
+        "</button></div></article>";
+      const input = document.getElementById("answer-input");
+      if (input) input.focus();
+    }
+
+    function reviewItemMarkup(index, position) {
+      const item = vocabulary[index];
+      const answer = state.answers[index] || "";
+      const good = isCorrect(item.word, answer);
+      return '<div class="review-item ' + (good ? "is-correct" : "is-incorrect") + '"><span class="review-number">' +
+        String(position + 1).padStart(2, "0") + '</span><div class="review-word"><strong>' + esc(item.word) +
+        '</strong><span>' + esc(item.meaning) + '</span></div><div class="review-result"><div class="result-line"><span class="result-badge ' +
+        (good ? "good" : "bad") + '">' + (good ? "CORRECT" : "CHECK THIS") + "</span>" +
+        (!good && !String(answer).trim() ? '<span class="feedback-caption">No answer</span>' : "") +
+        '</div><div class="letter-strip">' + letterStrip(item.word, answer) + "</div></div></div>";
+    }
+
+    function renderSummary() {
+      const correct = state.order.filter((index) => isCorrect(vocabulary[index].word, state.answers[index] || "")).length;
+      const incorrect = state.order.length - correct;
+      const percentage = Math.round((correct / state.order.length) * 100);
+      workArea.innerHTML = '<article class="mode-card summary-mode-card"><div class="mode-card-kicker">RESULT</div>' +
+        '<div class="score-line"><strong>' + correct + '</strong><span>/ ' + state.order.length + '</span><em>' +
+        percentage + '%</em></div><div class="summary-stats"><div class="stat good"><strong>' + correct +
+        '</strong><span>Correct</span></div><div class="stat bad"><strong>' + incorrect +
+        '</strong><span>To practise</span></div></div><div class="summary-list-heading"><h3>Review</h3></div>' +
+        '<div class="review-list">' + state.order.map((index, position) => reviewItemMarkup(index, position)).join("") +
+        '</div><div class="summary-actions"><button class="button button-primary" type="button" data-action="restart-dictation">Try again</button></div></article>';
+    }
+
+    function render() {
+      const inMode = Boolean(state.mode);
+      homeView.hidden = inMode;
+      appView.hidden = !inMode;
+      if (!inMode) return;
+      const names = { study: "Study", practice: "Check as you go", dictation: state.submitted ? "Result" : "Full dictation" };
+      activeModeName.textContent = names[state.mode];
+      activeProgress.textContent = state.submitted ? "" : (state.current + 1) + " / " + state.order.length;
+      if (state.mode === "study") renderStudy();
+      else if (state.mode === "practice") renderPractice();
+      else renderDictation();
+    }
+
+    function setMode(mode) {
+      if (mode !== state.mode) {
+        state.answers = {};
+        state.checked = {};
+      }
+      state.mode = mode;
+      state.current = 0;
+      state.submitted = false;
+      render();
+    }
+
+    function shuffleOrder() {
+      if (state.shuffled) {
+        state.order = vocabulary.map((_, index) => index);
+        state.shuffled = false;
+        showToast("Back to the class-list order.");
+      } else {
+        state.order = vocabulary.map((_, index) => index).sort(() => Math.random() - .5);
+        state.shuffled = true;
+        showToast("Word order shuffled.");
+      }
+      state.current = 0;
+      render();
+    }
+
+    function move(delta) {
+      state.current = (state.current + delta + state.order.length) % state.order.length;
+      render();
+    }
+
+    function checkPractice() {
+      const input = document.getElementById("answer-input");
+      state.answers[currentIndex()] = input ? input.value : "";
+      state.checked[currentIndex()] = true;
+      render();
+      const button = workArea.querySelector('[data-action="next-practice"]');
+      if (button) button.focus();
+    }
+
+    function nextPractice() {
+      if (state.current === state.order.length - 1) {
+        state.current = 0;
+        state.checked = {};
+        state.answers = {};
+        showToast("Practice reset — ready for another round.");
+      } else {
+        state.current += 1;
+      }
+      render();
+    }
+
+    function saveDictationAndNext() {
+      const input = document.getElementById("answer-input");
+      state.answers[currentIndex()] = input ? input.value : "";
+      if (state.current === state.order.length - 1) {
+        state.submitted = true;
+        render();
+      } else {
+        state.current += 1;
+        render();
+      }
+    }
+
+    function editDictation() { state.submitted = false; render(); }
+    function goHome() {
+      state.mode = null;
+      state.current = 0;
+      state.submitted = false;
+      render();
+    }
+    function restartDictation() {
+      state.answers = {};
+      state.checked = {};
+      state.current = 0;
+      state.submitted = false;
+      render();
+    }
+
+    document.addEventListener("click", (event) => {
+      const modeTab = event.target.closest("[data-mode]");
+      if (modeTab) { setMode(modeTab.dataset.mode); return; }
+      const actionTarget = event.target.closest("[data-action]");
+      if (!actionTarget || actionTarget.disabled) return;
+      const action = actionTarget.dataset.action;
+      if (action === "home") goHome();
+      else if (action === "speak") speak(currentWord().word);
+      else if (action === "previous") move(-1);
+      else if (action === "next") { state.current = state.current === state.order.length - 1 ? 0 : state.current + 1; render(); }
+      else if (action === "jump") { state.current = Number(actionTarget.dataset.position); if (state.mode === "dictation") state.submitted = false; render(); }
+      else if (action === "shuffle") shuffleOrder();
+      else if (action === "check-practice") checkPractice();
+      else if (action === "next-practice") nextPractice();
+      else if (action === "next-dictation") saveDictationAndNext();
+      else if (action === "edit-dictation") editDictation();
+      else if (action === "restart-dictation") restartDictation();
+    });
+
+    document.addEventListener("input", (event) => {
+      if (event.target.matches("#answer-input")) state.answers[currentIndex()] = event.target.value;
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" || !event.target.matches("#answer-input")) return;
+      event.preventDefault();
+      if (state.mode === "practice") {
+        if (state.checked[currentIndex()]) nextPractice();
+        else checkPractice();
+      } else if (state.mode === "dictation") {
+        saveDictationAndNext();
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
