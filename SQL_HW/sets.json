@@ -20,8 +20,8 @@
     {
       "id": "set_2",
       "file": "set_2.json",
-      "title": "Neon Expansion / 霓虹擴展",
-      "description": "Twenty new puzzles across racers, relics, drones, beasts, and traders. / 二十個以賽車、遺物、無人機、怪獸及交易員為主題的新謎題。",
+      "title": "LEFT JOIN Lab / LEFT JOIN 實驗室",
+      "description": "Connect SW_POKE with POKEMON using LEFT JOIN. / 使用 LEFT JOIN 連接 SW_POKE 與 POKEMON。",
       "levelCount": 20
     }
   ]

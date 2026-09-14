@@ -78,6 +78,8 @@
   .target .dot{background:var(--pink);box-shadow:0 0 10px var(--pink)}
   .badge{font-size:9px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:4px 8px}
   .tablebox{height:270px;overflow:auto;padding:12px 14px 6px}
+  .tablebox.multi-source{overflow:hidden;padding:9px;display:block}.source-stack{height:100%;display:grid;grid-template-rows:1fr 1fr;gap:8px}
+  .source-table{min-height:0;border:1px solid #213e52;border-radius:9px;overflow:hidden;background:#081321}.source-table-label{height:25px;padding:6px 10px;color:var(--cyan);font-size:9px;font-weight:900;letter-spacing:.12em;background:#102237;border-bottom:1px solid #213e52}.source-table-scroll{height:calc(100% - 25px);overflow:auto;padding:0 7px 5px}.source-table-scroll th{top:0}
   table{border-collapse:separate;border-spacing:0;width:100%;min-width:max-content;font-size:12px}
   th,td{padding:10px 13px;text-align:left;border-bottom:1px solid #1a3448;white-space:nowrap}
   th{position:sticky;top:0;z-index:1;background:#13243a;color:#8feeff;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
@@ -341,7 +343,7 @@ const el={score:$("#score"),time:$("#time"),best:$("#best"),deduct:$("#deduct"),
  blockCount:$("#blockCount"),palette:$("#palette"),toast:$("#toast"),announce:$("#announcer")};
 
 const F=name=>({type:"field",name}), A=(fn,field)=>({type:"agg",fn,field});
-const G=(select=[],extra={})=>({select,distinct:false,where:[],groupBy:[],having:[],orderBy:[],limit:null,...extra});
+const G=(select=[],extra={})=>({select,distinct:false,from:null,joins:[],where:[],groupBy:[],having:[],orderBy:[],limit:null,...extra});
 const storeKey="sqlCircuitProgressV2",legacyKey="sqlCircuitProgressV1";
 const SAVE_VERSION=1,FIREBASE_SDK_VERSION="12.17.0",CLOUD_COLLECTION="progress",guestOwnerKey="sqlCircuitGuestOwnerV1";
 const firebaseConfig={
@@ -355,7 +357,7 @@ const firebaseConfig={
 };
 const fallbackManifest={version:2,defaultSet:"set_1",sets:[
  {id:"set_1",file:"set_1.json",title:"Pokémon Data Lab / 寶可夢數據實驗室",description:"Learn core SQL skills with Pokémon / 使用寶可夢學習核心 SQL 技能",levelCount:20},
- {id:"set_2",file:"set_2.json",title:"Neon Expansion / 霓虹擴展",description:"Racers, relics, drones, beasts, and traders / 賽車、遺物、無人機、怪獸及交易員",levelCount:20},
+ {id:"set_2",file:"set_2.json",title:"LEFT JOIN Lab / LEFT JOIN 實驗室",description:"Connect SW_POKE with POKEMON using LEFT JOIN / 使用 LEFT JOIN 連接 SW_POKE 與 POKEMON",levelCount:20},
  {id:"set_3",file:"set_3.json",title:"Space Academy / 太空學院",description:"Cadets, missions, planets, and space relics / 學員、任務、行星及太空遺物",levelCount:20},
  {id:"set_4",file:"set_4.json",title:"Ocean Research / 海洋研究",description:"Research vessels, samples, oceans, and specimens / 研究船、樣本、海洋及標本",levelCount:20},
  {id:"set_5",file:"set_5.json",title:"Green City / 綠色城市",description:"Sustainable transport, districts, and civic projects / 可持續交通、地區及城市項目",levelCount:20},
@@ -424,7 +426,7 @@ const setProgress=()=>progress.sets[currentSet?.id||progress.lastSet]||(progress
 const localKey=uid=>uid?`${storeKey}:${uid}`:storeKey;
 const save=({cloud=true}={})=>{if(currentSet){const sp=setProgress();sp.last=levelIndex+1;progress.lastSet=currentSet.id}progress.saveVersion=SAVE_VERSION;progress.total=totalScore(progress);progress.localUpdatedAt=Date.now();localStorage.setItem(localKey(authUser?.uid),JSON.stringify(progress));if(cloud)scheduleCloudSave()};
 const valueLabel=v=>Array.isArray(v)?"("+v.map(valueLabel).join(", ")+")":v===null?"NULL":typeof v==="string"?"'"+v+"'":String(v);
-const aggName=a=>a.fn.toLowerCase()+(a.field==="*"?"":"_"+a.field);
+const aggName=a=>a.fn.toLowerCase()+(a.field==="*"?"":"_"+a.field.replace(/[^A-Za-z0-9_]/g,"_"));
 const exprLabel=e=>e.type==="field"?e.name:e.fn+"("+e.field+")";
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -463,9 +465,25 @@ function projectRow(select,row,groupRows,sourceColumns){
   });
   return result;
 }
-function evaluate(ast,source){
+function qualifyRow(table,row,columns=Object.keys(row||{})){const result={};columns.forEach(column=>result[`${table}.${column}`]=row?.[column]??null);return result}
+function joinedSource(ast,datasetMap){
+  const baseTable=ast.from,baseRows=datasetMap?.[baseTable]||[];
+  let rows=baseRows.map(row=>qualifyRow(baseTable,row)),columns=Object.keys(baseRows[0]||{}).map(column=>`${baseTable}.${column}`);
+  for(const join of ast.joins||[]){
+    const rightRows=datasetMap?.[join.table]||[],rightRawColumns=Object.keys(rightRows[0]||{}),rightColumns=rightRawColumns.map(column=>`${join.table}.${column}`),next=[];
+    rows.forEach(left=>{
+      const matches=rightRows.map(row=>({...left,...qualifyRow(join.table,row,rightRawColumns)})).filter(combined=>testConditions([join.on],{source:combined,result:combined,rows:[combined]}));
+      if(matches.length)next.push(...matches);else next.push({...left,...qualifyRow(join.table,null,rightRawColumns)});
+    });
+    rows=next;columns.push(...rightColumns);
+  }
+  return{rows,columns};
+}
+function evaluate(ast,source,datasetMap=null){
+  const joined=ast.from&&ast.joins?.length&&datasetMap?joinedSource(ast,datasetMap):null;
+  source=joined?joined.rows:source;
   let rows=source.filter(r=>testConditions(ast.where,{source:r,result:r,rows:[r]}));
-  const sourceColumns=source.length?Object.keys(source[0]):[];
+  const sourceColumns=joined?joined.columns:source.length?Object.keys(source[0]):[];
   const aggregating=ast.groupBy.length||ast.select.some(x=>x.type==="agg");
   let records=[];
   if(aggregating){
@@ -487,7 +505,7 @@ function exact(a,b){return JSON.stringify(a.columns)===JSON.stringify(b.columns)
 
 function token(type,value,label=value,kind=type){return{type,value,label,kind}}
 function parse(ts){
-  const ast=G([]);let i=0,state="start",clause="",pendingAgg=null,current=null,negate=false;
+  const ast=G([]);let i=0,state="start",clause="",pendingAgg=null,current=null,currentJoin=null,negate=false;
   const out=(valid,msg,next,errorAt=valid?null:i-1)=>({valid,msg,next,ast,state,errorAt});
   while(i<ts.length){
     const t=ts[i++];
@@ -505,8 +523,14 @@ function parse(ts){
       if(t.type==="FROM"){state="fromTable";continue}
       return out(false,"請加入另一個欄位或 FROM",["field","agg","FROM"]);
     }
-    if(state==="fromTable"){if(t.type!=="table")return out(false,"請選擇來源資料表",["table"]);state="post";continue}
+    if(state==="fromTable"){if(t.type!=="table")return out(false,"請選擇來源資料表",["table"]);ast.from=t.value;state="post";continue}
+    if(state==="joinTable"){if(t.type!=="table"||t.value===ast.from)return out(false,"請選擇另一個資料表",["table"]);currentJoin={type:"LEFT",table:t.value,on:null};state="joinOn";continue}
+    if(state==="joinOn"){if(t.type!=="ON")return out(false,"請加入 ON",["ON"]);state="joinLeft";continue}
+    if(state==="joinLeft"){if(t.type!=="field")return out(false,"請選擇連接條件的左方欄位",["field"]);current={left:F(t.value),not:false};state="joinOp";continue}
+    if(state==="joinOp"){if(t.type!=="op"||t.value!=="=")return out(false,"LEFT JOIN 的 ON 條件請使用 =",["op"]);current.op="=";state="joinRight";continue}
+    if(state==="joinRight"){if(t.type!=="field")return out(false,"請選擇連接條件的右方欄位",["field"]);current.right=F(t.value);currentJoin.on=current;ast.joins.push(currentJoin);current=null;currentJoin=null;state="post";continue}
     if(state==="post"||state==="conditionDone"||state==="groupDone"||state==="orderDone"){
+      if(state==="post"&&t.type==="LEFT JOIN"&&!ast.joins.length){state="joinTable";continue}
       if((state==="post"||state==="conditionDone")&&t.type==="WHERE"&&!ast.where.length){clause="where";state="condOperand";continue}
       if((state==="post"||state==="conditionDone")&&t.type==="GROUP BY"&&!ast.groupBy.length){state="groupField";continue}
       if((state==="groupDone")&&t.type==="HAVING"&&!ast.having.length){clause="having";state="condOperand";continue}
@@ -560,6 +584,7 @@ function parse(ts){
   }
   const valid=["post","conditionDone","groupDone","orderDone","orderDir"].includes(state);
   const messages={start:"請以 SELECT 開始",selectStart:"請選擇欄位",aggFieldSelect:"請選擇聚合欄位",selectDone:"請加入另一個欄位或 FROM",
+   joinTable:"請選擇要連接的資料表",joinOn:"請加入 ON",joinLeft:"請選擇 ON 左方欄位",joinOp:"請使用 =",joinRight:"請選擇 ON 右方欄位",
    fromTable:"請選擇來源資料表",condOperand:"請選擇條件欄位",condAggField:"請選擇聚合欄位",condOp:"請選擇比較運算子",
    condValue:"請選擇數值或欄位",betweenSecond:"請加入 AND 及範圍上限",groupField:"請選擇 GROUP BY 欄位",orderExpr:"請選擇排序欄位",
    orderAggField:"請選擇聚合欄位",orderDir:"請選擇 ASC 或 DESC",limitValue:"請選擇筆數限制"};
@@ -569,6 +594,7 @@ function parse(ts){
   if(state==="aggFieldSelect"||state==="condAggField"||state==="orderAggField")next=["field"];
   if(state==="selectDone")next=["field","agg","FROM"];
   if(state==="fromTable")next=["table"];
+  if(state==="joinTable")next=["table"];if(state==="joinOn")next=["ON"];if(state==="joinLeft"||state==="joinRight")next=["field"];if(state==="joinOp")next=["op"];
   if(["post","conditionDone","groupDone","orderDone"].includes(state))next=["clause"];
   if(state==="condOperand")next=clause==="having"?["field","agg","NOT"]:["field","NOT"];
   if(state==="condOp")next=["op"];if(state==="condValue")next=["value","field"];if(state==="betweenSecond")next=["AND","scalarValue","field"];
@@ -581,7 +607,7 @@ function formatQuery(ts){
   let lines=[],line=[],indent=false;
   const push=()=>{if(line.length){lines.push({tokens:line,indent});line=[]}};
   ts.forEach((t,idx)=>{
-    if(["FROM","WHERE","GROUP BY","HAVING","ORDER BY"].includes(t.type)){push();indent=false}
+    if(["FROM","LEFT JOIN","WHERE","GROUP BY","HAVING","ORDER BY"].includes(t.type)){push();indent=false}
     if((t.type==="AND"||t.type==="OR")&&(["where","having"].includes(findClause(ts,idx)))){push();indent=true}
     const prev=ts[idx-1],here=findClause(ts,idx);
     const needsComma=idx>0&&(
@@ -599,24 +625,26 @@ function sqlText(ast){
   const operand=x=>x&&typeof x==="object"&&!Array.isArray(x)&&(x.type==="field"||x.type==="agg")?expr(x):valueLabel(x);
   const right=c=>c.op.startsWith("IS ")?"":c.op==="BETWEEN"?" "+operand(c.right[0])+" AND "+operand(c.right[1]):" "+operand(c.right);
   const conds=cs=>cs.map((c,i)=>(i?(c.join||"AND")+" ":"")+(c.not?"NOT ":"")+expr(c.left)+" "+c.op+right(c)).join("\n  ");
-  let s="SELECT "+(ast.distinct?"DISTINCT ":"")+ast.select.map(selectExpr).join(", ")+"\nFROM "+levels[levelIndex].table;
+  let s="SELECT "+(ast.distinct?"DISTINCT ":"")+ast.select.map(selectExpr).join(", ")+"\nFROM "+(ast.from||levels[levelIndex].table);
+  (ast.joins||[]).forEach(join=>s+="\nLEFT JOIN "+join.table+" ON "+expr(join.on.left)+" = "+expr(join.on.right));
   if(ast.where.length)s+="\nWHERE "+conds(ast.where);if(ast.groupBy.length)s+="\nGROUP BY "+ast.groupBy.join(", ");
   if(ast.having.length)s+="\nHAVING "+conds(ast.having);if(ast.orderBy.length)s+="\nORDER BY "+ast.orderBy.map(o=>expr(o.expr)+" "+o.dir).join(", ");
   if(ast.limit!=null)s+="\nLIMIT "+ast.limit;return s;
 }
-function targetFor(lvl){return evaluate(lvl.goal,datasets[lvl.table])}
+function targetFor(lvl){return evaluate(lvl.goal,datasets[lvl.table],datasets)}
 
 function availableBlocks(){
-  const lvl=levels[levelIndex], fields=Object.keys(datasets[lvl.table][0]), values=[], seen=new Set();
+  const lvl=levels[levelIndex],tableNames=lvl.tables||[lvl.table],joinMode=tableNames.length>1,values=[],seen=new Set();
   const addValue=v=>{const k=JSON.stringify(v);if(!seen.has(k)){seen.add(k);values.push(v)}};
-  datasets[lvl.table].forEach(r=>fields.forEach(f=>addValue(r[f])));
+  tableNames.forEach(table=>{const fields=Object.keys(datasets[table]?.[0]||{});datasets[table].forEach(r=>fields.forEach(f=>addValue(r[f]))) });
   [0,1,2,3,4,5,10,50,80,100].forEach(addValue);
-  [...(lvl.goal.where||[]),...(lvl.goal.having||[])].forEach(c=>Array.isArray(c.right)?c.right.forEach(addValue):addValue(c.right));
+  [...(lvl.goal.where||[]),...(lvl.goal.having||[])].forEach(c=>{const add=v=>{if(!v||typeof v!=="object")addValue(v)};Array.isArray(c.right)?c.right.forEach(add):add(c.right)});
   if(lvl.goal.limit!=null)addValue(lvl.goal.limit);
   (lvl.extraValues||[]).forEach(addValue);
   return[
-   {name:"SQL 子句",items:["SELECT","FROM","WHERE","GROUP BY","HAVING","ORDER BY","LIMIT","DISTINCT"].map(x=>token(x,x,x,"clause"))},
-   {name:"資料表及欄位",items:[token("table",lvl.table,lvl.table,"table"),...fields.map(x=>token("field",x,x,"field")),token("field","*","*","field")]},
+   {name:"SQL 子句",items:["SELECT","FROM",...(joinMode?["LEFT JOIN","ON"]:[]),"WHERE","GROUP BY","HAVING","ORDER BY","LIMIT","DISTINCT"].map(x=>token(x,x,x,"clause"))},
+   {name:"資料表",items:tableNames.map(x=>token("table",x,x,"table"))},
+   ...tableNames.map(table=>({name:`${table} 欄位`,items:Object.keys(datasets[table]?.[0]||{}).map(field=>token("field",joinMode?`${table}.${field}`:field,joinMode?`${table}.${field}`:field,"field")).concat(table===tableNames[0]?[token("field","*","*","field")]:[])})),
    {name:"聚合函數",items:["COUNT","SUM","AVG","MIN","MAX"].map(x=>token("agg",x,x,"agg"))},
    {name:"比較運算子",items:["=","!=",">",">=","<","<=","LIKE","BETWEEN","IN","IS NULL","IS NOT NULL"].map(x=>token("op",x,x,"op"))},
    {name:"邏輯及排序",items:["AND","OR","NOT","ASC","DESC"].map(x=>token(x,x,x,["AND","OR","NOT"].includes(x)?"op":"clause"))},
@@ -633,6 +661,7 @@ function tableHTML(data,animated=false){
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function sourceData(lvl){const rows=datasets[lvl.table], columns=Object.keys(rows[0]);return{columns,rows}}
+function sourceTablesHTML(lvl){return`<div class="source-stack">${lvl.tables.map(table=>{const rows=datasets[table],data={columns:Object.keys(rows[0]||{}),rows};return`<section class="source-table"><div class="source-table-label">${escapeHtml(table)}</div><div class="source-table-scroll">${tableHTML(data)}</div></section>`}).join("")}</div>`}
 function renderQuery(){
   if(!tokens.length)el.query.innerHTML='<div class="emptyquery">連接 <strong style="color:var(--cyan);margin:0 5px">SELECT</strong> 積木以開始查詢。</div>';
   else{const lines=formatQuery(tokens);el.query.innerHTML=lines.map((l,lineIndex)=>`<div class="qline ${l.indent?"indent":""}">${l.tokens.map((t,i)=>{
@@ -652,11 +681,11 @@ function renderPalette(){
   }).join("")}</div></section>`).join("");
 }
 function renderTables(animate=false){
-  const lvl=levels[levelIndex], target=targetFor(lvl), live=lastValid||sourceData(lvl);
-  el.live.innerHTML=tableHTML(live,animate);el.target.innerHTML=tableHTML(target,false);
-  el.liveTitle.textContent=lastValid?"即時結果":"來源資料表";el.liveSignal.textContent=lastValid?"● 查詢有效":"● 來源資料";
-  el.liveCount.textContent=lastValid?(live.grouped?`${live.rows.length} 個群組`:`已選取 ${live.rows.length} 列`):`${live.rows.length} 列`;
-  el.targetCount.textContent=`${target.rows.length} ${target.grouped?"個目標群組":"列目標資料"}`;el.tableName.textContent=lvl.table.toUpperCase();
+  const lvl=levels[levelIndex],target=targetFor(lvl),multi=Boolean(lvl.tables?.length>1),live=lastValid||(!multi?sourceData(lvl):null);
+  el.live.classList.toggle("multi-source",multi&&!lastValid);el.live.innerHTML=lastValid?tableHTML(lastValid,animate):multi?sourceTablesHTML(lvl):tableHTML(live,animate);el.target.innerHTML=tableHTML(target,false);
+  el.liveTitle.textContent=lastValid?(multi?"LEFT JOIN 結果":"即時結果"):"來源資料表";el.liveSignal.textContent=lastValid?"● 查詢有效":"● 來源資料";
+  el.liveCount.textContent=lastValid?(lastValid.grouped?`${lastValid.rows.length} 個群組`:`已選取 ${lastValid.rows.length} 列`):multi?`${lvl.tables.length} 個來源資料表`:`${live.rows.length} 列`;
+  el.targetCount.textContent=`${target.rows.length} ${target.grouped?"個目標群組":"列目標資料"}`;el.tableName.textContent=(lvl.tables||[lvl.table]).join(" + ").toUpperCase();
 }
 function renderHud(){
   const score=currentScore(),sp=setProgress();el.score.textContent=score;el.time.textContent=formatTime(elapsed);el.best.textContent=sp.best[levelIndex+1]??"—";
@@ -684,7 +713,9 @@ function levelTitle(level){return level.titleZh?`${level.titleZh} / ${level.titl
 
 function update(animate=true){
   parsed=parse(tokens);
-  if(parsed.valid){try{lastValid=evaluate(parsed.ast,datasets[levels[levelIndex].table])}catch(e){parsed.msg="查詢尚未完成";parsed.valid=false}}
+  const lvl=levels[levelIndex],joinRequired=Boolean(lvl.tables?.length>1);
+  if(parsed.valid&&joinRequired&&!parsed.ast.joins.length){parsed.valid=false;parsed.msg="請使用 LEFT JOIN 連接兩個資料表"}
+  if(parsed.valid){try{lastValid=evaluate(parsed.ast,datasets[lvl.table],datasets)}catch(e){parsed.msg="查詢尚未完成";parsed.valid=false}}
   renderQuery();renderPalette();renderTables(animate);renderHud();
   if(parsed.valid&&!solved&&exact(lastValid,targetFor(levels[levelIndex])))complete();
 }
@@ -696,7 +727,6 @@ function deleteToken(index){
 }
 function undo(){
   if(!history.length||solved)return;const previous=history.pop();tokens=previous.tokens;insertAt=previous.insertAt;undos++;lastValid=null;parsed=parse(tokens);
-  for(let i=tokens.length;i>0;i--){const candidate=parse(tokens.slice(0,i));if(candidate.valid){lastValid=evaluate(candidate.ast,datasets[levels[levelIndex].table]);break}}
   penalty("UNDO");beep("undo");update(true);
 }
 function startLevel(idx){
@@ -749,7 +779,7 @@ async function readJSON(file){
 function validateSet(data,meta){
   if(!data||data.id!==meta.id||!data.datasets||!Array.isArray(data.levels))throw new Error(`${meta.file} has an invalid puzzle-set structure`);
   if(meta.levelCount&&data.levels.length!==meta.levelCount)throw new Error(`${meta.file} should contain ${meta.levelCount} puzzles`);
-  data.levels.forEach((level,i)=>{if(!level.goal||!data.datasets[level.table])throw new Error(`${meta.file}, puzzle ${i+1}, references missing data`)});
+  data.levels.forEach((level,i)=>{if(!level.goal||!(level.tables||[level.table]).every(table=>data.datasets[table]))throw new Error(`${meta.file}, puzzle ${i+1}, references missing data`)});
 }
 function updateAuthUI(state,message=""){
   const signedIn=Boolean(authUser),bar=$("#authBar"),login=$("#loginBtn"),cloudSave=$("#cloudSaveBtn"),logoutButton=$("#logoutBtn");
