@@ -419,7 +419,7 @@ function mergeProgress(localValue,cloudValue){
  result.localUpdatedAt=Math.max(local.localUpdatedAt,cloud.localUpdatedAt);result.total=totalScore(result);return result;
 }
 let progress=migrateLegacyProgress(readStored(storeKey));
-let manifest=fallbackManifest,setIndex=0,currentSet=null,datasets={},levels=[],levelIndex=0,tokens=[],parsed=null,lastValid=null,insertAt=0,history=[];
+let manifest=fallbackManifest,setIndex=0,currentSet=null,datasets={},levels=[],levelIndex=0,tokens=[],parsed=null,lastValid=null,joinPreview=null,insertAt=0,history=[];
 let startTime=0,elapsed=0,insertions=0,undos=0,solved=false,timer=null,lastTimerPenalty=0,audioCtx=null;
 
 const setProgress=()=>progress.sets[currentSet?.id||progress.lastSet]||(progress.sets[currentSet?.id||progress.lastSet]={unlocked:1,best:{},completed:{},last:1});
@@ -662,6 +662,17 @@ function tableHTML(data,animated=false){
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function sourceData(lvl){const rows=datasets[lvl.table], columns=Object.keys(rows[0]);return{columns,rows}}
 function sourceTablesHTML(lvl){return`<div class="source-stack">${lvl.tables.map(table=>{const rows=datasets[table],data={columns:Object.keys(rows[0]||{}),rows};return`<section class="source-table"><div class="source-table-label">${escapeHtml(table)}</div><div class="source-table-scroll">${tableHTML(data)}</div></section>`}).join("")}</div>`}
+function buildJoinPreview(ts,lvl){
+  const expected=lvl.goal?.joins?.[0];if(!expected||!lvl.tables?.length)return null;
+  for(let i=0;i<=ts.length-8;i++){
+    const part=ts.slice(i,i+8);
+    if(part[0].type!=="FROM"||part[1].type!=="table"||part[2].type!=="LEFT JOIN"||part[3].type!=="table"||part[4].type!=="ON"||part[5].type!=="field"||part[6].type!=="op"||part[6].value!=="="||part[7].type!=="field")continue;
+    if(part[1].value!==lvl.goal.from||part[3].value!==expected.table||part[5].value!==expected.on.left.name||part[7].value!==expected.on.right.name)continue;
+    const ast=G([F("*")],{from:part[1].value,joins:[{type:"LEFT",table:part[3].value,on:{left:F(part[5].value),op:"=",right:F(part[7].value),not:false}}]});
+    return evaluate(ast,datasets[lvl.table],datasets);
+  }
+  return null;
+}
 function renderQuery(){
   if(!tokens.length)el.query.innerHTML='<div class="emptyquery">連接 <strong style="color:var(--cyan);margin:0 5px">SELECT</strong> 積木以開始查詢。</div>';
   else{const lines=formatQuery(tokens);el.query.innerHTML=lines.map((l,lineIndex)=>`<div class="qline ${l.indent?"indent":""}">${l.tokens.map((t,i)=>{
@@ -681,10 +692,10 @@ function renderPalette(){
   }).join("")}</div></section>`).join("");
 }
 function renderTables(animate=false){
-  const lvl=levels[levelIndex],target=targetFor(lvl),multi=Boolean(lvl.tables?.length>1),live=lastValid||(!multi?sourceData(lvl):null);
-  el.live.classList.toggle("multi-source",multi&&!lastValid);el.live.innerHTML=lastValid?tableHTML(lastValid,animate):multi?sourceTablesHTML(lvl):tableHTML(live,animate);el.target.innerHTML=tableHTML(target,false);
-  el.liveTitle.textContent=lastValid?(multi?"LEFT JOIN 結果":"即時結果"):"來源資料表";el.liveSignal.textContent=lastValid?"● 查詢有效":"● 來源資料";
-  el.liveCount.textContent=lastValid?(lastValid.grouped?`${lastValid.rows.length} 個群組`:`已選取 ${lastValid.rows.length} 列`):multi?`${lvl.tables.length} 個來源資料表`:`${live.rows.length} 列`;
+  const lvl=levels[levelIndex],target=targetFor(lvl),multi=Boolean(lvl.tables?.length>1),displayResult=lastValid||joinPreview,live=displayResult||(!multi?sourceData(lvl):null);
+  el.live.classList.toggle("multi-source",multi&&!displayResult);el.live.innerHTML=displayResult?tableHTML(displayResult,animate):multi?sourceTablesHTML(lvl):tableHTML(live,animate);el.target.innerHTML=tableHTML(target,false);
+  el.liveTitle.textContent=displayResult?(multi?"LEFT JOIN 結果":"即時結果"):"來源資料表";el.liveSignal.textContent=lastValid?"● 查詢有效":joinPreview?"● JOIN 結構正確":"● 來源資料";
+  el.liveCount.textContent=displayResult?(displayResult.grouped?`${displayResult.rows.length} 個群組`:`已顯示 ${displayResult.rows.length} 列`):multi?`${lvl.tables.length} 個來源資料表`:`${live.rows.length} 列`;
   el.targetCount.textContent=`${target.rows.length} ${target.grouped?"個目標群組":"列目標資料"}`;el.tableName.textContent=(lvl.tables||[lvl.table]).join(" + ").toUpperCase();
 }
 function renderHud(){
@@ -714,6 +725,7 @@ function levelTitle(level){return level.titleZh?`${level.titleZh} / ${level.titl
 function update(animate=true){
   parsed=parse(tokens);
   const lvl=levels[levelIndex],joinRequired=Boolean(lvl.tables?.length>1);
+  joinPreview=joinRequired?buildJoinPreview(tokens,lvl):null;
   if(parsed.valid&&joinRequired&&!parsed.ast.joins.length){parsed.valid=false;parsed.msg="請使用 LEFT JOIN 連接兩個資料表"}
   if(parsed.valid){try{lastValid=evaluate(parsed.ast,datasets[lvl.table],datasets)}catch(e){parsed.msg="查詢尚未完成";parsed.valid=false}}
   renderQuery();renderPalette();renderTables(animate);renderHud();
@@ -730,7 +742,7 @@ function undo(){
   penalty("UNDO");beep("undo");update(true);
 }
 function startLevel(idx){
-  levelIndex=idx;tokens=[];parsed=parse(tokens);lastValid=null;insertAt=0;history=[];insertions=0;undos=0;elapsed=0;lastTimerPenalty=0;solved=false;startTime=Date.now();
+  levelIndex=idx;tokens=[];parsed=parse(tokens);lastValid=null;joinPreview=null;insertAt=0;history=[];insertions=0;undos=0;elapsed=0;lastTimerPenalty=0;solved=false;startTime=Date.now();
   clearInterval(timer);timer=setInterval(()=>{if(solved)return;const now=Math.floor((Date.now()-startTime)/1000);if(now!==elapsed){const old=Math.floor(elapsed/2);elapsed=now;
     if(Math.floor(elapsed/2)>old){penalty("TIME");beep("time")}renderHud()}},250);
   closeAll();update(false);save();flashToast(`${String(idx+1).padStart(2,"0")} // ${levelTitle(levels[idx])}`);
