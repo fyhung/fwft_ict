@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f4f5f7" />
+    <meta name="description" content="在裝置上用四張圖片製作動畫 GIF。" />
+    <title>四格 GIF</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%231a1d23'/%3E%3Crect x='14' y='14' width='16' height='16' rx='4' fill='%23ffb648'/%3E%3Crect x='34' y='14' width='16' height='16' rx='4' fill='%23fff'/%3E%3Crect x='14' y='34' width='16' height='16' rx='4' fill='%23fff'/%3E%3Crect x='34' y='34' width='16' height='16' rx='4' fill='%23ffb648'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">完全在此裝置處理</p>
+          <h1>四格 GIF</h1>
+        </div>
+        <button class="text-button" id="resetButton" type="button" disabled>清除全部</button>
+      </header>
+
+      <section class="workspace" aria-label="GIF 製作工具">
+        <div class="editor-panel">
+          <div class="section-heading">
+            <div>
+              <h2>選擇 4 張圖片</h2>
+              <p>依 1 至 4 的次序播放。點按圖片可更換。</p>
+            </div>
+            <span id="imageCount" class="count-pill">0 / 4</span>
+          </div>
+
+          <div class="frame-grid" id="frameGrid">
+            <label class="frame-slot" data-slot="0">
+              <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+              <span class="frame-number">1</span>
+              <span class="add-icon" aria-hidden="true">＋</span>
+              <span class="slot-label">加入圖片</span>
+              <img alt="第 1 格預覽" />
+            </label>
+            <label class="frame-slot" data-slot="1">
+              <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+              <span class="frame-number">2</span>
+              <span class="add-icon" aria-hidden="true">＋</span>
+              <span class="slot-label">加入圖片</span>
+              <img alt="第 2 格預覽" />
+            </label>
+            <label class="frame-slot" data-slot="2">
+              <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+              <span class="frame-number">3</span>
+              <span class="add-icon" aria-hidden="true">＋</span>
+              <span class="slot-label">加入圖片</span>
+              <img alt="第 3 格預覽" />
+            </label>
+            <label class="frame-slot" data-slot="3">
+              <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+              <span class="frame-number">4</span>
+              <span class="add-icon" aria-hidden="true">＋</span>
+              <span class="slot-label">加入圖片</span>
+              <img alt="第 4 格預覽" />
+            </label>
+          </div>
+
+          <div class="speed-control">
+            <div class="speed-copy">
+              <label for="fpsSlider">播放速度</label>
+              <span><strong id="fpsValue">6</strong> 格／秒</span>
+            </div>
+            <input id="fpsSlider" type="range" min="1" max="20" value="6" step="1" />
+            <div class="range-labels" aria-hidden="true"><span>慢</span><span>快</span></div>
+          </div>
+
+          <fieldset class="size-control">
+            <legend>輸出尺寸</legend>
+            <div class="size-fields">
+              <label>
+                <span>寬度</span>
+                <span class="number-field"><input id="widthInput" type="number" inputmode="numeric" min="1" max="1200" step="1" value="900" /><small>px</small></span>
+              </label>
+              <span class="size-cross" aria-hidden="true">×</span>
+              <label>
+                <span>高度</span>
+                <span class="number-field"><input id="heightInput" type="number" inputmode="numeric" min="1" max="1200" step="1" value="900" /><small>px</small></span>
+              </label>
+            </div>
+            <p>圖片會完整置中，不會被裁走。</p>
+          </fieldset>
+
+          <button class="primary-button" id="createButton" type="button" disabled>
+            <span>製作 GIF</span>
+          </button>
+          <p class="privacy-note">圖片不會離開你的裝置。</p>
+        </div>
+
+        <aside class="preview-panel" aria-live="polite">
+          <div class="preview-heading">
+            <h2>預覽</h2>
+            <span id="resultMeta"></span>
+          </div>
+          <div class="preview-stage" id="previewStage">
+            <div class="empty-preview" id="emptyPreview">
+              <span class="play-mark" aria-hidden="true">▶</span>
+              <p>完成後會在這裡播放</p>
+            </div>
+            <img id="gifPreview" alt="製作完成的動畫 GIF 預覽" />
+          </div>
+          <p class="status" id="statusText">請先加入 4 張圖片</p>
+          <a class="download-button" id="downloadButton" download="four-frame-animation.gif" aria-disabled="true">
+            下載 GIF
+          </a>
+        </aside>
+      </section>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>
