@@ -117,7 +117,7 @@
         const placement = contain(frame.image.naturalWidth, frame.image.naturalHeight, size.width, size.height);
         context.drawImage(frame.image, placement.x, placement.y, placement.width, placement.height);
         const pixels = context.getImageData(0, 0, size.width, size.height).data;
-        indexedFrames.push(quantize332(pixels));
+        indexedFrames.push(quantizeAdaptive(pixels, size.width, size.height));
         await nextPaint();
       }
 
@@ -181,16 +181,135 @@
     return { width, height, x: Math.floor((targetWidth - width) / 2), y: Math.floor((targetHeight - height) / 2) };
   }
 
-  function quantize332(rgba) {
-    const result = new Uint8Array(rgba.length / 4);
-    for (let source = 0, target = 0; source < rgba.length; source += 4, target += 1) {
-      const alpha = rgba[source + 3] / 255;
-      const red = Math.round(rgba[source] * alpha + 255 * (1 - alpha));
-      const green = Math.round(rgba[source + 1] * alpha + 255 * (1 - alpha));
-      const blue = Math.round(rgba[source + 2] * alpha + 255 * (1 - alpha));
-      result[target] = (red & 0xe0) | ((green & 0xe0) >> 3) | (blue >> 6);
+  function quantizeAdaptive(rgba, width, height) {
+    const histogram = new Uint32Array(32768);
+    for (let offset = 0; offset < rgba.length; offset += 4) {
+      const key = ((rgba[offset] >> 3) << 10) | ((rgba[offset + 1] >> 3) << 5) | (rgba[offset + 2] >> 3);
+      histogram[key] += 1;
     }
-    return result;
+
+    const colors = [];
+    for (let key = 0; key < histogram.length; key += 1) {
+      if (histogram[key]) colors.push(key);
+    }
+
+    let boxes = [makeColorBox(colors, histogram)];
+    while (boxes.length < 256) {
+      let splitIndex = -1;
+      let bestScore = -1;
+      for (let index = 0; index < boxes.length; index += 1) {
+        const box = boxes[index];
+        if (box.colors.length < 2) continue;
+        const range = Math.max(box.rMax - box.rMin, box.gMax - box.gMin, box.bMax - box.bMin);
+        const score = range * Math.sqrt(box.total);
+        if (score > bestScore) {
+          bestScore = score;
+          splitIndex = index;
+        }
+      }
+      if (splitIndex < 0) break;
+      const box = boxes[splitIndex];
+      const rRange = box.rMax - box.rMin;
+      const gRange = box.gMax - box.gMin;
+      const bRange = box.bMax - box.bMin;
+      const shift = gRange >= rRange && gRange >= bRange ? 5 : (rRange >= bRange ? 10 : 0);
+      box.colors.sort((a, b) => ((a >> shift) & 31) - ((b >> shift) & 31));
+      let running = 0;
+      let cut = 1;
+      for (; cut < box.colors.length; cut += 1) {
+        running += histogram[box.colors[cut - 1]];
+        if (running >= box.total / 2) break;
+      }
+      cut = Math.min(cut, box.colors.length - 1);
+      const left = box.colors.slice(0, cut);
+      const right = box.colors.slice(cut);
+      boxes.splice(splitIndex, 1, makeColorBox(left, histogram), makeColorBox(right, histogram));
+    }
+
+    const palette = new Uint8Array(256 * 3);
+    boxes.forEach((box, index) => {
+      let red = 0;
+      let green = 0;
+      let blue = 0;
+      let weight = 0;
+      box.colors.forEach((key) => {
+        const count = histogram[key];
+        red += ((key >> 10) & 31) * count;
+        green += ((key >> 5) & 31) * count;
+        blue += (key & 31) * count;
+        weight += count;
+      });
+      palette[index * 3] = Math.round((red / weight) * 255 / 31);
+      palette[index * 3 + 1] = Math.round((green / weight) * 255 / 31);
+      palette[index * 3 + 2] = Math.round((blue / weight) * 255 / 31);
+    });
+
+    const lookup = new Int16Array(32768);
+    lookup.fill(-1);
+    const indexed = new Uint8Array(width * height);
+    let currentErrors = new Float32Array((width + 2) * 3);
+    let nextErrors = new Float32Array((width + 2) * 3);
+    const clamp = (value) => Math.max(0, Math.min(255, value));
+
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const source = (y * width + x) * 4;
+        const errorIndex = (x + 1) * 3;
+        const red = clamp(rgba[source] + currentErrors[errorIndex]);
+        const green = clamp(rgba[source + 1] + currentErrors[errorIndex + 1]);
+        const blue = clamp(rgba[source + 2] + currentErrors[errorIndex + 2]);
+        const key = ((red >> 3) << 10) | ((green >> 3) << 5) | (blue >> 3);
+        let paletteIndex = lookup[key];
+        if (paletteIndex < 0) {
+          let bestDistance = Infinity;
+          paletteIndex = 0;
+          for (let candidate = 0; candidate < boxes.length; candidate += 1) {
+            const paletteOffset = candidate * 3;
+            const dr = red - palette[paletteOffset];
+            const dg = green - palette[paletteOffset + 1];
+            const db = blue - palette[paletteOffset + 2];
+            const distance = dr * dr * 2 + dg * dg * 4 + db * db;
+            if (distance < bestDistance) {
+              bestDistance = distance;
+              paletteIndex = candidate;
+            }
+          }
+          lookup[key] = paletteIndex;
+        }
+        indexed[y * width + x] = paletteIndex;
+
+        const paletteOffset = paletteIndex * 3;
+        const redError = red - palette[paletteOffset];
+        const greenError = green - palette[paletteOffset + 1];
+        const blueError = blue - palette[paletteOffset + 2];
+        for (let channel = 0; channel < 3; channel += 1) {
+          const error = channel === 0 ? redError : (channel === 1 ? greenError : blueError);
+          currentErrors[errorIndex + 3 + channel] += error * 7 / 16;
+          nextErrors[errorIndex - 3 + channel] += error * 3 / 16;
+          nextErrors[errorIndex + channel] += error * 5 / 16;
+          nextErrors[errorIndex + 3 + channel] += error / 16;
+        }
+      }
+      currentErrors = nextErrors;
+      nextErrors = new Float32Array((width + 2) * 3);
+    }
+    return { pixels: indexed, palette };
+  }
+
+  function makeColorBox(colors, histogram) {
+    let rMin = 31, gMin = 31, bMin = 31;
+    let rMax = 0, gMax = 0, bMax = 0;
+    let total = 0;
+    colors.forEach((key) => {
+      const red = (key >> 10) & 31;
+      const green = (key >> 5) & 31;
+      const blue = key & 31;
+      rMin = Math.min(rMin, red); rMax = Math.max(rMax, red);
+      gMin = Math.min(gMin, green); gMax = Math.max(gMax, green);
+      bMin = Math.min(bMin, blue); bMax = Math.max(bMax, blue);
+      total += histogram[key];
+    });
+    return { colors, total, rMin, rMax, gMin, gMax, bMin, bMax };
   }
 
   function encodeGif(width, height, indexedFrames, fps) {
@@ -202,25 +321,20 @@
     writeString("GIF89a");
     writeShort(width);
     writeShort(height);
-    writeByte(0xf7);
-    writeByte(255);
+    writeByte(0x70);
     writeByte(0);
-
-    for (let index = 0; index < 256; index += 1) {
-      writeByte(Math.round(((index >> 5) & 7) * 255 / 7));
-      writeByte(Math.round(((index >> 2) & 7) * 255 / 7));
-      writeByte((index & 3) * 85);
-    }
+    writeByte(0);
 
     writeByte(0x21); writeByte(0xff); writeByte(11); writeString("NETSCAPE2.0");
     writeByte(3); writeByte(1); writeShort(0); writeByte(0);
 
     const delay = Math.max(2, Math.round(100 / fps));
-    indexedFrames.forEach((pixels) => {
+    indexedFrames.forEach((frame) => {
       writeByte(0x21); writeByte(0xf9); writeByte(4); writeByte(0x04); writeShort(delay); writeByte(0); writeByte(0);
-      writeByte(0x2c); writeShort(0); writeShort(0); writeShort(width); writeShort(height); writeByte(0);
+      writeByte(0x2c); writeShort(0); writeShort(0); writeShort(width); writeShort(height); writeByte(0x87);
+      for (const value of frame.palette) writeByte(value);
       writeByte(8);
-      const compressed = lzwCompress(pixels);
+      const compressed = lzwCompress(frame.pixels);
       for (let offset = 0; offset < compressed.length; offset += 255) {
         const block = compressed.subarray(offset, offset + 255);
         writeByte(block.length);
