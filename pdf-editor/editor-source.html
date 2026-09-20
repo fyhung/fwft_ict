@@ -1,0 +1,117 @@
+<!doctype html>
+<!-- 開發來源：執行 npm run build 後會產生可直接開啟的 index.html。 -->
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f3f4f6" />
+    <meta name="description" content="完全在瀏覽器本機運作的單頁 PDF 編輯工具" />
+    <title>紙上｜本機 PDF 編輯器</title>
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <div class="brand" aria-label="紙上 PDF 編輯器">
+          <span class="brand-mark">紙</span>
+          <span>紙上</span>
+          <span class="local-badge">只在本機</span>
+        </div>
+        <div class="top-actions">
+          <button id="open-pdf-btn" class="button secondary" type="button"><span>開啟 PDF</span></button>
+          <input id="pdf-input" type="file" accept="application/pdf,.pdf" hidden />
+          <button id="download-btn" class="button primary" disabled>下載這一頁</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="pages-panel" aria-label="頁面">
+          <div class="panel-heading">
+            <span>頁面</span>
+            <span id="page-count" class="muted">—</span>
+          </div>
+          <div id="thumbnails" class="thumbnails"></div>
+        </aside>
+
+        <section class="editor-area">
+          <div id="toolbar" class="toolbar" aria-label="編輯工具">
+            <button class="tool active" data-tool="select" title="選取及移動 (V)">↖ <span>選取</span></button>
+            <button class="tool" data-tool="rect" title="繪製矩形 (R)">□ <span>矩形</span></button>
+            <button class="tool" data-tool="line" title="繪製直線 (L)">╱ <span>直線</span></button>
+            <button class="tool" data-tool="text" title="加入文字 (T)">T <span>文字</span></button>
+            <span class="divider"></span>
+            <label class="color-control" title="新物件顏色">
+              <span>顏色</span>
+              <input id="quick-color" type="color" value="#e5484d" />
+            </label>
+            <span class="divider"></span>
+            <div class="zoom-control" aria-label="PDF 縮放">
+              <button id="zoom-out-btn" type="button" title="縮小" disabled>−</button>
+              <button id="zoom-reset-btn" type="button" title="重設為 100%" disabled><span id="zoom-value">100%</span></button>
+              <button id="zoom-in-btn" type="button" title="放大" disabled>＋</button>
+            </div>
+            <button id="delete-btn" class="tool danger" disabled title="刪除選取物件 (Delete)">⌫ <span>刪除</span></button>
+          </div>
+
+          <div id="canvas-shell" class="canvas-shell">
+            <div id="empty-state" class="empty-state">
+              <div class="empty-icon">PDF</div>
+              <h1>開啟一份 PDF 開始編輯</h1>
+              <p>檔案不會上傳。你可以在頁面上加入矩形、直線和中英文文字。</p>
+              <button id="choose-pdf-btn" class="button primary large" type="button">選擇 PDF</button>
+            </div>
+            <div id="page-stage" class="page-stage" hidden>
+              <canvas id="pdf-canvas"></canvas>
+              <div id="objects-layer" class="objects-layer"></div>
+              <div id="draw-preview" class="draw-preview" hidden></div>
+            </div>
+          </div>
+          <div id="statusbar" class="statusbar">
+            <span id="status-text">未開啟檔案</span>
+            <span id="privacy-note">文件全程留在你的裝置</span>
+          </div>
+        </section>
+
+        <aside class="properties-panel" aria-label="物件設定">
+          <div class="panel-heading">物件設定</div>
+          <div id="no-selection" class="no-selection">
+            <span class="selection-glyph">◇</span>
+            <p>選取一個物件後，可在這裡調整樣式。</p>
+          </div>
+          <form id="properties" class="properties" hidden>
+            <div class="object-type-row">
+              <span id="object-type">文字</span>
+              <button id="duplicate-btn" type="button" class="text-button">複製</button>
+            </div>
+            <label id="text-content-field" class="field full">
+              <span>內容</span>
+              <textarea id="prop-text" rows="5" spellcheck="false"></textarea>
+            </label>
+            <label id="font-family-field" class="field full">
+              <span>字型</span>
+              <select id="prop-font-family">
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="'Times New Roman', serif">Times New Roman</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="Verdana, sans-serif">Verdana</option>
+                <option value="'Microsoft JhengHei', 'Noto Sans TC', sans-serif">微軟正黑體</option>
+                <option value="'Noto Sans TC', 'Microsoft JhengHei', sans-serif">Noto Sans TC</option>
+                <option value="'PMingLiU', 'MingLiU', serif">新細明體</option>
+                <option value="'DFKai-SB', 'BiauKai', serif">標楷體</option>
+              </select>
+            </label>
+            <div id="text-number-fields" class="field-grid">
+              <label class="field"><span>字級</span><div class="unit-input"><input id="prop-font-size" type="number" min="6" max="144" step="1" /><b>px</b></div></label>
+              <label class="field"><span>字距</span><div class="unit-input"><input id="prop-letter-spacing" type="number" min="-5" max="40" step="0.5" /><b>px</b></div></label>
+              <label class="field"><span>行距</span><div class="unit-input"><input id="prop-line-height" type="number" min="0.8" max="4" step="0.1" /><b>×</b></div></label>
+            </div>
+            <label class="field color-field"><span>顏色</span><div><input id="prop-color" type="color" /><output id="color-value"></output></div></label>
+            <label id="fill-enabled-field" class="field switch-field"><span>填滿矩形</span><input id="prop-fill-enabled" type="checkbox" role="switch" /></label>
+            <label id="stroke-width-field" class="field"><span>線條粗幼</span><div class="unit-input"><input id="prop-stroke-width" type="range" min="1" max="16" step="1" /><b id="stroke-value">3 px</b></div></label>
+          </form>
+        </aside>
+      </main>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
