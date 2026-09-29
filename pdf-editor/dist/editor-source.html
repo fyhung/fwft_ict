@@ -7,8 +7,8 @@
     <meta name="theme-color" content="#f3f4f6" />
     <meta name="description" content="完全在瀏覽器本機運作的單頁 PDF 編輯工具" />
     <title>紙上｜本機 PDF 編輯器</title>
-    <script type="module" crossorigin src="/assets/editor-source-B3gFH4F5.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/editor-source-2OcLPzci.css">
+    <script type="module" crossorigin src="/assets/editor-source-8TREMgoK.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/editor-source-UHJ8sGiu.css">
   </head>
   <body>
     <div id="app">
@@ -101,8 +101,14 @@
                 <option value="'DFKai-SB', 'BiauKai', serif">標楷體</option>
               </select>
             </label>
+            <div id="local-font-controls">
+              <button id="load-local-fonts" class="text-button" type="button">載入本機字型</button>
+              <button id="import-font-btn" class="text-button" type="button">匯入字型檔</button>
+              <input id="font-input" type="file" accept=".ttf,.otf,.ttc" hidden />
+              <p class="font-note">載入後，預覽及 PDF 會使用同一字型。未載入的字型會標示內建替代。字型只在本機使用。</p>
+            </div>
             <div id="text-number-fields" class="field-grid">
-              <label class="field"><span>字級</span><div class="unit-input"><input id="prop-font-size" type="number" min="6" max="144" step="1" /><b>px</b></div></label>
+              <label class="field"><span>字級</span><div class="unit-input"><input id="prop-font-size" type="number" min="3" max="144" step="0.5" /><button type="button" data-font-step="-1" aria-label="縮小字級">−</button><button type="button" data-font-step="1" aria-label="放大字級">＋</button><b>pt</b></div></label>
               <label class="field"><span>字距</span><div class="unit-input"><input id="prop-letter-spacing" type="number" min="-5" max="40" step="0.5" /><b>px</b></div></label>
               <label class="field"><span>行距</span><div class="unit-input"><input id="prop-line-height" type="number" min="0.8" max="4" step="0.1" /><b>×</b></div></label>
             </div>

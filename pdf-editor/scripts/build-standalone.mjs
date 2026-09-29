@@ -15,6 +15,11 @@ const js = jsSource.replaceAll('</script', '<\\/script');
 html = html
   .replace(/<link rel="stylesheet"[^>]+>/, () => `<style>${css}</style>`)
   .replace(/<script type="module"[^>]+><\/script>/, () => `<script type="module">${js}<\/script>`);
+const licenses = {
+  'Noto Sans TC': await readFile(join(root, 'src', 'assets', 'OFL-NotoSansTC.txt'), 'utf8'),
+  'Noto Serif TC': await readFile(join(root, 'src', 'assets', 'OFL-NotoSerifTC.txt'), 'utf8'),
+};
+html = html.replace('</head>', () => `<script type="application/json" id="font-licenses">${JSON.stringify(licenses).replaceAll('</script', '<\\/script')}</script></head>`);
 await writeFile(join(root, 'index.html'), html, 'utf8');
 await rm(join(root, 'PDF編輯器.html'), { force: true });
 console.log('Created index.html');

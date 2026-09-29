@@ -1,5 +1,6 @@
 :root { color-scheme: light; font-family: Inter, "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif; color: #202124; background: #eef0f3; font-synthesis: none; --ink: #202124; --accent: #2f65d9; --accent-soft: #eaf0ff; }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body, #app { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 button, input, select, textarea { font: inherit; }
 button { color: inherit; }
@@ -63,7 +64,9 @@ input[type="color"] { width: 32px; height: 30px; padding: 3px; border: 1px solid
 .resize-handle[data-corner="se"] { right: -7px; bottom: -7px; cursor: nwse-resize; }
 .rect-object { border-style: solid; background: transparent; min-width: 3px; min-height: 3px; }
 .line-object { height: 0; transform-origin: 0 50%; }
-.text-object { min-width: 24px; max-width: calc(100% - 8px); white-space: pre-wrap; overflow-wrap: break-word; padding: 2px 4px; line-height: 1.35; }
+.text-object { padding: 0; }
+.object svg { display: block; pointer-events: none; }
+.font-note { margin: 4px 0 14px; font-size: .75rem; color: #747b85; line-height: 1.6; }
 .draw-preview { pointer-events: none; z-index: 10; }
 .preview-shape { position: absolute; box-sizing: border-box; }
 .statusbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 0 12px; border-top: 1px solid #dcdfe4; background: #fafafa; color: #6b7179; font-size: .75rem; }
@@ -80,6 +83,10 @@ input[type="color"] { width: 32px; height: 30px; padding: 3px; border: 1px solid
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
 .unit-input { display: flex; align-items: center; border: 1px solid #d3d7dc; border-radius: 7px; background: #fff; overflow: hidden; }
 .unit-input input[type="number"] { border: 0; border-radius: 0; }
+#prop-font-size { appearance: textfield; -moz-appearance: textfield; }
+#prop-font-size::-webkit-inner-spin-button, #prop-font-size::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.unit-input button { flex: none; width: 20px; height: 32px; padding: 0; border: 0; background: #f6f7f9; cursor: pointer; }
+.unit-input button:hover { background: #e5e9ef; }
 .unit-input input[type="range"] { min-width: 0; flex: 1; margin: 0 8px; accent-color: #202124; }
 .unit-input b { padding-right: 8px; color: #8b9097; font-size: .68rem; font-weight: 600; white-space: nowrap; }
 .color-field > div { display: flex; align-items: center; gap: 9px; }

@@ -1,15 +1,36 @@
 import './styles.css';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfWorkerSource from 'pdfjs-dist/build/pdf.worker.min.mjs?raw';
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
-import fontkit from '@pdf-lib/fontkit';
+import { fontRecord, layoutText, buildEditedPdf } from './pdf-layout.js';
 import notoSansTcUrl from './assets/NotoSansTC-VF.ttf?url';
+import notoSerifTcUrl from './assets/NotoSerifTC-VF.ttf?url';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
   new Blob([pdfWorkerSource], { type: 'text/javascript' })
 );
 
 const $ = (s) => document.querySelector(s);
+const fontRecords = new Map();
+let fallbackSans, fallbackSerif;
+async function registerFont(key, bytes, family = '') {
+  const record = fontRecord(bytes, family);
+  fontRecords.set(key, record); return record;
+}
+const fontsReady = (async () => {
+  const [sans, serif] = await Promise.all([fetch(notoSansTcUrl).then((r) => r.arrayBuffer()), fetch(notoSerifTcUrl).then((r) => r.arrayBuffer())]);
+  fallbackSans = await registerFont('sans', sans); fallbackSerif = await registerFont('serif', serif);
+})();
+function resolveFont(key) {
+  return fontRecords.get(key) || (/Times|Georgia|PMingLiU|MingLiU|BiauKai|DFKai/i.test(key) ? fallbackSerif : fallbackSans);
+}
+function updateFontLabels() {
+  for (const option of $('#prop-font-family').options) {
+    option.dataset.label ||= option.textContent;
+    const exact = fontRecords.has(option.value) || option.value.startsWith("'Noto Sans TC'");
+    option.textContent = exact ? option.dataset.label : `${option.dataset.label}（內建${resolveFont(option.value) === fallbackSerif ? '明體' : '黑體'}替代）`;
+  }
+}
+fontsReady.then(() => { updateFontLabels(); renderObjects(); }).catch((error) => { console.error(error); notify('內建字型無法載入，請重新整理'); });
 const els = {
   input: $('#pdf-input'), open: $('#open-pdf-btn'), choose: $('#choose-pdf-btn'), download: $('#download-btn'), thumbnails: $('#thumbnails'), pageCount: $('#page-count'),
   zoomOut: $('#zoom-out-btn'), zoomIn: $('#zoom-in-btn'), zoomReset: $('#zoom-reset-btn'), zoomValue: $('#zoom-value'),
@@ -25,7 +46,7 @@ const els = {
 els.open.addEventListener('click', () => els.input.click());
 els.choose.addEventListener('click', () => els.input.click());
 
-const state = { pdf: null, bytes: null, name: '', page: 1, tool: 'select', selected: null, objects: new Map(), rendering: false, draw: null, drag: null, resize: null, pan: null, renderScale: 1, zoom: 1, baseWidth: 0, baseHeight: 0 };
+const state = { pdf: null, bytes: null, name: '', page: 1, tool: 'select', selected: null, objects: new Map(), rendering: false, draw: null, drag: null, resize: null, pan: null, renderScale: 1, viewScale: 1, zoom: 1, baseWidth: 0, baseHeight: 0, viewport: null };
 const pageObjects = () => state.objects.get(state.page) || [];
 const uid = () => crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`;
 
@@ -53,8 +74,10 @@ async function renderPage(pageNumber) {
   state.rendering = true; state.page = pageNumber; selectObject(null);
   try {
     const page = await state.pdf.getPage(pageNumber);
-    const baseViewport = fitViewport(page); state.baseWidth = baseViewport.width; state.baseHeight = baseViewport.height;
-    const viewport = page.getViewport({ scale: baseViewport.scale * state.zoom }); state.renderScale = viewport.scale;
+    const baseViewport = page.getViewport({ scale: 1 }); state.viewport = baseViewport;
+    state.baseWidth = baseViewport.width; state.baseHeight = baseViewport.height;
+    state.viewScale = fitViewport(page).scale * state.zoom;
+    const viewport = page.getViewport({ scale: state.viewScale }); state.renderScale = viewport.scale;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     els.canvas.width = Math.floor(viewport.width * dpr); els.canvas.height = Math.floor(viewport.height * dpr);
     els.canvas.style.width = `${viewport.width}px`; els.canvas.style.height = `${viewport.height}px`;
@@ -79,6 +102,7 @@ els.input.addEventListener('change', async () => {
   const file = els.input.files?.[0]; if (!file) return;
   try {
     els.status.textContent = '正在開啟文件…';
+    await fontsReady;
     state.bytes = new Uint8Array(await file.arrayBuffer()); state.name = file.name;
     state.pdf = await pdfjsLib.getDocument({ data: state.bytes.slice() }).promise;
     state.objects.clear(); state.zoom = 1; updateZoomControls(); els.thumbnails.replaceChildren();
@@ -94,13 +118,13 @@ els.input.addEventListener('change', async () => {
 
 function stagePoint(event) {
   const r = els.stage.getBoundingClientRect();
-  return { x: Math.max(0, Math.min(state.baseWidth, (event.clientX - r.left) / state.zoom)), y: Math.max(0, Math.min(state.baseHeight, (event.clientY - r.top) / state.zoom)) };
+  return { x: Math.max(0, Math.min(state.baseWidth, (event.clientX - r.left) / state.viewScale)), y: Math.max(0, Math.min(state.baseHeight, (event.clientY - r.top) / state.viewScale)) };
 }
 
 function createObject(type, props = {}) {
   const base = { id: uid(), type, x: 60, y: 60, color: els.quickColor.value, strokeWidth: 3, filled: false };
   const object = type === 'text'
-    ? { ...base, text: '在此輸入文字', width: 220, fontFamily: "'Microsoft JhengHei', 'Noto Sans TC', sans-serif", fontSize: 24, letterSpacing: 0, lineHeight: 1.35, ...props }
+    ? { ...base, text: '在此輸入文字', width: 220, height: 100, fontFamily: "'Noto Sans TC', 'Microsoft JhengHei', sans-serif", fontSize: 24, letterSpacing: 0, lineHeight: 1.35, ...props }
     : { ...base, width: 120, height: type === 'rect' ? 70 : 0, angle: type === 'line' ? 0 : undefined, ...props };
   if (!state.objects.has(state.page)) state.objects.set(state.page, []);
   state.objects.get(state.page).push(object); renderObjects(); selectObject(object.id); return object;
@@ -108,20 +132,30 @@ function createObject(type, props = {}) {
 
 function objectElement(object) {
   const el = document.createElement('div'); el.className = `object ${object.type}-object${state.selected === object.id ? ' selected' : ''}`; el.dataset.id = object.id;
-  const z = state.zoom; el.style.left = `${object.x * z}px`; el.style.top = `${object.y * z}px`;
+  const z = state.viewScale; el.style.left = `${object.x * z}px`; el.style.top = `${object.y * z}px`;
   if (object.type === 'rect') {
     el.style.width = `${object.width * z}px`; el.style.height = `${object.height * z}px`; el.style.borderColor = object.color; el.style.borderWidth = `${object.strokeWidth * z}px`; el.style.background = object.filled ? object.color : 'transparent';
-    if (state.selected === object.id) {
-      ['nw', 'ne', 'sw', 'se'].forEach((corner) => {
-        const handle = document.createElement('button'); handle.type = 'button'; handle.className = 'resize-handle'; handle.dataset.corner = corner;
-        handle.setAttribute('aria-label', `調整矩形${corner}角`); handle.addEventListener('pointerdown', (event) => startResize(event, object, corner)); el.append(handle);
-      });
-    }
   } else if (object.type === 'line') {
-    el.style.width = `${object.width * z}px`; el.style.borderTop = `${object.strokeWidth * z}px solid ${object.color}`; el.style.transform = `rotate(${object.angle}rad)`;
+    el.style.width = `${object.width * z}px`; el.style.height = '12px'; el.style.top = `${object.y * z - 6}px`; el.style.transformOrigin = '0 6px'; el.style.transform = `rotate(${object.angle}rad)`;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.style.overflow = 'visible'; svg.setAttribute('width', object.width * z); svg.setAttribute('height', 12);
+    const line = document.createElementNS(svg.namespaceURI, 'line'); line.setAttribute('x1', 0); line.setAttribute('y1', 6); line.setAttribute('x2', object.width * z); line.setAttribute('y2', 6); line.setAttribute('stroke', object.color); line.setAttribute('stroke-width', object.strokeWidth * z); svg.append(line); el.append(svg);
   } else {
-    el.textContent = object.text || ' '; el.style.width = `${object.width * z}px`; el.style.color = object.color; el.style.fontFamily = object.fontFamily;
-    el.style.fontSize = `${object.fontSize * z}px`; el.style.letterSpacing = `${object.letterSpacing * z}px`; el.style.lineHeight = object.lineHeight;
+    el.style.width = `${object.width * z}px`; el.style.height = `${object.height * z}px`;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%'); svg.setAttribute('viewBox', `0 0 ${object.width} ${object.height}`); svg.style.overflow = 'hidden';
+    if (fallbackSans) for (const item of layoutText(object, resolveFont(object.fontFamily), fallbackSans)) {
+      // Draw the same glyph outlines that the embedded PDF font uses. This also
+      // works for older local TTC fonts rejected by the browser's font loader.
+      const path = document.createElementNS(svg.namespaceURI, 'path');
+      const scale = object.fontSize / item.font.metrics.unitsPerEm;
+      path.setAttribute('d', item.glyph.path.toSVG()); path.setAttribute('transform', `translate(${item.x} ${item.baseline}) scale(${scale} ${-scale})`); path.setAttribute('fill', object.color); svg.append(path);
+    }
+    el.append(svg);
+  }
+  if (state.selected === object.id && object.type !== 'line') {
+    for (const corner of ['nw', 'ne', 'sw', 'se']) {
+      const handle = document.createElement('button'); handle.type = 'button'; handle.className = 'resize-handle'; handle.dataset.corner = corner;
+      handle.setAttribute('aria-label', `調整${object.type === 'text' ? '文字方塊' : '矩形'}${corner}角`); handle.addEventListener('pointerdown', (event) => startResize(event, object, corner)); el.append(handle);
+    }
   }
   el.addEventListener('pointerdown', (event) => startDrag(event, object));
   el.addEventListener('dblclick', () => { if (object.type === 'text') { selectObject(object.id); els.text.focus(); els.text.select(); } });
@@ -137,7 +171,9 @@ function selectObject(id) {
   if (!object) return;
   const isText = object.type === 'text'; els.objectType.textContent = isText ? '文字方塊' : object.type === 'rect' ? '矩形' : '直線';
   els.textField.hidden = !isText; els.fontField.hidden = !isText; els.textNumbers.hidden = !isText; els.strokeField.hidden = isText; els.fillField.hidden = object.type !== 'rect';
+  $('#local-font-controls').hidden = !isText;
   els.text.value = object.text || ''; els.font.value = object.fontFamily || els.font.value; els.fontSize.value = object.fontSize || 24;
+  els.fontSize.step = object.fontSize < 10 ? '0.5' : '1';
   els.letterSpacing.value = object.letterSpacing ?? 0; els.lineHeight.value = object.lineHeight || 1.35;
   els.color.value = object.color; els.colorValue.value = object.color; els.fill.checked = Boolean(object.filled); els.stroke.value = object.strokeWidth || 3; els.strokeValue.textContent = `${object.strokeWidth || 3} px`;
 }
@@ -147,11 +183,11 @@ function updateSelected(patch) { const o = selectedObject(); if (!o) return; Obj
 
 function startDrag(event, object) {
   if (state.tool !== 'select') return;
-  event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId); selectObject(object.id);
+  event.preventDefault(); event.stopPropagation(); els.layer.setPointerCapture(event.pointerId); selectObject(object.id);
   const p = stagePoint(event); state.drag = { id: object.id, dx: p.x - object.x, dy: p.y - object.y };
 }
 function startResize(event, object, corner) {
-  event.preventDefault(); event.stopPropagation(); selectObject(object.id);
+  event.preventDefault(); event.stopPropagation(); els.layer.setPointerCapture(event.pointerId); selectObject(object.id);
   const start = stagePoint(event);
   state.resize = { id: object.id, corner, start, original: { x: object.x, y: object.y, width: object.width, height: object.height } };
 }
@@ -189,7 +225,7 @@ els.layer.addEventListener('pointerup', stopPointerAction);
 els.layer.addEventListener('pointercancel', stopPointerAction);
 
 els.layer.addEventListener('pointerdown', (event) => {
-  if (event.target !== els.layer) return;
+  if (event.target !== els.layer && (state.tool === 'select' || !event.target.closest('.object'))) return;
   const p = stagePoint(event);
   if (state.tool === 'select') {
     const shell = $('#canvas-shell');
@@ -211,7 +247,7 @@ els.layer.addEventListener('pointerup', (event) => {
 
 function drawPreview() {
   const { type, start, current } = state.draw; const dx = current.x - start.x, dy = current.y - start.y;
-  const z = state.zoom; const shape = document.createElement('div'); shape.className = 'preview-shape'; shape.style.left = `${(type === 'rect' ? Math.min(start.x, current.x) : start.x) * z}px`; shape.style.top = `${(type === 'rect' ? Math.min(start.y, current.y) : start.y) * z}px`;
+  const z = state.viewScale; const shape = document.createElement('div'); shape.className = 'preview-shape'; shape.style.left = `${(type === 'rect' ? Math.min(start.x, current.x) : start.x) * z}px`; shape.style.top = `${(type === 'rect' ? Math.min(start.y, current.y) : start.y) * z}px`;
   shape.style.borderColor = els.quickColor.value;
   if (type === 'rect') { shape.style.width = `${Math.abs(dx) * z}px`; shape.style.height = `${Math.abs(dy) * z}px`; shape.style.borderStyle = 'solid'; shape.style.borderWidth = `${3 * z}px`; }
   else { shape.style.width = `${Math.hypot(dx, dy) * z}px`; shape.style.borderTop = `${3 * z}px solid ${els.quickColor.value}`; shape.style.transformOrigin = '0 50%'; shape.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`; }
@@ -225,13 +261,56 @@ els.duplicate.addEventListener('click', () => { const o = selectedObject(); if (
 
 const bindings = [
   [els.text, 'input', () => ({ text: els.text.value })], [els.font, 'change', () => ({ fontFamily: els.font.value })],
-  [els.fontSize, 'input', () => ({ fontSize: Number(els.fontSize.value) })], [els.letterSpacing, 'input', () => ({ letterSpacing: Number(els.letterSpacing.value) })],
+  [els.fontSize, 'input', () => { const size = Number(els.fontSize.value); els.fontSize.step = size < 10 ? '0.5' : '1'; return Number.isFinite(size) && size >= 3 && size <= 144 ? { fontSize: size } : {}; }], [els.letterSpacing, 'input', () => ({ letterSpacing: Number(els.letterSpacing.value) })],
   [els.lineHeight, 'input', () => ({ lineHeight: Number(els.lineHeight.value) })],
   [els.color, 'input', () => { els.colorValue.value = els.color.value; els.quickColor.value = els.color.value; return { color: els.color.value }; }],
   [els.fill, 'change', () => ({ filled: els.fill.checked })],
   [els.stroke, 'input', () => { els.strokeValue.textContent = `${els.stroke.value} px`; return { strokeWidth: Number(els.stroke.value) }; }]
 ];
 bindings.forEach(([el, name, value]) => el.addEventListener(name, () => updateSelected(value())));
+
+function stepFontSize(direction) {
+  const current = Number(els.fontSize.value);
+  const step = current < 10 || current === 10 && direction < 0 ? 0.5 : 1;
+  els.fontSize.value = Math.max(3, Math.min(144, current + direction * step));
+  els.fontSize.dispatchEvent(new Event('input'));
+}
+document.querySelectorAll('[data-font-step]').forEach((button) => button.addEventListener('click', () => stepFontSize(Number(button.dataset.fontStep))));
+els.fontSize.addEventListener('keydown', (event) => {
+  if (!['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+  event.preventDefault(); stepFontSize(event.key === 'ArrowUp' ? 1 : -1);
+});
+els.fontSize.addEventListener('change', () => {
+  const value = Number(els.fontSize.value);
+  els.fontSize.value = Math.max(3, Math.min(144, Number.isFinite(value) ? value : 3));
+  els.fontSize.dispatchEvent(new Event('input'));
+});
+
+$('#load-local-fonts').addEventListener('click', async () => {
+  if (!window.queryLocalFonts) { notify('此瀏覽器未支援本機字型；請匯入 TTF、OTF 或 TTC 字型檔'); return; }
+  try {
+    const available = await window.queryLocalFonts(); await fontsReady;
+    let count = 0;
+    for (const option of els.font.options) {
+      const family = option.value.split(',')[0].replaceAll("'", '').trim();
+      const candidates = available.filter((font) => font.family === family || font.postscriptName === family);
+      const local = candidates.find((font) => /Regular|Normal|Roman/i.test(font.style)) || candidates[0];
+      if (local) { try { await registerFont(option.value, await (await local.blob()).arrayBuffer(), family); count++; } catch (error) { console.warn('字型無法嵌入', family, error); } }
+    }
+    updateFontLabels(); renderObjects(); notify(count ? `已載入 ${count} 種本機字型，預覽及 PDF 已同步` : '找不到所列字型，請匯入字型檔');
+  } catch (error) { console.error(error); notify('未取得字型存取權限；可改用匯入字型檔'); }
+});
+$('#import-font-btn').addEventListener('click', () => $('#font-input').click());
+$('#font-input').addEventListener('change', async (event) => {
+  const file = event.target.files?.[0]; if (!file) return;
+  try {
+    await fontsReady;
+    const key = els.font.value, family = key.split(',')[0].replaceAll("'", '').trim();
+    await registerFont(key, await file.arrayBuffer(), family);
+    updateFontLabels(); renderObjects(); notify(`已套用 ${file.name}，預覽及 PDF 已同步`);
+  } catch (error) { console.error(error); notify('無法載入字型，請選擇有效的 TTF、OTF 或 TTC 檔案'); }
+  finally { event.target.value = ''; }
+});
 
 function updateZoomControls() {
   els.zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
@@ -255,73 +334,16 @@ document.addEventListener('keydown', (event) => {
   if (event.key.toLowerCase() === 'l') setTool('line'); if (event.key.toLowerCase() === 't') setTool('text');
 });
 
-function pdfColor(hex) {
-  const value = Number.parseInt(hex.slice(1), 16);
-  return rgb(((value >> 16) & 255) / 255, ((value >> 8) & 255) / 255, (value & 255) / 255);
-}
-
-function standardFontName(fontFamily) {
-  return /Times|Georgia|PMingLiU|MingLiU|BiauKai|DFKai/i.test(fontFamily) ? StandardFonts.TimesRoman : StandardFonts.Helvetica;
-}
-
-function fontCanEncode(font, char) {
-  try { font.encodeText(char); return true; } catch { return false; }
-}
-
-function drawPdfText(page, object, fonts, pageWidth, pageHeight) {
-  const sx = pageWidth / state.baseWidth, sy = pageHeight / state.baseHeight;
-  const size = object.fontSize * sy, spacing = object.letterSpacing * sx, maxWidth = object.width * sx;
-  const color = pdfColor(object.color), fontFor = (char) => fontCanEncode(fonts.standard, char) ? fonts.standard : fonts.unicode;
-  const charWidth = (char) => fontFor(char).widthOfTextAtSize(char, size);
-  const lines = [];
-  for (const paragraph of (object.text || ' ').split('\n')) {
-    let line = '', width = 0;
-    for (const char of paragraph || ' ') {
-      const nextWidth = width + (line ? spacing : 0) + charWidth(char);
-      if (line && nextWidth > maxWidth) { lines.push(line); line = char; width = charWidth(char); }
-      else { width = nextWidth; line += char; }
-    }
-    lines.push(line);
-  }
-  lines.forEach((line, lineIndex) => {
-    const lineFonts = [...line].map(fontFor);
-    const ascent = Math.max(...lineFonts.map((font) => font.heightAtSize(size, { descender: false })));
-    const y = pageHeight - object.y * sy - lineIndex * size * object.lineHeight - ascent;
-    let x = object.x * sx;
-    [...line].forEach((char, index) => {
-      const font = lineFonts[index]; page.drawText(char, { x, y, size, font, color });
-      x += font.widthOfTextAtSize(char, size) + spacing;
-    });
-  });
-}
-
 async function exportPage() {
   if (!state.pdf) return;
   els.download.disabled = true; els.download.textContent = '正在製作…';
   try {
-    const source = await PDFDocument.load(state.bytes.slice());
-    const doc = await PDFDocument.create(); const [page] = await doc.copyPages(source, [state.page - 1]); doc.addPage(page);
-    const { width, height } = page.getSize(); const sx = width / state.baseWidth, sy = height / state.baseHeight;
-    const textObjects = pageObjects().filter((object) => object.type === 'text'); const fonts = new Map();
-    if (textObjects.length) {
-      doc.registerFontkit(fontkit);
-      const unicodeBytes = await fetch(notoSansTcUrl).then((response) => response.arrayBuffer());
-      const unicode = await doc.embedFont(unicodeBytes, { subset: false });
-      for (const object of textObjects) {
-        const name = standardFontName(object.fontFamily);
-        if (!fonts.has(name)) fonts.set(name, { standard: await doc.embedFont(name), unicode });
-      }
-    }
-    for (const o of pageObjects()) {
-      const color = pdfColor(o.color), borderWidth = o.strokeWidth * ((sx + sy) / 2);
-      if (o.type === 'text') drawPdfText(page, o, fonts.get(standardFontName(o.fontFamily)), width, height);
-      else if (o.type === 'rect') page.drawRectangle({ x: o.x * sx, y: height - (o.y + o.height) * sy, width: o.width * sx, height: o.height * sy, borderColor: color, borderWidth, ...(o.filled ? { color } : {}) });
-      else page.drawLine({ start: { x: o.x * sx, y: height - o.y * sy }, end: { x: (o.x + Math.cos(o.angle) * o.width) * sx, y: height - (o.y + Math.sin(o.angle) * o.width) * sy }, color, thickness: borderWidth });
-    }
-    const result = await doc.save(); const blob = new Blob([result], { type: 'application/pdf' }); const url = URL.createObjectURL(blob);
+    await fontsReady;
+    const result = await buildEditedPdf(state.bytes.slice(), state.page - 1, state.viewport, pageObjects(), resolveFont, fallbackSans);
+    const blob = new Blob([result], { type: 'application/pdf' }); const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = `${state.name.replace(/\.pdf$/i, '')}-第${state.page}頁.pdf`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     notify('已下載單頁 PDF');
-  } catch (error) { console.error(error); notify('製作 PDF 時發生問題'); }
+  } catch (error) { console.error(error); notify(error.message || '製作 PDF 時發生問題'); }
   finally { els.download.disabled = false; els.download.textContent = '下載這一頁'; }
 }
 els.download.addEventListener('click', exportPage);
