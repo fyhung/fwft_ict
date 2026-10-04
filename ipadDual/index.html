@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>iPad 雙人遊戲提示詞產生器</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, "Microsoft JhengHei", sans-serif; color: #182c40; background: #eef3f8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { max-width: 1360px; margin: auto; padding: 40px 24px; }
+    .eyebrow { color: #4268ba; font-size: 13px; font-weight: 750; letter-spacing: .15em; }
+    h1 { margin: 10px 0; font-size: clamp(26px, 4vw, 38px); }
+    .intro { color: #5a6b7d; line-height: 1.7; margin-bottom: 28px; }
+    .layout { display: grid; grid-template-columns: 1fr 1.1fr; gap: 24px; align-items: start; }
+    .card { background: white; border: 1px solid #dbe4ee; border-radius: 20px; padding: 26px; box-shadow: 0 8px 30px #182c4006; }
+    h2 { font-size: 19px; margin: 0 0 20px; }
+    .section + .section { margin-top: 28px; padding-top: 26px; border-top: 1px solid #e5ebf2; }
+    label { display: block; margin: 18px 0 8px; font-weight: 650; font-size: 14px; }
+    textarea { display: block; width: 100%; border: 1px solid #cbd7e4; border-radius: 10px; padding: 12px 14px; font: inherit; font-size: 15px; line-height: 1.6; resize: vertical; background: #fbfcfe; color: #182c40; }
+    textarea:focus { outline: 3px solid #3877e52b; border-color: #3877e5; }
+    textarea::placeholder { color: #7b8898; }
+    .preview-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+    .preview-header h2 { margin: 0; }
+    button { border: 0; border-radius: 10px; background: #275cce; color: white; padding: 12px 20px; font: inherit; font-weight: 650; cursor: pointer; min-height: 44px; }
+    button:hover { background: #1c49aa; }
+    button:focus-visible { outline: 3px solid #7eacf9; outline-offset: 3px; }
+    #result { height: 760px; font-size: 14px; background: #f7f9fc; }
+    .hint, #status { font-size: 13px; color: #64758a; line-height: 1.6; }
+    #status { min-height: 24px; margin: 10px 0 0; color: #235b9b; }
+    @media (max-width: 850px) { .layout { grid-template-columns: 1fr; } main { padding: 28px 16px; } .card { padding: 20px; } #result { height: 560px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">IPAD DUAL · PROMPT BUILDER</div>
+    <h1>iPad 雙人遊戲提示詞產生器</h1>
+    <p class="intro">填寫遊戲構想與操作方法，即時產生完整提示詞。複製後貼到 AI 對話，即可提出遊戲開發要求。</p>
+    <div class="layout">
+      <form class="card" id="settings" autocomplete="off">
+        <section class="section">
+          <h2>02 ／ 遊戲內容</h2>
+          <label for="theme">遊戲名稱／主題</label>
+          <textarea id="theme" rows="2" placeholder="例如：雙人貪食蛇 / 氣球炸彈爭霸戰 / 雙人空中曲棍球"></textarea>
+          <label for="rules">遊戲規則與勝負條件</label>
+          <textarea id="rules" rows="3" placeholder="例如：三局兩勝制、先得 10 分者勝、撞到對方或邊界算輸"></textarea>
+          <label for="style">視覺風格</label>
+          <textarea id="style" rows="2" placeholder="例如：賽博朋克霓虹光效 / 街機復古風格 / 極簡扁平化"></textarea>
+        </section>
+        <section class="section">
+          <h2>03 ／ 遊戲控制方法</h2>
+          <label for="player1">玩家 1（下半畫面）</label>
+          <textarea id="player1" rows="2" placeholder="例如：左下/右下角方向鍵、或滑動控制"></textarea>
+          <label for="player2">玩家 2（上半畫面）</label>
+          <textarea id="player2" rows="2" placeholder="例如：右上/左上角方向鍵"></textarea>
+          <label for="desktop">電腦版測試支援</label>
+          <textarea id="desktop" rows="2">玩家 1 使用 WASD，玩家 2 使用 方向鍵 (Arrow Keys)。</textarea>
+        </section>
+      </form>
+      <section class="card" aria-labelledby="preview-title">
+        <div class="preview-header">
+          <h2 id="preview-title">完整提示詞</h2>
+          <button id="copy" type="button">複製提示詞</button>
+        </div>
+        <p class="hint">保留基本指示及全部 iPad 適配規範；未填欄位會顯示填寫提示。</p>
+        <textarea id="result" readonly aria-label="產生的完整提示詞" spellcheck="false"></textarea>
+        <p id="status" role="status" aria-live="polite"></p>
+      </section>
+    </div>
+  </main>
+  <script>
+    const byId = id => document.getElementById(id);
+    const defaults = {
+      theme: '[請在此填寫遊戲名稱與主題，例如：雙人貪食蛇 / 氣球炸彈爭霸戰 / 雙人空中曲棍球]',
+      rules: '[請在此填寫遊戲規則，例如：三局兩勝制、先得 10 分者勝、撞到對方或邊界算輸]',
+      style: '[請在此填寫視覺風格，例如：賽博朋克霓虹光效 / 街機復古風格 / 極簡扁平化]',
+      player1: '[請在此填寫 P1 控制方式，例如：左下/右下角方向鍵、或滑動控制]',
+      player2: '[請在此填寫 P2 控制方式，例如：右上/左上角方向鍵]',
+      desktop: '玩家 1 使用 WASD，玩家 2 使用 方向鍵 (Arrow Keys)。'
+    };
+    const value = id => byId(id).value.trim() || defaults[id];
+    function generate() {
+      byId('result').value = `請幫我開發一個單一檔案 (Single-file HTML) 的網頁遊戲，適合在 iPad 上進行雙人面對面 (Face-to-Face) 同螢幕對戰。
+
+[1. 基本指示]
+- 檔案類型：單一 HTML 檔案，包含 HTML、CSS（可採用 Tailwind CSS CDN）與 JavaScript。
+- 渲染技術：主要遊戲畫面與動態繪圖必須使用 HTML5 Canvas。
+- 支援環境：iPad Safari 瀏覽器，支援全螢幕 RWD 響應式佈局與視網膜 (Retina High-DPI) 畫質適配。
+- 音效支援：使用原生的 Web Audio API 合成音效（不需要任何外部音效檔/圖片檔）。
+
+[2. 遊戲內容]
+- 遊戲名稱/主題：${value('theme')}
+- 遊戲規則與勝負條件：${value('rules')}
+- 視覺風格：${value('style')}
+
+[3. 遊戲控制方法]
+- 玩家 1（下半畫面）：${value('player1')}
+- 玩家 2（上半畫面）：${value('player2')}
+- 電腦版測試支援：${value('desktop')}
+
+[4. 詳細指示 - iPad 雙人同螢幕適配規範]
+
+1. UI 與視覺倒向 (180° Inverted UI)
+   - 玩家 2 位於螢幕上方，其所有專屬 UI（分數 HUD、提示文字、控制按鈕）必須套用 CSS \`transform: rotate(180deg)\`，讓面對面的 P2 玩家能正常閱讀。
+   - 玩家 1 位於螢幕下方，UI 保持正向。
+   - 遊戲角落或中央設置全螢幕滿版 Canvas，UI 介面以半透明（Glassmorphism / Overlay）方式懸浮於 Canvas 上方，避免遮擋中央戰場。
+
+2. 觸控與多點觸控防干擾 (Multi-touch & Safari Defaults)
+   - 在 \`body\` 與 \`canvas\` 上設定 \`touch-action: none;\` 與 \`user-select: none;\`，並在 \`touchstart\`, \`touchmove\`, \`touchend\` 事件中阻止預設行為 (\`e.preventDefault()\`)，防止 iOS Safari 的頁面拉動、雙擊縮放、三指手勢干擾。
+   - 必須透過 \`e.changedTouches\` 遍歷並記錄每個 \`touch.identifier\`，確保 P1 與 P2 雙手同時操作（多達 4 隻手指同時點擊）時互不卡頓、不掉幀。
+   - 按鈕實體區域需擴大（至少 60px x 60px 以上），適合盲操與雙手握持。
+
+3. 高畫質 Canvas 與動態自適應 (Retina Canvas & Scaling)
+   - 根據 \`window.devicePixelRatio\` 動態設定 Canvas 的內部 \`width\` 與 \`height\`，並透過 CSS 設定為 \`100vw\` 與 \`100vh\`，確保在 iPad Retina 螢幕上圖像高清不模糊。
+   - 遊戲邏輯與物件座標應採用「相對比例/網格座標系」，當螢幕旋轉或 Resize 時能自動重算邏輯比例，保持遊戲內容居中不變形。
+
+4. 流暢體驗與音效解鎖 (Input Queue & Web Audio)
+   - 輸入事件加入緩衝機制 (Input Queue/Buffer)，避免快速連點時指令遺失或產生非法轉向。
+   - 使用 Web Audio API 時，需在玩家第一次點擊「開始遊戲」或觸控螢幕時執行 \`audioCtx.resume()\`，順利解鎖 iOS 音效播放。
+   - 包含完美的「遊戲準備/開始/結束結算」狀態切換，並提供單鍵「重新開始」功能。`;
+      byId('status').textContent = '';
+    }
+    byId('settings').addEventListener('input', generate);
+    byId('settings').addEventListener('submit', event => event.preventDefault());
+    byId('copy').addEventListener('click', async () => {
+      const result = byId('result');
+      try {
+        if (!navigator.clipboard || !window.isSecureContext) throw new Error('Use fallback');
+        await navigator.clipboard.writeText(result.value);
+        byId('status').textContent = '已複製完整提示詞！';
+      } catch {
+        result.focus();
+        result.select();
+        result.setSelectionRange(0, result.value.length);
+        let copied = false;
+        try { copied = document.execCommand('copy'); } catch {}
+        byId('status').textContent = copied ? '已複製完整提示詞！' : '已選取提示詞，請長按選取文字並選擇「複製」，或按 Ctrl+C / ⌘C。';
+      }
+    });
+    generate();
+  </script>
+</body>
+</html>
