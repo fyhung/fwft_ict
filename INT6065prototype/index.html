@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#244f45">
+  <meta name="description" content="Draw your own story. Find your Chinese voice. A bilingual Mandarin speaking prototype.">
+  <title>語寵故事工房 · Lingo-Pet Story Studio</title>
+  <link rel="icon" href="./assets/pet.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">跳至內容 / Skip to content</a>
+  <header class="site-header">
+    <a href="./" class="brand" aria-label="語寵故事工房 Lingo-Pet Story Studio"><img src="./assets/pet.svg" alt="" width="45" height="45"><span><strong>語寵故事工房</strong><small>LINGO-PET STORY STUDIO</small></span></a>
+    <div class="header-actions"><span class="pilot-pill">小組測試 · GROUP PILOT</span><button id="language" class="text-button" type="button">English first / 英文優先</button><button id="settings-open" class="icon-button" type="button" aria-label="設定 / Settings">⚙</button></div>
+  </header>
+  <div id="demo-banner" class="demo-banner" hidden></div>
+  <nav id="steps" class="steps" aria-label="學習進度 / Learning progress"></nav>
+  <main id="main" tabindex="-1">
+    <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+    <div id="view"></div>
+  </main>
+  <footer class="site-footer"><span>用你的想像，找到中文的聲音。<small>Your imagination. Your story. Your Chinese voice. · v1.0.1</small></span><button id="new-story" class="text-button" type="button">重新開始 / Start over</button></footer>
+  <dialog id="settings" aria-labelledby="settings-title"><form method="dialog"><div class="dialog-heading"><h2 id="settings-title">測試設定 / Test settings</h2><button aria-label="關閉 / Close" class="icon-button">×</button></div></form>
+    <p>設定只套用於這個分頁；不會改寫檔案。<br><small>Changes apply to this tab only; files are not changed.</small></p>
+    <label>文字與圖像理解模型 / Text & vision model<input id="text-model" autocomplete="off"></label>
+    <label>語音分析模型 / Audio feedback model<input id="audio-model" autocomplete="off"></label>
+    <label>插圖模型 / Illustration model<input id="image-model" autocomplete="off"></label>
+    <label>語音生成模型 / TTS model<input id="tts-model" autocomplete="off"></label>
+    <div class="settings-row"><button id="connection" class="button secondary" type="button">檢查連線 / Check connection</button><button id="save-settings" class="button" type="button">套用 / Apply</button></div>
+    <p id="connection-result" role="status" aria-live="polite"></p>
+    <hr><p>需要不使用 API 的導覽？<br><small>Want to explore without API calls?</small></p><button id="demo-start" class="button secondary" type="button">開啟示範故事 / Open demo story</button>
+  </dialog>
+  <dialog id="confirm-dialog" aria-labelledby="confirm-title"><h2 id="confirm-title"></h2><p id="confirm-message"></p><div class="button-row"><button id="confirm-no" class="button secondary">取消 / Cancel</button><button id="confirm-yes" class="button">繼續 / Continue</button></div></dialog>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
