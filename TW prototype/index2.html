@@ -1,0 +1,2228 @@
+<!doctype html>
+<html lang="zh-HK">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>路路通•地地淨 — 3D 城市流動感知原型</title>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --surface-subtle: #f8fafc;
+      --border: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --ink: #0f172a;
+      --ink-secondary: #334155;
+      --muted: #64748b;
+      --brand: #0284c7;
+      --brand-soft: #e0f2fe;
+      --brand-ink: #0369a1;
+      --bump: #d97706;
+      --bump-soft: #fef3c7;
+      --bump-border: #f59e0b;
+      --trash: #dc2626;
+      --trash-soft: #fee2e2;
+      --trash-border: #ef4444;
+      --ok: #059669;
+      --ok-soft: #d1fae5;
+      --radius-lg: 14px;
+      --radius-md: 10px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-6: 24px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: var(--font);
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .app-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: var(--space-3) var(--space-4);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+      flex-wrap: wrap;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, #0284c7, #0f766e);
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .brand-subtitle {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .sim-caption {
+      font-size: 12px;
+      color: var(--ink-secondary);
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      padding: 5px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    /* Main Workspace */
+    .workspace {
+      flex: 1;
+      padding: var(--space-4);
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-4);
+    }
+
+    @media (min-width: 1024px) {
+      .app-shell {
+        height: 100vh;
+        overflow: hidden;
+      }
+      .workspace {
+        grid-template-columns: 320px minmax(0, 1fr) 330px;
+        min-height: 0;
+        overflow: hidden;
+      }
+    }
+
+    @media (min-width: 1280px) {
+      .workspace {
+        grid-template-columns: 350px minmax(0, 1fr) 360px;
+      }
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .panel-header-main {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .panel-hint {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Building Transparency Toggle Button */
+    .building-toggle-btn {
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-secondary);
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+      padding: 6px 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .building-toggle-btn:hover {
+      background: #e2e8f0;
+    }
+
+    .building-toggle-btn:focus-visible {
+      outline: 2px solid var(--brand);
+      outline-offset: 2px;
+    }
+
+    .building-toggle-btn.is-on {
+      background: var(--brand-soft);
+      border-color: var(--brand);
+      color: var(--brand-ink);
+    }
+
+    .toggle-switch-track {
+      width: 28px;
+      height: 16px;
+      border-radius: 999px;
+      background: #94a3b8;
+      position: relative;
+      transition: background-color 0.18s ease;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch-thumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #ffffff;
+      transition: transform 0.18s ease;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.25);
+    }
+
+    .building-toggle-btn.is-on .toggle-switch-track {
+      background: var(--brand);
+    }
+
+    .building-toggle-btn.is-on .toggle-switch-thumb {
+      transform: translateX(12px);
+    }
+
+    /* Left Panel: Front Camera + Vehicle Selector */
+    .camera-box {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-subtle);
+      flex-shrink: 0;
+    }
+
+    .cam-viewport {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      background: #0f172a;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--border-strong);
+    }
+
+    #front-cam-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .cam-signal-bar {
+      margin-top: var(--space-2);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--ink-secondary);
+      transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    }
+
+    .signal-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--ok);
+      flex-shrink: 0;
+    }
+
+    .cam-signal-bar.is-bump {
+      background: var(--bump-soft);
+      border-color: #fcd34d;
+      color: #92400e;
+    }
+
+    .cam-signal-bar.is-bump .signal-dot {
+      background: var(--bump);
+      animation: pulseDot 0.7s infinite alternate;
+    }
+
+    .cam-signal-bar.is-trash {
+      background: var(--trash-soft);
+      border-color: #fca5a5;
+      color: #991b1b;
+    }
+
+    .cam-signal-bar.is-trash .signal-dot {
+      background: var(--trash);
+      animation: pulseDot 0.7s infinite alternate;
+    }
+
+    @keyframes pulseDot {
+      from { transform: scale(0.9); opacity: 0.7; }
+      to { transform: scale(1.35); opacity: 1; }
+    }
+
+    .vehicle-list-wrap {
+      padding: var(--space-3);
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .section-caption {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      padding: 0 var(--space-1) var(--space-1);
+    }
+
+    .vehicle-btn {
+      width: 100%;
+      text-align: left;
+      font: inherit;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2);
+      transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+    }
+
+    .vehicle-btn:hover {
+      background: var(--surface-subtle);
+      border-color: var(--border-strong);
+    }
+
+    .vehicle-btn:active {
+      transform: translateY(1px);
+    }
+
+    .vehicle-btn:focus-visible {
+      outline: 2px solid var(--brand);
+      outline-offset: 2px;
+    }
+
+    .vehicle-btn.is-active {
+      background: var(--brand-soft);
+      border-color: var(--brand);
+    }
+
+    /* Highlight when a car in the left panel is viewing an issue */
+    .vehicle-btn.is-viewing-bump {
+      background: var(--bump-soft);
+      border-color: var(--bump-border);
+      box-shadow: 0 0 0 1px rgba(217, 119, 6, 0.25);
+    }
+
+    .vehicle-btn.is-viewing-trash {
+      background: var(--trash-soft);
+      border-color: var(--trash-border);
+      box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.25);
+    }
+
+    .vehicle-btn.is-active.is-viewing-bump {
+      box-shadow: 0 0 0 2px var(--brand);
+    }
+
+    .vehicle-btn.is-active.is-viewing-trash {
+      box-shadow: 0 0 0 2px var(--brand);
+    }
+
+    .veh-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .veh-swatch {
+      width: 12px;
+      height: 26px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .veh-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .veh-route {
+      font-size: 12px;
+      color: var(--muted);
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .vehicle-btn.is-active .veh-name {
+      color: var(--brand-ink);
+    }
+
+    .vehicle-btn.is-viewing-bump .veh-name {
+      color: #92400e;
+    }
+
+    .vehicle-btn.is-viewing-trash .veh-name {
+      color: #991b1b;
+    }
+
+    .veh-right-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .veh-cam-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .vehicle-btn.is-active .veh-cam-label {
+      color: var(--brand-ink);
+    }
+
+    .veh-issue-pill {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      line-height: 1.3;
+    }
+
+    .veh-issue-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      animation: pulseDot 0.6s infinite alternate;
+    }
+
+    .vehicle-btn.is-viewing-bump .veh-issue-pill {
+      display: inline-flex;
+      background: #fde68a;
+      color: #92400e;
+    }
+
+    .vehicle-btn.is-viewing-bump .veh-issue-dot {
+      background: var(--bump);
+    }
+
+    .vehicle-btn.is-viewing-trash .veh-issue-pill {
+      display: inline-flex;
+      background: #fecaca;
+      color: #991b1b;
+    }
+
+    .vehicle-btn.is-viewing-trash .veh-issue-dot {
+      background: var(--trash);
+    }
+
+    /* Center Panel: 3D City Town */
+    .city-stage {
+      position: relative;
+      flex: 1;
+      min-height: 380px;
+      background: #dbeafe;
+      overflow: hidden;
+    }
+
+    #city-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #city-canvas:active {
+      cursor: grabbing;
+    }
+
+    .stage-legend {
+      position: absolute;
+      left: var(--space-3);
+      bottom: var(--space-3);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(6px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      font-size: 12px;
+      color: var(--ink-secondary);
+      pointer-events: none;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    .legend-cone-swatch {
+      width: 12px;
+      height: 10px;
+      background: linear-gradient(180deg, rgba(2, 132, 199, 0.25), rgba(2, 132, 199, 0.75));
+      clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+      display: inline-block;
+    }
+
+    .stage-fallback {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-6);
+      text-align: center;
+      background: var(--surface-subtle);
+      color: var(--ink-secondary);
+      font-size: 14px;
+    }
+
+    /* Right Panel: Warnings List */
+    .warning-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-3);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      min-height: 260px;
+    }
+
+    .empty-state {
+      margin: auto 0;
+      padding: var(--space-6) var(--space-4);
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .empty-state strong {
+      display: block;
+      color: var(--ink-secondary);
+      font-size: 14px;
+      margin-bottom: var(--space-1);
+    }
+
+    .warning-item {
+      width: 100%;
+      text-align: left;
+      font: inherit;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left-width: 4px;
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    }
+
+    .warning-item:hover {
+      background: var(--surface-subtle);
+    }
+
+    .warning-item:active {
+      transform: translateY(1px);
+    }
+
+    .warning-item:focus-visible {
+      outline: 2px solid var(--brand);
+      outline-offset: 2px;
+    }
+
+    .warning-item.type-bump {
+      border-left-color: var(--bump);
+    }
+
+    .warning-item.type-trash {
+      border-left-color: var(--trash);
+    }
+
+    .warn-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2);
+    }
+
+    .warn-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .warning-item.type-bump .warn-title {
+      color: #b45309;
+    }
+
+    .warning-item.type-trash .warn-title {
+      color: #b91c1c;
+    }
+
+    .warn-time {
+      font-size: 11px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+
+    .warn-snapshot-wrap {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 1px solid var(--border-strong);
+      background: #0f172a;
+    }
+
+    .warn-snapshot-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .warn-meta {
+      font-size: 12px;
+      color: var(--ink-secondary);
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-2);
+    }
+
+    .warn-loc {
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand-group">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+            <circle cx="7" cy="17" r="2"/>
+            <path d="M9 17h6"/>
+            <circle cx="17" cy="17" r="2"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">路路通•地地淨 — 城市車隊 3D 流動感知原型</h1>
+          <p class="brand-subtitle">東華三院馮黃鳳亭中學 · 車聯網 × 移動電腦視覺概念模擬</p>
+        </div>
+      </div>
+      <div class="sim-caption">概念模擬原型（Simulated Prototype Data）</div>
+    </header>
+
+    <main class="workspace">
+      <!-- Left Panel: Front Camera & Car/Bus Selector -->
+      <section class="panel" aria-label="車載前向鏡頭與車輛選擇">
+        <div class="panel-header">
+          <h2 class="panel-title">車載前向鏡頭 (Front Camera)</h2>
+          <span class="panel-hint" id="active-cam-tag">EV-Bus 01</span>
+        </div>
+
+        <div class="camera-box">
+          <div class="cam-viewport">
+            <canvas id="front-cam-canvas" width="480" height="300"></canvas>
+          </div>
+          <div class="cam-signal-bar" id="cam-signal-bar" role="status" aria-live="polite">
+            <span class="signal-dot"></span>
+            <span id="cam-signal-text">正常巡航掃描中 · 路面未見異常</span>
+          </div>
+        </div>
+
+        <div class="vehicle-list-wrap">
+          <div class="section-caption">選擇車輛切換前向鏡頭 (Select Vehicle)</div>
+          <div id="vehicle-list" role="listbox" aria-label="巡航車隊清單"></div>
+        </div>
+      </section>
+
+      <!-- Center Panel: 3D City Model -->
+      <section class="panel" aria-label="3D 城市與車隊模型">
+        <div class="panel-header">
+          <div class="panel-header-main">
+            <h2 class="panel-title">3D 智慧城市街區模型 (City Town 3D View)</h2>
+            <span class="panel-hint">拖曳旋轉 · 滾輪縮放 · 點擊車輛切換視角</span>
+          </div>
+          <button type="button" class="building-toggle-btn" id="building-alpha-toggle" aria-pressed="false">
+            <span class="toggle-switch-track" aria-hidden="true">
+              <span class="toggle-switch-thumb"></span>
+            </span>
+            <span>半透明建築</span>
+          </button>
+        </div>
+        <div class="city-stage" id="city-stage">
+          <canvas id="city-canvas"></canvas>
+          <div class="stage-legend">
+            <span class="legend-item"><span class="legend-swatch" style="background:#0284c7;"></span><span class="legend-cone-swatch"></span>選中車輛與視域扇區 (Viewing Region)</span>
+            <span class="legend-item"><span class="legend-swatch" style="background:#d97706;"></span>路面凹凸 / 坑洞 (Road Bump)</span>
+            <span class="legend-item"><span class="legend-swatch" style="background:#dc2626;"></span>街道垃圾 / 滿溢 (Street Trash)</span>
+          </div>
+          <div class="stage-fallback" id="stage-fallback">
+            未能載入 3D 繪圖引擎，請檢查網絡連線或確認瀏覽器支援 WebGL。
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Panel: List of Warnings -->
+      <section class="panel" aria-label="偵測警示列表">
+        <div class="panel-header">
+          <h2 class="panel-title">警示訊號紀錄 (Warnings)</h2>
+          <span class="panel-hint">附鏡頭擷圖 · 點擊切換車輛</span>
+        </div>
+        <div class="warning-list" id="warning-list" aria-live="polite">
+          <div class="empty-state" id="warning-empty">
+            <strong>暫無異常警示</strong>
+            巴士及私家車隊正於城區街道巡航，偵測到路面凹凸或街道垃圾時將自動擷取鏡頭畫面並發出警示訊號。
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    (function () {
+      const cityCanvas = document.getElementById('city-canvas');
+      const cityStage = document.getElementById('city-stage');
+      const frontCanvas = document.getElementById('front-cam-canvas');
+      const frontCtx = frontCanvas.getContext('2d');
+      const fallbackEl = document.getElementById('stage-fallback');
+      const vehicleListEl = document.getElementById('vehicle-list');
+      const warningListEl = document.getElementById('warning-list');
+      const warningEmptyEl = document.getElementById('warning-empty');
+      const activeCamTagEl = document.getElementById('active-cam-tag');
+      const camSignalBarEl = document.getElementById('cam-signal-bar');
+      const camSignalTextEl = document.getElementById('cam-signal-text');
+      const buildingToggleBtn = document.getElementById('building-alpha-toggle');
+
+      // Offscreen canvas for capturing front-camera warning snapshots
+      const snapCanvas = document.createElement('canvas');
+      snapCanvas.width = 360;
+      snapCanvas.height = 225;
+      const snapCtx = snapCanvas.getContext('2d');
+
+      if (typeof THREE === 'undefined') {
+        fallbackEl.style.display = 'flex';
+        return;
+      }
+
+      let renderer;
+      try {
+        renderer = new THREE.WebGLRenderer({
+          canvas: cityCanvas,
+          antialias: true,
+          powerPreference: 'high-performance'
+        });
+      } catch (err) {
+        fallbackEl.style.display = 'flex';
+        return;
+      }
+
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xdbeafe);
+      scene.fog = new THREE.Fog(0xdbeafe, 130, 260);
+
+      // Main bird's-eye camera with smooth custom orbit/zoom
+      const mainCamera = new THREE.PerspectiveCamera(42, 1, 0.5, 400);
+      const orbit = {
+        theta: 0.72,
+        phi: 0.92,
+        radius: 108,
+        target: new THREE.Vector3(0, 0, 0),
+        dragging: false,
+        lastX: 0,
+        lastY: 0
+      };
+
+      function updateMainCamera() {
+        orbit.phi = Math.max(0.28, Math.min(1.42, orbit.phi));
+        orbit.radius = Math.max(42, Math.min(185, orbit.radius));
+        const sinPhi = Math.sin(orbit.phi);
+        mainCamera.position.set(
+          orbit.target.x + orbit.radius * sinPhi * Math.sin(orbit.theta),
+          orbit.target.y + orbit.radius * Math.cos(orbit.phi),
+          orbit.target.z + orbit.radius * sinPhi * Math.cos(orbit.theta)
+        );
+        mainCamera.lookAt(orbit.target);
+      }
+      updateMainCamera();
+
+      // Front camera attached logically to the selected vehicle, plus snapshot camera
+      const frontCamera = new THREE.PerspectiveCamera(58, 480 / 300, 0.3, 140);
+      const snapCamera = new THREE.PerspectiveCamera(58, 360 / 225, 0.3, 140);
+
+      // Detection / Viewing Cone parameters (matched between 3D viewing shade & AI detection)
+      const VIEW_RANGE = 17.5;
+      const VIEW_HALF_ANGLE_RAD = THREE.MathUtils.degToRad(38);
+      const VIEW_COS_THRESHOLD = Math.cos(VIEW_HALF_ANGLE_RAD);
+
+      // Lighting
+      const hemiLight = new THREE.HemisphereLight(0xf8fafc, 0x94a3b8, 0.85);
+      scene.add(hemiLight);
+
+      const sunLight = new THREE.DirectionalLight(0xfffbeb, 0.95);
+      sunLight.position.set(55, 85, 45);
+      sunLight.castShadow = true;
+      sunLight.shadow.mapSize.width = 2048;
+      sunLight.shadow.mapSize.height = 2048;
+      sunLight.shadow.camera.near = 10;
+      sunLight.shadow.camera.far = 220;
+      const d = 78;
+      sunLight.shadow.camera.left = -d;
+      sunLight.shadow.camera.right = d;
+      sunLight.shadow.camera.top = d;
+      sunLight.shadow.camera.bottom = -d;
+      scene.add(sunLight);
+
+      // City Town Layout Constants
+      const ROAD_COORDS = [-45, -15, 15, 45];
+      const TOWN_SIZE = 122;
+
+      const STREET_NAMES_X = {
+        '-45': '禾輋街段',
+        '-15': '沙田正街段',
+        '15': '彌敦道段',
+        '45': '源禾路段'
+      };
+      const STREET_NAMES_Z = {
+        '-45': '瀝源街段',
+        '-15': '弼街商業段',
+        '15': '西洋菜街段',
+        '45': '亞皆老街段'
+      };
+
+      function getStreetLabel(x, z) {
+        let bestX = ROAD_COORDS[0], minDx = Infinity;
+        let bestZ = ROAD_COORDS[0], minDz = Infinity;
+        for (const rc of ROAD_COORDS) {
+          if (Math.abs(x - rc) < minDx) { minDx = Math.abs(x - rc); bestX = rc; }
+          if (Math.abs(z - rc) < minDz) { minDz = Math.abs(z - rc); bestZ = rc; }
+        }
+        if (minDx < 5.5 && minDz < 5.5) {
+          return STREET_NAMES_X[String(bestX)] + '與' + STREET_NAMES_Z[String(bestZ)] + '交界';
+        }
+        return minDx < minDz ? STREET_NAMES_X[String(bestX)] : STREET_NAMES_Z[String(bestZ)];
+      }
+
+      // Build Base Ground & Sidewalk Blocks
+      const groundMat = new THREE.MeshLambertMaterial({ color: 0xdce5ec });
+      const groundMesh = new THREE.Mesh(new THREE.BoxGeometry(TOWN_SIZE + 30, 1, TOWN_SIZE + 30), groundMat);
+      groundMesh.position.y = -0.6;
+      groundMesh.receiveShadow = true;
+      scene.add(groundMesh);
+
+      const asphaltMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
+      const roadPlane = new THREE.Mesh(new THREE.PlaneGeometry(TOWN_SIZE, TOWN_SIZE), asphaltMat);
+      roadPlane.rotation.x = -Math.PI / 2;
+      roadPlane.position.y = 0.01;
+      roadPlane.receiveShadow = true;
+      scene.add(roadPlane);
+
+      // Helper to create procedural window facade textures
+      function makeBuildingTexture(baseHex, winHex, rows, cols) {
+        const c = document.createElement('canvas');
+        c.width = 128;
+        c.height = 256;
+        const g = c.getContext('2d');
+        g.fillStyle = baseHex;
+        g.fillRect(0, 0, 128, 256);
+
+        const padX = 10, padY = 14;
+        const cellW = (128 - padX * 2) / cols;
+        const cellH = (256 - padY * 2) / rows;
+        for (let r = 0; r < rows; r++) {
+          for (let col = 0; col < cols; col++) {
+            g.fillStyle = ((r + col * 3) % 7 === 0) ? '#bae6fd' : winHex;
+            g.fillRect(padX + col * cellW + 2, padY + r * cellH + 3, cellW - 5, cellH - 6);
+          }
+        }
+        const tex = new THREE.CanvasTexture(c);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        return tex;
+      }
+
+      const buildingTextures = [
+        makeBuildingTexture('#e2e8f0', '#475569', 10, 4),
+        makeBuildingTexture('#f1f5f9', '#334155', 8, 4),
+        makeBuildingTexture('#fed7aa', '#475569', 9, 4),
+        makeBuildingTexture('#cbd5e1', '#1e293b', 12, 5),
+        makeBuildingTexture('#e0f2fe', '#0369a1', 11, 4)
+      ];
+
+      const sidewalkMat = new THREE.MeshLambertMaterial({ color: 0xe2e8f0 });
+      const grassMat = new THREE.MeshLambertMaterial({ color: 0x86efac });
+      const trunkMat = new THREE.MeshLambertMaterial({ color: 0x78350f });
+      const leafMat = new THREE.MeshLambertMaterial({ color: 0x16a34a });
+      const roofMat = new THREE.MeshLambertMaterial({ color: 0x94a3b8 });
+
+      // Track all building meshes & materials for the half-transparent toggle
+      const buildingMeshes = [];
+      const buildingMaterials = new Set([roofMat]);
+
+      function registerBuildingPart(mesh, castsShadowWhenOpaque) {
+        mesh.userData.castsShadowOpaque = castsShadowWhenOpaque;
+        buildingMeshes.push(mesh);
+        buildingMaterials.add(mesh.material);
+      }
+
+      function addTree(x, z) {
+        const group = new THREE.Group();
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 1.6, 7), trunkMat);
+        trunk.position.y = 0.9;
+        trunk.castShadow = true;
+        const crown = new THREE.Mesh(new THREE.SphereGeometry(1.15, 8, 8), leafMat);
+        crown.position.y = 2.4;
+        crown.castShadow = true;
+        group.add(trunk, crown);
+        group.position.set(x, 0, z);
+        scene.add(group);
+      }
+
+      function addStreetLamp(x, z) {
+        const poleMat = new THREE.MeshLambertMaterial({ color: 0x64748b });
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.12, 4.2, 6), poleMat);
+        pole.position.set(x, 2.2, z);
+        pole.castShadow = true;
+        const lampHead = new THREE.Mesh(
+          new THREE.BoxGeometry(0.6, 0.18, 0.3),
+          new THREE.MeshBasicMaterial({ color: 0xfef08a })
+        );
+        lampHead.position.set(x, 4.3, z);
+        scene.add(pole, lampHead);
+      }
+
+      // Populate City Blocks between roads
+      const BLOCK_BOUNDS = [
+        [-60, -50],
+        [-40, -20],
+        [-10, 10],
+        [20, 40],
+        [50, 60]
+      ];
+
+      let blockSeed = 1;
+      for (let bx = 0; bx < BLOCK_BOUNDS.length; bx++) {
+        for (let bz = 0; bz < BLOCK_BOUNDS.length; bz++) {
+          const [x0, x1] = BLOCK_BOUNDS[bx];
+          const [z0, z1] = BLOCK_BOUNDS[bz];
+          const bw = x1 - x0;
+          const bd = z1 - z0;
+          const cx = (x0 + x1) / 2;
+          const cz = (z0 + z1) / 2;
+
+          // Raised sidewalk slab
+          const slab = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.32, bd), sidewalkMat);
+          slab.position.set(cx, 0.16, cz);
+          slab.receiveShadow = true;
+          scene.add(slab);
+
+          const isInnerBlock = bw >= 18 && bd >= 18;
+          if (isInnerBlock && bx === 2 && bz === 2) {
+            // Central Town Park / Community Plaza
+            const lawn = new THREE.Mesh(new THREE.BoxGeometry(bw - 3, 0.12, bd - 3), grassMat);
+            lawn.position.set(cx, 0.36, cz);
+            lawn.receiveShadow = true;
+            scene.add(lawn);
+            addTree(cx - 5, cz - 5);
+            addTree(cx + 5, cz - 5);
+            addTree(cx - 5, cz + 5);
+            addTree(cx + 5, cz + 5);
+            addTree(cx, cz);
+          } else if (isInnerBlock) {
+            // Subdivide into 2x2 urban buildings
+            const subOffsets = [[-4.4, -4.4], [4.4, -4.4], [-4.4, 4.4], [4.4, 4.4]];
+            subOffsets.forEach(([ox, oz], idx) => {
+              blockSeed = (blockSeed * 16807 + 7) % 2147483647;
+              const h = 8 + (blockSeed % 17);
+              const w = 6.8 + ((idx % 2) * 0.6);
+              const d2 = 6.8 + (((idx + 1) % 2) * 0.6);
+              const tex = buildingTextures[(blockSeed + idx) % buildingTextures.length];
+              const mat = new THREE.MeshLambertMaterial({ map: tex });
+              const bldg = new THREE.Mesh(new THREE.BoxGeometry(w, h, d2), mat);
+              bldg.position.set(cx + ox, 0.32 + h / 2, cz + oz);
+              bldg.castShadow = true;
+              bldg.receiveShadow = true;
+              scene.add(bldg);
+              registerBuildingPart(bldg, true);
+
+              const roof = new THREE.Mesh(new THREE.BoxGeometry(w * 0.65, 0.7, d2 * 0.65), roofMat);
+              roof.position.set(cx + ox, 0.32 + h + 0.35, cz + oz);
+              scene.add(roof);
+              registerBuildingPart(roof, false);
+            });
+            addStreetLamp(x0 + 0.8, z0 + 0.8);
+            addStreetLamp(x1 - 0.8, z1 - 0.8);
+          } else {
+            // Perimeter blocks
+            blockSeed = (blockSeed * 48271 + 11) % 2147483647;
+            const h = 7 + (blockSeed % 12);
+            const w = Math.max(4, bw - 2.6);
+            const d2 = Math.max(4, bd - 2.6);
+            const tex = buildingTextures[blockSeed % buildingTextures.length];
+            const bldg = new THREE.Mesh(
+              new THREE.BoxGeometry(w, h, d2),
+              new THREE.MeshLambertMaterial({ map: tex })
+            );
+            bldg.position.set(cx, 0.32 + h / 2, cz);
+            bldg.castShadow = true;
+            bldg.receiveShadow = true;
+            scene.add(bldg);
+            registerBuildingPart(bldg, true);
+
+            if (bw > 14) addTree(cx - 4, cz + (cz > 0 ? -3.8 : 3.8));
+          }
+        }
+      }
+
+      // Building Half-Transparent Toggle Logic
+      let buildingsHalfTransparent = false;
+      function applyBuildingTransparency(isHalfTransparent) {
+        buildingsHalfTransparent = isHalfTransparent;
+        buildingToggleBtn.classList.toggle('is-on', isHalfTransparent);
+        buildingToggleBtn.setAttribute('aria-pressed', isHalfTransparent ? 'true' : 'false');
+
+        buildingMaterials.forEach((mat) => {
+          mat.transparent = isHalfTransparent;
+          mat.opacity = isHalfTransparent ? 0.36 : 1.0;
+          mat.depthWrite = !isHalfTransparent;
+          mat.needsUpdate = true;
+        });
+
+        buildingMeshes.forEach((mesh) => {
+          mesh.castShadow = isHalfTransparent ? false : Boolean(mesh.userData.castsShadowOpaque);
+          mesh.renderOrder = isHalfTransparent ? 3 : 0;
+        });
+      }
+
+      buildingToggleBtn.addEventListener('click', () => {
+        applyBuildingTransparency(!buildingsHalfTransparent);
+      });
+
+      // Dashed Road Centerlines & Crosswalks
+      const lineMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
+      const yellowLineMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+      const SEGMENTS = [[-55, -50], [-40, -20], [-10, 10], [20, 40], [50, 55]];
+
+      ROAD_COORDS.forEach((rc) => {
+        SEGMENTS.forEach(([s0, s1]) => {
+          for (let p = s0 + 1.5; p < s1 - 1; p += 4) {
+            const dashNS = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 1.8), yellowLineMat);
+            dashNS.rotation.x = -Math.PI / 2;
+            dashNS.position.set(rc, 0.03, p);
+            scene.add(dashNS);
+
+            const dashEW = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 0.22), yellowLineMat);
+            dashEW.rotation.x = -Math.PI / 2;
+            dashEW.position.set(p, 0.03, rc);
+            scene.add(dashEW);
+          }
+        });
+
+        ROAD_COORDS.forEach((rc2) => {
+          for (let s = -3.6; s <= 3.6; s += 1.2) {
+            const cw1 = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 1.6), lineMat);
+            cw1.rotation.x = -Math.PI / 2;
+            cw1.position.set(rc + s, 0.03, rc2 - 5.6);
+            const cw2 = cw1.clone();
+            cw2.position.set(rc + s, 0.03, rc2 + 5.6);
+
+            const cw3 = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.5), lineMat);
+            cw3.rotation.x = -Math.PI / 2;
+            cw3.position.set(rc - 5.6, 0.03, rc2 + s);
+            const cw4 = cw3.clone();
+            cw4.position.set(rc + 5.6, 0.03, rc2 + s);
+
+            scene.add(cw1, cw2, cw3, cw4);
+          }
+        });
+      });
+
+      // Street Hazards: Road Bumps/Potholes & Street Trash
+      function createBumpMesh() {
+        const group = new THREE.Group();
+        const patch = new THREE.Mesh(
+          new THREE.CylinderGeometry(1.45, 1.6, 0.08, 10),
+          new THREE.MeshLambertMaterial({ color: 0x1e293b })
+        );
+        patch.position.y = 0.04;
+
+        const bumpMound = new THREE.Mesh(
+          new THREE.SphereGeometry(1.05, 10, 8),
+          new THREE.MeshLambertMaterial({ color: 0x78350f })
+        );
+        bumpMound.scale.set(1.25, 0.34, 0.9);
+        bumpMound.position.y = 0.08;
+
+        const warnRing = new THREE.Mesh(
+          new THREE.RingGeometry(1.55, 1.85, 18),
+          new THREE.MeshBasicMaterial({ color: 0xf59e0b, side: THREE.DoubleSide })
+        );
+        warnRing.rotation.x = -Math.PI / 2;
+        warnRing.position.y = 0.05;
+
+        group.add(patch, bumpMound, warnRing);
+        return group;
+      }
+
+      function createTrashMesh() {
+        const group = new THREE.Group();
+        const binBody = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.46, 0.4, 1.25, 12),
+          new THREE.MeshLambertMaterial({ color: 0xea580c })
+        );
+        binBody.position.set(0, 0.62, 0);
+        binBody.castShadow = true;
+
+        const binTop = new THREE.Mesh(
+          new THREE.SphereGeometry(0.45, 10, 8),
+          new THREE.MeshLambertMaterial({ color: 0xf97316 })
+        );
+        binTop.position.set(0, 1.25, 0);
+
+        const overflow = new THREE.Mesh(
+          new THREE.DodecahedronGeometry(0.36, 0),
+          new THREE.MeshLambertMaterial({ color: 0xf8fafc })
+        );
+        overflow.position.set(0.1, 1.52, 0.08);
+
+        const bagMat = new THREE.MeshLambertMaterial({ color: 0x1f2937 });
+        const bag1 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.48, 1), bagMat);
+        bag1.scale.set(1.1, 0.85, 1.0);
+        bag1.position.set(0.65, 0.36, 0.3);
+        bag1.castShadow = true;
+
+        const bag2 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.4, 1), bagMat);
+        bag2.position.set(-0.55, 0.32, 0.42);
+
+        const box = new THREE.Mesh(
+          new THREE.BoxGeometry(0.75, 0.52, 0.65),
+          new THREE.MeshLambertMaterial({ color: 0xd97706 })
+        );
+        box.rotation.y = 0.35;
+        box.position.set(0.15, 0.26, 0.78);
+        box.castShadow = true;
+
+        group.add(binBody, binTop, overflow, bag1, bag2, box);
+        return group;
+      }
+
+      const HAZARDS = [
+        { id: 'hz-1', kind: 'bump', label: '路面凹凸 / 坑洞', pos: new THREE.Vector3(12.8, 0.02, 2.0), active: true },
+        { id: 'hz-2', kind: 'trash', label: '廢屑箱滿溢及棄置垃圾', pos: new THREE.Vector3(10.3, 0.3, -27.0), active: true },
+        { id: 'hz-3', kind: 'bump', label: '行車線路面裂縫凹陷', pos: new THREE.Vector3(-28.0, 0.02, -12.8), active: true },
+        { id: 'hz-4', kind: 'trash', label: '路邊堆積垃圾袋與紙皮', pos: new THREE.Vector3(-19.7, 0.3, 28.0), active: true },
+        { id: 'hz-5', kind: 'bump', label: '支路路面不平損耗', pos: new THREE.Vector3(-42.8, 0.02, -28.0), active: true },
+        { id: 'hz-6', kind: 'trash', label: '街角廢屑箱外溢雜物', pos: new THREE.Vector3(29.0, 0.3, 10.3), active: true },
+        { id: 'hz-7', kind: 'bump', label: '路口瀝青凹凸破損', pos: new THREE.Vector3(2.0, 0.02, 42.8), active: false },
+        { id: 'hz-8', kind: 'trash', label: '行人路旁棄置雜物', pos: new THREE.Vector3(-30.0, 0.3, -49.7), active: false }
+      ];
+
+      HAZARDS.forEach((h) => {
+        h.street = getStreetLabel(h.pos.x, h.pos.z);
+        h.mesh = h.kind === 'bump' ? createBumpMesh() : createTrashMesh();
+        h.mesh.position.copy(h.pos);
+        h.mesh.visible = h.active;
+        scene.add(h.mesh);
+      });
+
+      setInterval(() => {
+        const activeList = HAZARDS.filter((h) => h.active);
+        const inactiveList = HAZARDS.filter((h) => !h.active);
+        if (activeList.length > 0 && inactiveList.length > 0) {
+          const toHide = activeList[Math.floor(Math.random() * activeList.length)];
+          const toShow = inactiveList[Math.floor(Math.random() * inactiveList.length)];
+          toHide.active = false;
+          toHide.mesh.visible = false;
+          toShow.active = true;
+          toShow.mesh.visible = true;
+        }
+      }, 18000);
+
+      // Smooth Closed-Loop Path Builder with Rounded Bezier Corners
+      function buildSmoothLoop(waypoints, cornerRadius) {
+        const n = waypoints.length;
+        const segments = [];
+
+        for (let i = 0; i < n; i++) {
+          const prev = waypoints[(i - 1 + n) % n];
+          const curr = waypoints[i];
+          const next = waypoints[(i + 1) % n];
+
+          const inVec = new THREE.Vector3().subVectors(curr, prev);
+          const outVec = new THREE.Vector3().subVectors(next, curr);
+          const inLen = inVec.length();
+          const outLen = outVec.length();
+          const r = Math.min(cornerRadius, inLen * 0.4, outLen * 0.4);
+
+          inVec.normalize();
+          outVec.normalize();
+
+          const entryPt = curr.clone().addScaledVector(inVec, -r);
+          const exitPt = curr.clone().addScaledVector(outVec, r);
+
+          segments.push({ entryPt, corner: curr.clone(), exitPt });
+        }
+
+        const rawPts = [];
+        for (let i = 0; i < n; i++) {
+          const prevSeg = segments[(i - 1 + n) % n];
+          const currSeg = segments[i];
+
+          const lineDist = prevSeg.exitPt.distanceTo(currSeg.entryPt);
+          const lineSteps = Math.max(4, Math.ceil(lineDist * 2.5));
+          for (let s = 0; s < lineSteps; s++) {
+            rawPts.push(new THREE.Vector3().lerpVectors(prevSeg.exitPt, currSeg.entryPt, s / lineSteps));
+          }
+
+          const curveSteps = 16;
+          for (let s = 0; s < curveSteps; s++) {
+            const t = s / curveSteps;
+            const omt = 1 - t;
+            const x = omt * omt * currSeg.entryPt.x + 2 * omt * t * currSeg.corner.x + t * t * currSeg.exitPt.x;
+            const z = omt * omt * currSeg.entryPt.z + 2 * omt * t * currSeg.corner.z + t * t * currSeg.exitPt.z;
+            rawPts.push(new THREE.Vector3(x, 0, z));
+          }
+        }
+
+        const cumLen = [0];
+        let total = 0;
+        for (let i = 1; i <= rawPts.length; i++) {
+          const a = rawPts[i - 1];
+          const b = rawPts[i % rawPts.length];
+          total += a.distanceTo(b);
+          cumLen.push(total);
+        }
+
+        return { pts: rawPts, cumLen, totalLength: total };
+      }
+
+      function sampleLoop(loop, distAlong) {
+        let d = ((distAlong % loop.totalLength) + loop.totalLength) % loop.totalLength;
+        let lo = 0, hi = loop.pts.length - 1;
+        while (lo < hi) {
+          const mid = (lo + hi + 1) >> 1;
+          if (loop.cumLen[mid] <= d) lo = mid;
+          else hi = mid - 1;
+        }
+        const idx = lo;
+        const nextIdx = (idx + 1) % loop.pts.length;
+        const segStart = loop.cumLen[idx];
+        const segLen = Math.max(0.0001, loop.cumLen[idx + 1] - segStart);
+        const t = (d - segStart) / segLen;
+
+        const pos = new THREE.Vector3().lerpVectors(loop.pts[idx], loop.pts[nextIdx], t);
+        const fwd = new THREE.Vector3().subVectors(loop.pts[nextIdx], loop.pts[idx]).normalize();
+        return { pos, fwd };
+      }
+
+      // Forward Viewing Region Shade Texture & Geometry Builder (for selected car in main 3D model)
+      function makeViewConeTexture() {
+        const c = document.createElement('canvas');
+        c.width = 64;
+        c.height = 256;
+        const g = c.getContext('2d');
+        const grad = g.createLinearGradient(0, 0, 0, 256);
+        grad.addColorStop(0.0, 'rgba(255, 255, 255, 0.52)');
+        grad.addColorStop(0.55, 'rgba(255, 255, 255, 0.26)');
+        grad.addColorStop(0.95, 'rgba(255, 255, 255, 0.08)');
+        grad.addColorStop(1.0, 'rgba(255, 255, 255, 0.02)');
+        g.fillStyle = grad;
+        g.fillRect(0, 0, 64, 256);
+        // Subtle outer range highlight band near v = 0.97
+        g.fillStyle = 'rgba(255, 255, 255, 0.45)';
+        g.fillRect(0, 246, 64, 6);
+        return new THREE.CanvasTexture(c);
+      }
+      const sharedConeAlphaTex = makeViewConeTexture();
+
+      function createViewingRegionHelper(camOffset) {
+        const helperGroup = new THREE.Group();
+
+        // 1. Circle around the selected vehicle
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: 0x0284c7,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.92,
+          depthWrite: false
+        });
+        const selectRing = new THREE.Mesh(new THREE.RingGeometry(2.35, 2.85, 36), ringMat);
+        selectRing.rotation.x = -Math.PI / 2;
+        selectRing.position.y = 0.07;
+        selectRing.renderOrder = 2;
+        helperGroup.add(selectRing);
+
+        // 2. Shaded forward viewing region fan on the road in front of the car (+Z forward)
+        const rInner = 2.82;
+        const rOuter = VIEW_RANGE;
+        const radialSegs = 28;
+        const positions = [];
+        const uvs = [];
+        const indices = [];
+
+        for (let i = 0; i <= radialSegs; i++) {
+          const u = i / radialSegs;
+          const theta = -VIEW_HALF_ANGLE_RAD + u * (VIEW_HALF_ANGLE_RAD * 2);
+          const sinT = Math.sin(theta);
+          const cosT = Math.cos(theta);
+
+          // Inner arc vertex (v = 0)
+          positions.push(rInner * sinT, 0.08, rInner * cosT);
+          uvs.push(u, 0);
+
+          // Outer arc vertex (v = 1)
+          positions.push(rOuter * sinT, 0.08, rOuter * cosT);
+          uvs.push(u, 1);
+
+          if (i < radialSegs) {
+            const base = i * 2;
+            indices.push(base, base + 1, base + 2);
+            indices.push(base + 1, base + 3, base + 2);
+          }
+        }
+
+        const shadeGeo = new THREE.BufferGeometry();
+        shadeGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        shadeGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        shadeGeo.setIndex(indices);
+
+        const shadeMat = new THREE.MeshBasicMaterial({
+          color: 0x0284c7,
+          alphaMap: sharedConeAlphaTex,
+          transparent: true,
+          opacity: 0.85,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        });
+        const shadeMesh = new THREE.Mesh(shadeGeo, shadeMat);
+        shadeMesh.renderOrder = 2;
+        helperGroup.add(shadeMesh);
+
+        // 3. Crisp outline border along the left ray, outer arc, and right ray of the viewing shade
+        const borderPts = [];
+        borderPts.push(new THREE.Vector3(
+          rInner * Math.sin(-VIEW_HALF_ANGLE_RAD),
+          0.09,
+          rInner * Math.cos(-VIEW_HALF_ANGLE_RAD)
+        ));
+        for (let i = 0; i <= radialSegs; i++) {
+          const theta = -VIEW_HALF_ANGLE_RAD + (i / radialSegs) * (VIEW_HALF_ANGLE_RAD * 2);
+          borderPts.push(new THREE.Vector3(rOuter * Math.sin(theta), 0.09, rOuter * Math.cos(theta)));
+        }
+        borderPts.push(new THREE.Vector3(
+          rInner * Math.sin(VIEW_HALF_ANGLE_RAD),
+          0.09,
+          rInner * Math.cos(VIEW_HALF_ANGLE_RAD)
+        ));
+
+        const borderLineMat = new THREE.LineBasicMaterial({
+          color: 0x0284c7,
+          transparent: true,
+          opacity: 0.8,
+          depthWrite: false
+        });
+        const borderLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(borderPts), borderLineMat);
+        borderLine.renderOrder = 2;
+        helperGroup.add(borderLine);
+
+        // 4. Subtle 3D camera frustum wedge projecting from the windshield camera down to the road shade
+        const leftFar = new THREE.Vector3(
+          rOuter * Math.sin(-VIEW_HALF_ANGLE_RAD),
+          0.09,
+          rOuter * Math.cos(-VIEW_HALF_ANGLE_RAD)
+        );
+        const rightFar = new THREE.Vector3(
+          rOuter * Math.sin(VIEW_HALF_ANGLE_RAD),
+          0.09,
+          rOuter * Math.cos(VIEW_HALF_ANGLE_RAD)
+        );
+        const frustumGeo = new THREE.BufferGeometry();
+        frustumGeo.setAttribute('position', new THREE.Float32BufferAttribute([
+          camOffset.x, camOffset.y, camOffset.z,
+          leftFar.x, leftFar.y, leftFar.z,
+          rightFar.x, rightFar.y, rightFar.z
+        ], 3));
+        const frustumMat = new THREE.MeshBasicMaterial({
+          color: 0x38bdf8,
+          transparent: true,
+          opacity: 0.14,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        });
+        const frustumMesh = new THREE.Mesh(frustumGeo, frustumMat);
+        frustumMesh.renderOrder = 2;
+        helperGroup.add(frustumMesh);
+
+        helperGroup.visible = false;
+        return {
+          group: helperGroup,
+          ringMat,
+          shadeMat,
+          borderLineMat,
+          frustumMat
+        };
+      }
+
+      // 3D Vehicle Mesh Builders (Buses & Cars)
+      const wheelMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
+      const glassMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
+      const headlightMat = new THREE.MeshBasicMaterial({ color: 0xfef9c3 });
+      const taillightMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+
+      function createVehicleMesh(cfg) {
+        const group = new THREE.Group();
+        const bodyMat = new THREE.MeshLambertMaterial({ color: cfg.color });
+        const accentMat = new THREE.MeshLambertMaterial({ color: cfg.accent });
+
+        if (cfg.kind === 'double-bus') {
+          const lower = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.8, 6.4), bodyMat);
+          lower.position.y = 1.25;
+          lower.castShadow = true;
+
+          const stripe = new THREE.Mesh(new THREE.BoxGeometry(2.54, 0.35, 6.42), accentMat);
+          stripe.position.y = 2.15;
+
+          const upper = new THREE.Mesh(new THREE.BoxGeometry(2.46, 1.55, 6.25), bodyMat);
+          upper.position.y = 3.05;
+          upper.castShadow = true;
+
+          const frontWindshield1 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.0, 0.1), glassMat);
+          frontWindshield1.position.set(0, 1.5, 3.21);
+          const frontWindshield2 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.95, 0.1), glassMat);
+          frontWindshield2.position.set(0, 3.15, 3.14);
+
+          const sideGlass1 = new THREE.Mesh(new THREE.BoxGeometry(2.52, 0.82, 5.2), glassMat);
+          sideGlass1.position.set(0, 3.15, -0.1);
+          const sideGlass2 = new THREE.Mesh(new THREE.BoxGeometry(2.52, 0.82, 4.8), glassMat);
+          sideGlass2.position.set(0, 1.55, -0.2);
+
+          group.add(lower, stripe, upper, frontWindshield1, frontWindshield2, sideGlass1, sideGlass2);
+          cfg.camOffset = new THREE.Vector3(0, 2.55, 3.3);
+          cfg.roofY = 4.05;
+          addWheels(group, 1.22, [-2.0, 2.0], 0.48);
+          addLights(group, 0.9, 0.85, 3.22, -3.22);
+        } else if (cfg.kind === 'minibus') {
+          const creamMat = new THREE.MeshLambertMaterial({ color: 0xfef3c7 });
+          const lower = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.25, 4.9), creamMat);
+          lower.position.y = 0.95;
+          lower.castShadow = true;
+
+          const roofTop = new THREE.Mesh(new THREE.BoxGeometry(2.14, 0.95, 4.7), bodyMat);
+          roofTop.position.y = 2.02;
+          roofTop.castShadow = true;
+
+          const winBand = new THREE.Mesh(new THREE.BoxGeometry(2.22, 0.68, 4.2), glassMat);
+          winBand.position.set(0, 1.92, 0.12);
+
+          const frontGlass = new THREE.Mesh(new THREE.BoxGeometry(1.92, 0.78, 0.1), glassMat);
+          frontGlass.position.set(0, 1.88, 2.36);
+
+          group.add(lower, roofTop, winBand, frontGlass);
+          cfg.camOffset = new THREE.Vector3(0, 1.95, 2.48);
+          cfg.roofY = 2.7;
+          addWheels(group, 1.08, [-1.5, 1.5], 0.4);
+          addLights(group, 0.78, 0.75, 2.46, -2.46);
+        } else {
+          const chassis = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.78, 3.9), bodyMat);
+          chassis.position.y = 0.68;
+          chassis.castShadow = true;
+
+          const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.68, 0.68, 2.1), accentMat);
+          cabin.position.set(0, 1.38, -0.15);
+          cabin.castShadow = true;
+
+          const windshield = new THREE.Mesh(new THREE.BoxGeometry(1.52, 0.52, 2.16), glassMat);
+          windshield.position.set(0, 1.36, -0.15);
+
+          group.add(chassis, cabin, windshield);
+          cfg.camOffset = new THREE.Vector3(0, 1.45, 1.88);
+          cfg.roofY = 1.95;
+          addWheels(group, 0.95, [-1.18, 1.18], 0.34);
+          addLights(group, 0.68, 0.65, 1.96, -1.96);
+        }
+
+        // Circle + Forward Viewing Shade for selected vehicle
+        const viewHelper = createViewingRegionHelper(cfg.camOffset);
+        group.add(viewHelper.group);
+
+        // Warning pulse beacon on roof
+        const beacon = new THREE.Mesh(
+          new THREE.SphereGeometry(0.45, 12, 12),
+          new THREE.MeshBasicMaterial({ color: 0xef4444, transparent: true, opacity: 0.9 })
+        );
+        beacon.position.y = cfg.roofY + 0.55;
+        beacon.visible = false;
+        group.add(beacon);
+
+        cfg.mesh = group;
+        cfg.viewHelper = viewHelper;
+        cfg.beacon = beacon;
+        scene.add(group);
+      }
+
+      function addWheels(group, halfX, zPositions, radius) {
+        const geo = new THREE.CylinderGeometry(radius, radius, 0.32, 12);
+        geo.rotateZ(Math.PI / 2);
+        zPositions.forEach((z) => {
+          const wl = new THREE.Mesh(geo, wheelMat);
+          wl.position.set(-halfX, radius, z);
+          const wr = new THREE.Mesh(geo, wheelMat);
+          wr.position.set(halfX, radius, z);
+          group.add(wl, wr);
+        });
+      }
+
+      function addLights(group, halfX, y, frontZ, backZ) {
+        const hlGeo = new THREE.BoxGeometry(0.32, 0.18, 0.08);
+        const hlL = new THREE.Mesh(hlGeo, headlightMat);
+        hlL.position.set(-halfX, y, frontZ);
+        const hlR = new THREE.Mesh(hlGeo, headlightMat);
+        hlR.position.set(halfX, y, frontZ);
+
+        const tlL = new THREE.Mesh(hlGeo, taillightMat);
+        tlL.position.set(-halfX, y, backZ);
+        const tlR = new THREE.Mesh(hlGeo, taillightMat);
+        tlR.position.set(halfX, y, backZ);
+        group.add(hlL, hlR, tlL, tlR);
+      }
+
+      // Fleet of 6 Cars & Buses with calmed, realistic urban speeds
+      const VEHICLES = [
+        {
+          id: 'ev-bus-01',
+          name: '電動雙層巴士 EV-Bus 01',
+          routeDesc: '城區主幹線循環 (彌敦道 · 沙田正街)',
+          kind: 'double-bus',
+          color: 0xdc2626,
+          accent: 0xfacc15,
+          swatch: '#dc2626',
+          speed: 4.5,
+          progress: 26,
+          waypoints: [
+            new THREE.Vector3(12.8, 0, 17.2),
+            new THREE.Vector3(12.8, 0, -42.8),
+            new THREE.Vector3(-17.2, 0, -42.8),
+            new THREE.Vector3(-17.2, 0, 17.2)
+          ]
+        },
+        {
+          id: 'ev-minibus-02',
+          name: '綠色專線小巴 e-Minibus 02',
+          routeDesc: '內街支線循環 (弼街 · 西洋菜街)',
+          kind: 'minibus',
+          color: 0x16a34a,
+          accent: 0xfef3c7,
+          swatch: '#16a34a',
+          speed: 4.9,
+          progress: 58,
+          waypoints: [
+            new THREE.Vector3(-12.8, 0, -12.8),
+            new THREE.Vector3(42.8, 0, -12.8),
+            new THREE.Vector3(42.8, 0, 12.8),
+            new THREE.Vector3(-12.8, 0, 12.8)
+          ]
+        },
+        {
+          id: 'ev-bus-03',
+          name: '電動雙層巴士 EV-Bus 03',
+          routeDesc: '西區外環幹線 (禾輋街 · 亞皆老街)',
+          kind: 'double-bus',
+          color: 0x0284c7,
+          accent: 0xe0f2fe,
+          swatch: '#0284c7',
+          speed: 4.3,
+          progress: 145,
+          waypoints: [
+            new THREE.Vector3(-42.8, 0, 42.8),
+            new THREE.Vector3(-42.8, 0, -47.2),
+            new THREE.Vector3(47.2, 0, -47.2),
+            new THREE.Vector3(47.2, 0, 42.8)
+          ]
+        },
+        {
+          id: 'ev-car-04',
+          name: '電動私家車 EV-Car 04',
+          routeDesc: '商業區內環線 (沙田正街 · 弼街)',
+          kind: 'car',
+          color: 0xffffff,
+          accent: 0xe2e8f0,
+          swatch: '#64748b',
+          speed: 5.5,
+          progress: 48,
+          waypoints: [
+            new THREE.Vector3(-17.2, 0, -12.8),
+            new THREE.Vector3(-17.2, 0, 47.2),
+            new THREE.Vector3(17.2, 0, 47.2),
+            new THREE.Vector3(17.2, 0, -12.8)
+          ]
+        },
+        {
+          id: 'ev-car-05',
+          name: '電動巡邏車 EV-Car 05',
+          routeDesc: '北區支路巡航 (禾輋街 · 瀝源街)',
+          kind: 'car',
+          color: 0x0ea5e9,
+          accent: 0xbae6fd,
+          swatch: '#0ea5e9',
+          speed: 5.2,
+          progress: 68,
+          waypoints: [
+            new THREE.Vector3(-47.2, 0, -12.8),
+            new THREE.Vector3(12.8, 0, -12.8),
+            new THREE.Vector3(12.8, 0, -47.2),
+            new THREE.Vector3(-47.2, 0, -47.2)
+          ]
+        },
+        {
+          id: 'ev-minibus-06',
+          name: '綠色專線小巴 e-Minibus 06',
+          routeDesc: '南區社區專線 (源禾路 · 西洋菜街)',
+          kind: 'minibus',
+          color: 0x15803d,
+          accent: 0xfef3c7,
+          swatch: '#15803d',
+          speed: 4.7,
+          progress: 30,
+          waypoints: [
+            new THREE.Vector3(42.8, 0, 42.8),
+            new THREE.Vector3(-42.8, 0, 42.8),
+            new THREE.Vector3(-42.8, 0, 17.2),
+            new THREE.Vector3(42.8, 0, 17.2)
+          ]
+        }
+      ];
+
+      VEHICLES.forEach((v) => {
+        v.loop = buildSmoothLoop(v.waypoints, 4.0);
+        const initSample = sampleLoop(v.loop, v.progress);
+        v.pos = initSample.pos.clone();
+        v.fwd = initSample.fwd.clone();
+        v.alertUntil = 0;
+        v.lastAlertHazard = null;
+        v.viewingHazard = null;
+        v.uiIssueKind = '';
+        createVehicleMesh(v);
+        v.mesh.position.copy(v.pos);
+        v.mesh.rotation.y = Math.atan2(v.fwd.x, v.fwd.z);
+      });
+
+      let selectedVehicleId = VEHICLES[0].id;
+      const cooldownMap = new Map();
+      const warnings = [];
+      const vehicleBtnMap = new Map();
+
+      // Render Vehicle Selector Buttons in Left Panel
+      function renderVehicleList() {
+        vehicleListEl.innerHTML = '';
+        vehicleBtnMap.clear();
+
+        VEHICLES.forEach((v) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'vehicle-btn' + (v.id === selectedVehicleId ? ' is-active' : '');
+          btn.setAttribute('role', 'option');
+          btn.setAttribute('aria-selected', v.id === selectedVehicleId ? 'true' : 'false');
+          btn.dataset.vid = v.id;
+
+          btn.innerHTML = `
+            <div class="veh-main">
+              <span class="veh-swatch" style="background:${v.swatch};"></span>
+              <div style="min-width:0;">
+                <span class="veh-name">${v.name}</span>
+                <span class="veh-route">${v.routeDesc}</span>
+              </div>
+            </div>
+            <div class="veh-right-meta">
+              <span class="veh-cam-label">${v.id === selectedVehicleId ? '觀看中' : '前鏡頭'}</span>
+              <span class="veh-issue-pill"><span class="veh-issue-dot"></span><span class="veh-issue-text"></span></span>
+            </div>
+          `;
+
+          btn.addEventListener('click', () => {
+            selectVehicle(v.id);
+          });
+          vehicleListEl.appendChild(btn);
+          vehicleBtnMap.set(v.id, btn);
+        });
+      }
+
+      function updateVehicleRowIssueHighlight(v) {
+        const kind = v.viewingHazard ? v.viewingHazard.kind : '';
+        if (v.uiIssueKind === kind) return;
+        v.uiIssueKind = kind;
+
+        const btn = vehicleBtnMap.get(v.id);
+        if (!btn) return;
+        btn.classList.toggle('is-viewing-bump', kind === 'bump');
+        btn.classList.toggle('is-viewing-trash', kind === 'trash');
+
+        const pillText = btn.querySelector('.veh-issue-text');
+        if (pillText) {
+          pillText.textContent = kind === 'bump' ? '發現坑洞' : (kind === 'trash' ? '發現垃圾' : '');
+        }
+      }
+
+      function updateViewHelperColor(v) {
+        const kind = v.viewingHazard ? v.viewingHazard.kind : '';
+        const hex = kind === 'bump' ? 0xf59e0b : (kind === 'trash' ? 0xef4444 : 0x0284c7);
+        const frustumHex = kind === 'bump' ? 0xfbbf24 : (kind === 'trash' ? 0xf87171 : 0x38bdf8);
+        v.viewHelper.ringMat.color.setHex(hex);
+        v.viewHelper.shadeMat.color.setHex(hex);
+        v.viewHelper.borderLineMat.color.setHex(hex);
+        v.viewHelper.frustumMat.color.setHex(frustumHex);
+      }
+
+      function selectVehicle(vid) {
+        selectedVehicleId = vid;
+        const selected = VEHICLES.find((v) => v.id === vid);
+        if (selected) {
+          activeCamTagEl.textContent = selected.name.split(' ').slice(-2).join(' ');
+        }
+        VEHICLES.forEach((v) => {
+          v.viewHelper.group.visible = (v.id === vid);
+        });
+        vehicleBtnMap.forEach((btn, id) => {
+          const active = id === vid;
+          btn.classList.toggle('is-active', active);
+          btn.setAttribute('aria-selected', active ? 'true' : 'false');
+          const label = btn.querySelector('.veh-cam-label');
+          if (label) label.textContent = active ? '觀看中' : '前鏡頭';
+        });
+      }
+
+      renderVehicleList();
+      selectVehicle(selectedVehicleId);
+
+      // Compute visible hazard projections for any camera & canvas size
+      function projectHazardsForCamera(cam, canvasW, canvasH) {
+        const list = [];
+        HAZARDS.forEach((hz) => {
+          if (!hz.active) return;
+          const worldPt = hz.pos.clone();
+          worldPt.y += (hz.kind === 'bump' ? 0.25 : 0.75);
+          const camSpace = worldPt.clone().applyMatrix4(cam.matrixWorldInverse);
+          const depth = -camSpace.z;
+          if (depth > 2.0 && depth < 32.0) {
+            const ndc = worldPt.clone().project(cam);
+            if (Math.abs(ndc.x) < 0.92 && Math.abs(ndc.y) < 0.92) {
+              const px = (ndc.x * 0.5 + 0.5) * canvasW;
+              const py = (-ndc.y * 0.5 + 0.5) * canvasH;
+              const boxScale = Math.min(canvasW * 0.28, Math.max(canvasW * 0.075, (canvasW * 1.08) / depth));
+              list.push({
+                hazard: hz,
+                dist: depth,
+                x: px,
+                y: py,
+                w: boxScale * 1.15,
+                h: boxScale * (hz.kind === 'bump' ? 0.68 : 0.95)
+              });
+            }
+          }
+        });
+        return list;
+      }
+
+      // Draw 2D AI Camera HUD & Detection Bounding Boxes onto any 2D canvas context
+      function drawCameraOverlay(ctx, cw, ch, veh, detections, borderKind) {
+        const grad = ctx.createLinearGradient(0, 0, 0, 40);
+        grad.addColorStop(0, 'rgba(15, 23, 42, 0.74)');
+        grad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, cw, 40);
+
+        const scale = cw / 480;
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = `600 ${Math.max(11, Math.round(13 * scale))}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+        ctx.fillText('CAM // ' + veh.name, 10 * scale, 20 * scale);
+
+        const streetNow = getStreetLabel(veh.pos.x, veh.pos.z);
+        ctx.fillStyle = '#bae6fd';
+        ctx.font = `500 ${Math.max(10, Math.round(12 * scale))}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+        ctx.textAlign = 'right';
+        ctx.fillText(streetNow, cw - 10 * scale, 20 * scale);
+        ctx.textAlign = 'left';
+
+        detections.forEach((det) => {
+          const isBump = det.hazard.kind === 'bump';
+          const strokeColor = isBump ? '#f59e0b' : '#ef4444';
+          const bgColor = isBump ? 'rgba(245, 158, 11, 0.17)' : 'rgba(239, 68, 68, 0.19)';
+
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(det.x - det.w / 2, det.y - det.h / 2, det.w, det.h);
+
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = Math.max(2, 2.5 * scale);
+          ctx.strokeRect(det.x - det.w / 2, det.y - det.h / 2, det.w, det.h);
+
+          const tagText = (isBump ? '路面凹凸 ' : '街道垃圾 ') + Math.round(det.dist) + 'm';
+          ctx.font = `700 ${Math.max(10, Math.round(12 * scale))}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+          const tw = ctx.measureText(tagText).width + 10 * scale;
+          const th = Math.max(16, Math.round(20 * scale));
+          const tx = Math.max(6, Math.min(cw - tw - 6, det.x - det.w / 2));
+          const ty = Math.max(24 * scale, det.y - det.h / 2 - th - 2);
+
+          ctx.fillStyle = strokeColor;
+          ctx.fillRect(tx, ty, tw, th);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(tagText, tx + 5 * scale, ty + th * 0.73);
+        });
+
+        if (borderKind) {
+          ctx.strokeStyle = borderKind === 'bump' ? '#f59e0b' : '#ef4444';
+          ctx.lineWidth = Math.max(3, 4.5 * scale);
+          ctx.strokeRect(2, 2, cw - 4, ch - 4);
+        }
+      }
+
+      let stageW = 800;
+      let stageH = 560;
+      const snapCamPos = new THREE.Vector3();
+      const snapCamTarget = new THREE.Vector3();
+
+      // Capture a clean street-level snapshot from any triggering vehicle's front camera
+      function captureWarningSnapshot(vehicle, hazard) {
+        // Temporarily hide 3D UI overlays (selection circles/cones & roof beacons) for authentic dashcam view
+        const savedStates = VEHICLES.map((v) => ({
+          helperVis: v.viewHelper.group.visible,
+          beaconVis: v.beacon.visible
+        }));
+        VEHICLES.forEach((v) => {
+          v.viewHelper.group.visible = false;
+          v.beacon.visible = false;
+        });
+
+        // Temporarily ensure buildings look solid in dashcam snapshot if transparent mode is active
+        const wasHalfTrans = buildingsHalfTransparent;
+        if (wasHalfTrans) {
+          buildingMaterials.forEach((mat) => {
+            mat.opacity = 1.0;
+            mat.depthWrite = true;
+          });
+        }
+
+        snapCamPos.copy(vehicle.camOffset)
+          .applyAxisAngle(new THREE.Vector3(0, 1, 0), vehicle.mesh.rotation.y)
+          .add(vehicle.pos);
+        snapCamTarget.copy(snapCamPos).addScaledVector(vehicle.fwd, 16);
+        snapCamTarget.y = 0.35;
+
+        snapCamera.position.copy(snapCamPos);
+        snapCamera.lookAt(snapCamTarget);
+        snapCamera.updateMatrixWorld();
+
+        const dpr = renderer.getPixelRatio();
+        const vpW = Math.min(stageW, Math.floor(snapCanvas.width / dpr));
+        const vpH = Math.min(stageH, Math.floor(snapCanvas.height / dpr));
+        snapCamera.aspect = vpW / vpH;
+        snapCamera.updateProjectionMatrix();
+
+        renderer.setScissorTest(true);
+        renderer.setViewport(0, 0, vpW, vpH);
+        renderer.setScissor(0, 0, vpW, vpH);
+        renderer.render(scene, snapCamera);
+
+        const srcW = Math.round(vpW * dpr);
+        const srcH = Math.round(vpH * dpr);
+        const srcY = renderer.domElement.height - srcH;
+
+        snapCtx.clearRect(0, 0, snapCanvas.width, snapCanvas.height);
+        snapCtx.drawImage(renderer.domElement, 0, srcY, srcW, srcH, 0, 0, snapCanvas.width, snapCanvas.height);
+
+        const detections = projectHazardsForCamera(snapCamera, snapCanvas.width, snapCanvas.height);
+        drawCameraOverlay(snapCtx, snapCanvas.width, snapCanvas.height, vehicle, detections, hazard.kind);
+
+        // Restore building transparency & 3D helper states
+        if (wasHalfTrans) {
+          buildingMaterials.forEach((mat) => {
+            mat.opacity = 0.36;
+            mat.depthWrite = false;
+          });
+        }
+        VEHICLES.forEach((v, idx) => {
+          v.viewHelper.group.visible = savedStates[idx].helperVis;
+          v.beacon.visible = savedStates[idx].beaconVis;
+        });
+
+        return snapCanvas.toDataURL('image/jpeg', 0.84);
+      }
+
+      // Add Warning with Camera Snapshot to Right Panel
+      function formatClock(date) {
+        return date.toTimeString().slice(0, 8);
+      }
+
+      function pushWarning(vehicle, hazard, snapshotDataUrl) {
+        const entry = {
+          id: 'w-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+          vehicleId: vehicle.id,
+          vehicleName: vehicle.name,
+          kind: hazard.kind,
+          label: hazard.label,
+          street: hazard.street,
+          timeStr: formatClock(new Date()),
+          snapshot: snapshotDataUrl
+        };
+        warnings.unshift(entry);
+        if (warnings.length > 25) warnings.pop();
+
+        if (warningEmptyEl && warningEmptyEl.parentNode) {
+          warningEmptyEl.remove();
+        }
+
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'warning-item ' + (entry.kind === 'bump' ? 'type-bump' : 'type-trash');
+        item.innerHTML = `
+          <div class="warn-top">
+            <span class="warn-title">${entry.kind === 'bump' ? '⚠ 路面凹凸警示' : '⚠ 街道垃圾警示'}：${entry.label}</span>
+            <span class="warn-time">${entry.timeStr}</span>
+          </div>
+          <div class="warn-snapshot-wrap">
+            <img class="warn-snapshot-img" src="${entry.snapshot}" alt="${entry.vehicleName} 前向鏡頭擷圖：${entry.label}">
+          </div>
+          <div class="warn-meta">
+            <span>${entry.vehicleName}</span>
+            <span class="warn-loc">${entry.street}</span>
+          </div>
+        `;
+        item.addEventListener('click', () => {
+          selectVehicle(entry.vehicleId);
+        });
+
+        warningListEl.prepend(item);
+        while (warningListEl.children.length > 25) {
+          warningListEl.removeChild(warningListEl.lastChild);
+        }
+      }
+
+      // Mouse / Touch Orbit & Raycast Selection on 3D Canvas
+      const raycaster = new THREE.Raycaster();
+      const pointerDownPos = { x: 0, y: 0 };
+
+      cityCanvas.addEventListener('pointerdown', (e) => {
+        orbit.dragging = true;
+        orbit.lastX = e.clientX;
+        orbit.lastY = e.clientY;
+        pointerDownPos.x = e.clientX;
+        pointerDownPos.y = e.clientY;
+        cityCanvas.setPointerCapture(e.pointerId);
+      });
+
+      cityCanvas.addEventListener('pointermove', (e) => {
+        if (!orbit.dragging) return;
+        const dx = e.clientX - orbit.lastX;
+        const dy = e.clientY - orbit.lastY;
+        orbit.lastX = e.clientX;
+        orbit.lastY = e.clientY;
+        orbit.theta -= dx * 0.007;
+        orbit.phi -= dy * 0.007;
+        updateMainCamera();
+      });
+
+      cityCanvas.addEventListener('pointerup', (e) => {
+        orbit.dragging = false;
+        const moved = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+        if (moved < 5) {
+          const rect = cityCanvas.getBoundingClientRect();
+          const mouse = new THREE.Vector2(
+            ((e.clientX - rect.left) / rect.width) * 2 - 1,
+            -((e.clientY - rect.top) / rect.height) * 2 + 1
+          );
+          raycaster.setFromCamera(mouse, mainCamera);
+          const meshes = VEHICLES.map((v) => v.mesh);
+          const hits = raycaster.intersectObjects(meshes, true);
+          if (hits.length > 0) {
+            // Ignore clicks that only hit the ground viewing shade mesh
+            const validHit = hits.find((hit) => {
+              let p = hit.object;
+              while (p) {
+                if (VEHICLES.some((v) => v.viewHelper.group === p)) return false;
+                p = p.parent;
+              }
+              return true;
+            });
+            if (validHit) {
+              let obj = validHit.object;
+              while (obj && obj.parent && obj.parent !== scene) {
+                obj = obj.parent;
+              }
+              const matched = VEHICLES.find((v) => v.mesh === obj);
+              if (matched) selectVehicle(matched.id);
+            }
+          }
+        }
+      });
+
+      cityCanvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        orbit.radius += e.deltaY * 0.06;
+        updateMainCamera();
+      }, { passive: false });
+
+      // Resize Handler
+      function handleResize() {
+        const rect = cityStage.getBoundingClientRect();
+        stageW = Math.max(300, Math.floor(rect.width));
+        stageH = Math.max(300, Math.floor(rect.height));
+        renderer.setSize(stageW, stageH, false);
+        mainCamera.aspect = stageW / stageH;
+        mainCamera.updateProjectionMatrix();
+      }
+      window.addEventListener('resize', handleResize);
+      handleResize();
+
+      // Main Animation Loop
+      let lastTime = performance.now();
+      const tmpVec = new THREE.Vector3();
+      const tmpCamPos = new THREE.Vector3();
+      const tmpCamTarget = new THREE.Vector3();
+
+      function animate(nowMs) {
+        requestAnimationFrame(animate);
+        const dt = Math.min(0.05, (nowMs - lastTime) / 1000);
+        lastTime = nowMs;
+
+        const pendingTriggers = [];
+
+        // 1. Update Vehicles & Check Viewing Issues / Hazard Detections
+        VEHICLES.forEach((v) => {
+          v.progress += v.speed * dt;
+          const { pos, fwd } = sampleLoop(v.loop, v.progress);
+          v.pos.copy(pos);
+          v.fwd.copy(fwd);
+
+          v.mesh.position.copy(pos);
+          const angle = Math.atan2(fwd.x, fwd.z);
+          v.mesh.rotation.y = angle;
+
+          let closestViewedHazard = null;
+          let closestDist = Infinity;
+
+          HAZARDS.forEach((hz) => {
+            if (!hz.active) return;
+            tmpVec.subVectors(hz.pos, v.pos);
+            tmpVec.y = 0;
+            const dist = tmpVec.length();
+            if (dist > 2.2 && dist < VIEW_RANGE) {
+              const forwardDot = tmpVec.clone().normalize().dot(v.fwd);
+              if (forwardDot > VIEW_COS_THRESHOLD) {
+                if (dist < closestDist) {
+                  closestDist = dist;
+                  closestViewedHazard = hz;
+                }
+                const key = v.id + ':' + hz.id;
+                const lastTrig = cooldownMap.get(key) || 0;
+                if (dist < 15.5 && nowMs - lastTrig > 32000) {
+                  cooldownMap.set(key, nowMs);
+                  v.alertUntil = nowMs + 3400;
+                  v.lastAlertHazard = hz;
+                  v.beacon.material.color.setHex(hz.kind === 'bump' ? 0xf59e0b : 0xef4444);
+                  pendingTriggers.push({ vehicle: v, hazard: hz });
+                }
+              }
+            }
+          });
+
+          // Determine if this vehicle is currently viewing an issue (for left-panel highlight & beacon)
+          if (closestViewedHazard) {
+            v.viewingHazard = closestViewedHazard;
+          } else if (nowMs < v.alertUntil && v.lastAlertHazard && v.lastAlertHazard.active) {
+            v.viewingHazard = v.lastAlertHazard;
+          } else {
+            v.viewingHazard = null;
+          }
+
+          if (v.viewingHazard) {
+            v.beacon.visible = true;
+            v.beacon.material.color.setHex(v.viewingHazard.kind === 'bump' ? 0xf59e0b : 0xef4444);
+            const s = 1 + 0.32 * Math.sin(nowMs * 0.016);
+            v.beacon.scale.set(s, s, s);
+          } else {
+            v.beacon.visible = false;
+          }
+
+          updateVehicleRowIssueHighlight(v);
+          if (v.id === selectedVehicleId) {
+            updateViewHelperColor(v);
+          }
+        });
+
+        // 2. Capture camera snapshots for any newly triggered warnings this frame
+        if (pendingTriggers.length > 0) {
+          pendingTriggers.forEach(({ vehicle, hazard }) => {
+            const snapUrl = captureWarningSnapshot(vehicle, hazard);
+            pushWarning(vehicle, hazard, snapUrl);
+          });
+        }
+
+        // 3. Position Front Camera on Selected Vehicle
+        const selectedVeh = VEHICLES.find((v) => v.id === selectedVehicleId) || VEHICLES[0];
+        tmpCamPos.copy(selectedVeh.camOffset)
+          .applyAxisAngle(new THREE.Vector3(0, 1, 0), selectedVeh.mesh.rotation.y)
+          .add(selectedVeh.pos);
+        tmpCamTarget.copy(tmpCamPos).addScaledVector(selectedVeh.fwd, 18);
+        tmpCamTarget.y = 0.35;
+
+        frontCamera.position.copy(tmpCamPos);
+        frontCamera.lookAt(tmpCamTarget);
+        frontCamera.updateMatrixWorld();
+
+        // Update Left Panel Signal Status Bar
+        if (selectedVeh.viewingHazard) {
+          const hz = selectedVeh.viewingHazard;
+          camSignalBarEl.className = 'cam-signal-bar ' + (hz.kind === 'bump' ? 'is-bump' : 'is-trash');
+          camSignalTextEl.textContent = '警示訊號觸發：偵測到' + hz.label;
+        } else {
+          camSignalBarEl.className = 'cam-signal-bar';
+          camSignalTextEl.textContent = '正常巡航掃描中 · 路面未見異常';
+        }
+
+        // 4. Render Live Front Camera (hide 3D selection ring/shade & keep buildings solid in dashcam view)
+        selectedVeh.viewHelper.group.visible = false;
+        const wasHalfTrans = buildingsHalfTransparent;
+        if (wasHalfTrans) {
+          buildingMaterials.forEach((mat) => {
+            mat.opacity = 1.0;
+            mat.depthWrite = true;
+          });
+        }
+
+        const dpr = renderer.getPixelRatio();
+        const vpW = Math.min(stageW, Math.floor(frontCanvas.width / dpr));
+        const vpH = Math.min(stageH, Math.floor(frontCanvas.height / dpr));
+
+        frontCamera.aspect = vpW / vpH;
+        frontCamera.updateProjectionMatrix();
+
+        renderer.setScissorTest(true);
+        renderer.setViewport(0, 0, vpW, vpH);
+        renderer.setScissor(0, 0, vpW, vpH);
+        renderer.render(scene, frontCamera);
+
+        const srcW = Math.round(vpW * dpr);
+        const srcH = Math.round(vpH * dpr);
+        const srcY = renderer.domElement.height - srcH;
+        frontCtx.clearRect(0, 0, frontCanvas.width, frontCanvas.height);
+        frontCtx.drawImage(renderer.domElement, 0, srcY, srcW, srcH, 0, 0, frontCanvas.width, frontCanvas.height);
+
+        const visibleDetections = projectHazardsForCamera(frontCamera, frontCanvas.width, frontCanvas.height);
+        const borderKind = selectedVeh.viewingHazard ? selectedVeh.viewingHazard.kind : null;
+        drawCameraOverlay(frontCtx, frontCanvas.width, frontCanvas.height, selectedVeh, visibleDetections, borderKind);
+
+        // Restore selection circle + forward viewing shade & building transparency for Main 3D City View
+        selectedVeh.viewHelper.group.visible = true;
+        if (wasHalfTrans) {
+          buildingMaterials.forEach((mat) => {
+            mat.opacity = 0.36;
+            mat.depthWrite = false;
+          });
+        }
+
+        // 5. Render full 3D City View
+        renderer.setViewport(0, 0, stageW, stageH);
+        renderer.setScissor(0, 0, stageW, stageH);
+        renderer.render(scene, mainCamera);
+        renderer.setScissorTest(false);
+      }
+
+      requestAnimationFrame(animate);
+    })();
+  </script>
+</body>
+</html>
